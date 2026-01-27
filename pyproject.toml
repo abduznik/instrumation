@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "instrumation"
+version = "0.1.2"
+description = "A high-level Hardware Abstraction Layer (HAL) for RF test stations with Digital Twin support."
+readme = "README.md"
+requires-python = ">=3.7"
+license = {text = "MIT"}
+authors = [
+  {name = "abduznik", email = "abduznik@users.noreply.github.com"}
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Interface Engine/Protocol Translator",
+]
+dependencies = [
+    "pyvisa",
+    "pyserial",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/abduznik/instrumation"
+"Repository" = "https://github.com/abduznik/instrumation"
+"Bug Tracker" = "https://github.com/abduznik/instrumation/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]

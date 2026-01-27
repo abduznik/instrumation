@@ -1,5 +1,7 @@
 # Instrumation
 
+[![PyPI version](https://img.shields.io/pypi/v/instrumation)](https://pypi.org/project/instrumation/) [![License](https://img.shields.io/pypi/l/instrumation)](https://pypi.org/project/instrumation/) [![Python Versions](https://img.shields.io/pypi/pyversions/instrumation)](https://pypi.org/project/instrumation/)
+
 ![Example](assets/example.gif)
 
 A high-level Hardware Abstraction Layer (HAL) for RF test stations, designed to simplify interactions with VISA instruments and Serial control boxes.
@@ -10,7 +12,7 @@ A high-level Hardware Abstraction Layer (HAL) for RF test stations, designed to 
 It features a **Digital Twin** mode, enabling you to develop and test your scripts offline using simulated drivers that generate realistic data with noise.
 
 ## Tech Usage
-* **Language:** Python 3.8+
+* **Language:** Python 3.7+
 * **Libraries:** PyVISA, PySerial
 * **Architecture:** Factory Pattern, Polymorphism
 * **Standards:** SCPI (Standard Commands for Programmable Instruments)
@@ -25,7 +27,7 @@ It features a **Digital Twin** mode, enabling you to develop and test your scrip
 # Getting Started
 
 ## Prerequisites
-* Python 3.8 or higher
+* Python 3.7 or higher
 * Git (optional, if cloning the repository)
 
 ## Installation
@@ -120,10 +122,10 @@ print(f"Voltage: {driver.measure_voltage(1)} V")
 ```
 
 | Command | Description | 
-| :--- | :--- |
-| `scan()` | Lists all connected Serial and VISA devices. |
-| `connect()` | Auto-connects to a generic Test Station (Box + Inst). |
-| `connect_instrument(addr)` | Connects to a specific instrument (loading correct driver). |
+| :--- | :--- | 
+| `scan()` | Lists all connected Serial and VISA devices. | 
+| `connect()` | Auto-connects to a generic Test Station (Box + Inst). | 
+| `connect_instrument(addr)` | Connects to a specific instrument (loading correct driver). | 
 
 # Development & Testing
 
