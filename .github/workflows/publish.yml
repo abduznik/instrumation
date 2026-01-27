@@ -15,7 +15,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0 # Full history for git operations
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v3
@@ -33,31 +34,44 @@ jobs:
           # Extract version from tag (remove 'v' prefix if present)
           TAG_NAME=${{ github.ref_name }}
           VERSION=${TAG_NAME#v}
-          echo "Setting version to $VERSION"
+          echo "Target Version: $VERSION"
           
-          # Use Python to reliably replace the version string in both files
+          # Run Python script to update files with flexible regex
           python3 -c "
           import re
-          
+          import sys
+
           v = '$VERSION'
-          
-          # Update pyproject.toml
-          with open('instrumation/pyproject.toml', 'r') as f:
-              c = f.read()
-          c = re.sub(r'version = \"[^\"]+\"", f'version = \"{v}\"', c)
-          with open('instrumation/pyproject.toml', 'w') as f:
-              f.write(c)
-              
-          # Update setup.py
-          with open('instrumation/setup.py', 'r') as f:
-              c = f.read()
-          c = re.sub(r'version=\"[^\"]+\"", f'version=\"{v}\"', c)
-          with open('instrumation/setup.py', 'w') as f:
-              f.write(c)
+          files = ['instrumation/pyproject.toml', 'instrumation/setup.py']
+
+          for file_path in files:
+              print(f'Processing {file_path}...')
+              try:
+                  with open(file_path, 'r') as f:
+                      content = f.read()
+                  
+                  # Regex to match version = "..." or version='...' with flexible spacing
+                  # Matches: version = "1.2.3", version="1.2.3", version='1.2.3'
+                  pattern = r'(version\s*=\s*)([\"\])([^\"\]+)([\"\])'
+                  
+                  if re.search(pattern, content):
+                      new_content = re.sub(pattern, f'\g<1>\g<2>{v}\g<4>', content)
+                      
+                      with open(file_path, 'w') as f:
+                          f.write(new_content)
+                      print(f'  -> Updated version to {v}')
+                  else:
+                      print(f'  -> WARNING: Could not find version pattern in {file_path}')
+                      sys.exit(1) # Fail the build if we can't update
+              except FileNotFoundError:
+                  print(f'  -> ERROR: File not found: {file_path}')
+                  sys.exit(1)
           "
           
-          # Verify the change
+          # Debug: Show the changes
+          echo "--- Content of pyproject.toml ---"
           grep "version" instrumation/pyproject.toml
+          echo "---------------------------------"
 
       - name: Build package
         run: |
@@ -86,10 +100,10 @@ jobs:
           
           git add instrumation/pyproject.toml instrumation/setup.py
           
-          # Only commit if there are changes
           if git diff --staged --quiet; then
-            echo "No changes to commit"
+            echo "No changes to commit. Version might have already been set."
           else
             git commit -m "ci: bump version to ${{ github.ref_name }}"
+            # Push changes to the main branch
             git push origin HEAD:main
           fi
