@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="instrumation",
-    version="0.1.2",
+    version="0.1.3",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     install_requires=[
