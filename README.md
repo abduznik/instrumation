@@ -1,0 +1,153 @@
+# Instrumation
+
+![Example](assets/example.gif)
+
+A high-level Hardware Abstraction Layer (HAL) for RF test stations, designed to simplify interactions with VISA instruments and Serial control boxes.
+
+# About The Project
+**Instrumation** is a Python library that provides a unified interface for controlling hardware test benches. It abstracts away the low-level details of PyVISA and PySerial, allowing you to focus on writing test logic rather than connection code.
+
+It features a **Digital Twin** mode, enabling you to develop and test your scripts offline using simulated drivers that generate realistic data with noise.
+
+## Tech Usage
+* **Language:** Python 3.8+
+* **Libraries:** PyVISA, PySerial
+* **Architecture:** Factory Pattern, Polymorphism
+* **Standards:** SCPI (Standard Commands for Programmable Instruments)
+
+## Features
+* **Auto-Discovery:** Automatically scans and identifies connected devices (VISA & Serial).
+* **Smart Factory:** Detects connected hardware (e.g., Keysight vs. Rigol) and loads the correct driver automatically.
+* **Digital Twin:** Simulation mode with realistic Gaussian noise for offline development.
+* **Unified API:** Use the same code for different hardware brands.
+* **Logging:** Built-in CSV logging for test results.
+
+# Getting Started
+
+## Prerequisites
+* Python 3.8 or higher
+* Git (optional, if cloning the repository)
+
+## Installation
+1.  **Download or Clone the repository:**
+    You can download the source code as a ZIP file and extract it, or clone the repository using Git:
+    ```bash
+    git clone https://github.com/yourusername/instrumation.git
+    cd instrumation
+    ```
+2.  **Install the library:**
+    Navigate to the `instrumation` project root directory (where `setup.py` is located) and install:
+    ```bash
+    pip install .
+    ```
+    For developers, you might want to install in editable mode:
+    ```bash
+    pip install -e .
+    ```
+
+# Setup Guide
+
+## Linux / Termux (Android)
+If you are running this on Termux (Android) or a Linux machine:
+
+1.  **Install dependencies:**
+    ```bash
+    pkg install python # Add git if you plan to clone the repo
+    ```
+    *(On standard Linux, use `sudo apt install python3` and optionally `git`)*
+
+2.  **Setup Virtual Environment (Optional but Recommended):**
+    ```bash
+    python -m venv .venv
+    source .venv/bin/activate
+    ```
+
+3.  **Install the library:**
+    ```bash
+    pip install .
+    ```
+
+## Windows
+1.  **Open PowerShell** as Administrator (for driver installation if needed).
+2.  **Install Python:** Download from [python.org](https://www.python.org/).
+3.  **Download or Clone and Install:** 
+    ```powershell
+    # If cloning (requires Git):
+    git clone https://github.com/yourusername/instrumation.git
+    cd instrumation
+    
+    # Or if you downloaded the ZIP and extracted it, navigate to the extracted folder:
+    # cd path\to\instrumation-main
+    
+    pip install .
+    ```
+4.  **VISA Backend:** You may need to install NI-VISA or Keysight IO Libraries Suite for physical hardware access.
+
+# Usage
+
+### 1. Real Hardware Mode
+Connect your devices and run:
+
+```python
+import instrumation
+
+# Auto-connect to first found instrument
+sa = instrumation.connect_instrument("USB0::0x2A8D::...") 
+
+# Works on ANY supported device (Keysight, Rigol, etc.)
+peak_power = sa.get_peak_value()
+print(f"Peak Power: {peak_power} dBm")
+```
+
+### 2. Digital Twin (Simulation) Mode
+Develop offline without hardware.
+
+**Enable Simulation:**
+*   **Linux/Termux:** `export INSTRUMATION_MODE=SIM`
+*   **Windows (PowerShell):** `$env:INSTRUMATION_MODE="SIM"`
+*   **Windows (CMD):** `set INSTRUMATION_MODE=SIM`
+
+**Run Code:**
+```python
+from instrumation.factory import get_driver
+
+# Address is ignored in SIM mode
+driver = get_driver("DUMMY_ADDRESS")
+driver.connect()
+
+print(f"ID: {driver.get_id()}")
+print(f"Voltage: {driver.measure_voltage(1)} V")
+```
+
+| Command | Description | 
+| :--- | :--- |
+| `scan()` | Lists all connected Serial and VISA devices. |
+| `connect()` | Auto-connects to a generic Test Station (Box + Inst). |
+| `connect_instrument(addr)` | Connects to a specific instrument (loading correct driver). |
+
+# Development & Testing
+
+If you want to contribute or run the tests, follow these steps to avoid import errors.
+
+1.  **Install in Editable Mode**: 
+    This is crucial for tests to find your local changes.
+    ```bash
+    pip install -e .
+    ```
+
+2.  **Install Test Dependencies**: 
+    ```bash
+    pip install pytest flake8
+    ```
+
+3.  **Run Tests**: 
+    Enable simulation mode and run pytest.
+    ```bash
+    # Linux / Termux
+    export INSTRUMATION_MODE=SIM
+    pytest
+
+    # Windows PowerShell
+    $env:INSTRUMATION_MODE="SIM"
+    pytest
+    ```
