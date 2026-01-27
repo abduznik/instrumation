@@ -1,5 +1,6 @@
 import sys
 import time
+import os
 # Add the src directory to path so we can import the library without installing it
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 

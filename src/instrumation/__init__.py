@@ -24,7 +24,6 @@ def connect(serial_id=None, visa_id=None):
     """
     Creates the connection object for the full test station (Serial + VISA).
     """
-    global _discovered_devices
     
     if not _discovered_devices and (serial_id is None or visa_id is None):
         search_devices()
