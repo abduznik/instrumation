@@ -31,54 +31,21 @@ jobs:
       - name: Update Version in Files
         id: bump_version
         run: |
-          # Extract version from tag (remove 'v' prefix if present)
+          # Extract version from tag
           TAG_NAME=${{ github.ref_name }}
           VERSION=${TAG_NAME#v}
           echo "Target Version: $VERSION"
           
-          # Run Python script to update files (Paths corrected to root)
-          python3 -c "
-          import re
-          import sys
-          import os
-
-          v = '$VERSION'
-          # Files are at the root of the repo
-          files = ['pyproject.toml', 'setup.py']
-
-          for file_path in files:
-              print(f'Processing {file_path}...')
-              if not os.path.exists(file_path):
-                  print(f'  -> ERROR: File not found: {file_path}')
-                  print(f'  -> Current Directory: {os.getcwd()}')
-                  print(f'  -> Listing: {os.listdir()}')
-                  sys.exit(1)
-
-              with open(file_path, 'r') as f:
-                  content = f.read()
-              
-              # Regex to match version = "..." or version='...'
-              pattern = r'(version\s*=\s*)(["\'])([^"\']+)(["\'])'
-              
-              if re.search(pattern, content):
-                  new_content = re.sub(pattern, f'\g<1>\g<2>{v}\g<4>', content)
-                  
-                  with open(file_path, 'w') as f:
-                      f.write(new_content)
-                  print(f'  -> Updated version to {v}')
-              else:
-                  print(f'  -> WARNING: Could not find version pattern in {file_path}')
-                  # Don't exit, maybe one file lacks it
-          "
+          # Run the python script
+          python3 scripts/update_version.py "$VERSION"
           
-          # Debug: Show the changes
-          echo "--- Content of pyproject.toml ---"
+          # Debug
+          echo "--- pyproject.toml check ---"
           grep "version" pyproject.toml
-          echo "---------------------------------"
+          echo "----------------------------"
 
       - name: Build package
         run: |
-          # Build at root
           python -m build
 
       - name: Publish distribution 📦 to PyPI
