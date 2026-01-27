@@ -11,14 +11,15 @@ def update_file(file_path, new_version):
     with open(file_path, 'r') as f:
         content = f.read()
 
-    # Regex to match version = "..." or version='...'
-    # Captures: 1=(version = ), 2=(" or '), 3=(current_version), 4=(matching quote)
-    # We use a simplified pattern that handles both quote types
-    pattern = r'(version\s*=\s*)([\"\])([^\"\]+)([\"\])')
+    # Regex breakdown:
+    # (version\s*=\s*["\'])  -> Group 1: Matches 'version = "' or 'version="'
+    # ([^"\']+)              -> Group 2: Matches the version number inside
+    # ([ "\'])                -> Group 3: Matches the closing quote
+    pattern = r'(version\s*=\s*["\'])([^"\']+)(["\'])'
     
     if re.search(pattern, content):
-        # \g<1> is the prefix, \g<2> is the opening quote, \g<4> is the closing quote
-        new_content = re.sub(pattern, f'\\g<1>\\g<2>{new_version}\\g<4>', content)
+        # We replace Group 2 (the old version) with the new_version
+        new_content = re.sub(pattern, f'\g<1>{new_version}\g<3>', content)
         
         with open(file_path, 'w') as f:
             f.write(new_content)
@@ -33,7 +34,6 @@ if __name__ == "__main__":
 
     new_version = sys.argv[1]
     
-    # Define files to update (relative to repo root)
     files = ['pyproject.toml', 'setup.py']
     
     for f in files:
