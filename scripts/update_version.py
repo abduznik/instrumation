@@ -12,19 +12,19 @@ def update_file(file_path, new_version):
         content = f.read()
 
     # Regex to match version = "..." or version='...'
-    # Captures: 1=(version = ), 2=(" or '), 3=(current_version), 4=(" or ')
-    pattern = r'(version\s*=\s*)([\"\'])([^\"\\]+)([\"\\]))'
+    # Captures: 1=(version = ), 2=(" or '), 3=(current_version), 4=(matching quote)
+    # We use a simplified pattern that handles both quote types
+    pattern = r'(version\s*=\s*)([\"\])([^\"\]+)([\"\])')
     
     if re.search(pattern, content):
-        # Use raw string for replacement pattern to avoid escape issues
-        # \g<1> refers to group 1, etc.
+        # \g<1> is the prefix, \g<2> is the opening quote, \g<4> is the closing quote
         new_content = re.sub(pattern, f'\\g<1>\\g<2>{new_version}\\g<4>', content)
         
         with open(file_path, 'w') as f:
             f.write(new_content)
         print(f"  -> Success: Version set to {new_version}")
     else:
-        print(f"  -> Warning: Could not find version string pattern.")
+        print(f"  -> Warning: Could not find version string pattern in {file_path}")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
