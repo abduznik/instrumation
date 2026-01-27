@@ -6,14 +6,16 @@ on:
 
 jobs:
   pypi-publish:
-    name: Upload release to PyPI and Attach Assets
+    name: Update Version, Build & Publish
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # For PyPI trusted publishing
-      contents: write  # REQUIRED: To upload assets to the GitHub Release
+      contents: write  # REQUIRED: To commit version bump & upload release assets
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Full history for git operations
 
       - name: Set up Python
         uses: actions/setup-python@v3
@@ -25,13 +27,47 @@ jobs:
           python -m pip install --upgrade pip
           pip install build twine
 
+      - name: Update Version in Files
+        id: bump_version
+        run: |
+          # Extract version from tag (remove 'v' prefix if present)
+          TAG_NAME=${{ github.ref_name }}
+          VERSION=${TAG_NAME#v}
+          echo "Setting version to $VERSION"
+          
+          # Use Python to reliably replace the version string in both files
+          python3 -c "
+          import re
+          
+          v = '$VERSION'
+          
+          # Update pyproject.toml
+          with open('instrumation/pyproject.toml', 'r') as f:
+              c = f.read()
+          c = re.sub(r'version = \"[^\"]+\"", f'version = \"{v}\"', c)
+          with open('instrumation/pyproject.toml', 'w') as f:
+              f.write(c)
+              
+          # Update setup.py
+          with open('instrumation/setup.py', 'r') as f:
+              c = f.read()
+          c = re.sub(r'version=\"[^\"]+\"", f'version=\"{v}\"', c)
+          with open('instrumation/setup.py', 'w') as f:
+              f.write(c)
+          "
+          
+          # Verify the change
+          grep "version" instrumation/pyproject.toml
+
       - name: Build package
         run: |
+          cd instrumation
           python -m build
 
       - name: Publish distribution 📦 to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
+          package_dir: instrumation/dist/
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
 
@@ -39,6 +75,21 @@ jobs:
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: dist/*
+          files: instrumation/dist/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit and Push Version Bump
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git add instrumation/pyproject.toml instrumation/setup.py
+          
+          # Only commit if there are changes
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "ci: bump version to ${{ github.ref_name }}"
+            git push origin HEAD:main
+          fi
