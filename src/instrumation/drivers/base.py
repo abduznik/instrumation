@@ -23,6 +23,21 @@ class InstrumentDriver(ABC):
         """Returns the identification string of the instrument."""
         pass
 
+    @abstractmethod
+    def measure_frequency(self) -> float:
+        """Measures the frequency of the input signal."""
+        pass
+
+    @abstractmethod
+    def measure_duty_cycle(self) -> float:
+        """Measures the duty cycle of the input signal as a percentage."""
+        pass
+
+    @abstractmethod
+    def measure_v_peak_to_peak(self) -> float:
+        """Measures the peak-to-peak voltage of the input signal."""
+        pass
+
 class Multimeter(InstrumentDriver):
     """Abstract Base Class for Digital Multimeters."""
     @abstractmethod
