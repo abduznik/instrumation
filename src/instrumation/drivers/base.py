@@ -74,3 +74,22 @@ class SpectrumAnalyzer(InstrumentDriver):
         """Helper: Performs peak search and returns amplitude."""
         self.peak_search()
         return self.get_marker_amplitude()
+
+class NetworkAnalyzer(InstrumentDriver):
+    """Abstract Base Class for Vector Network Analyzers."""
+    @abstractmethod
+    def set_start_frequency(self, freq_hz: float):
+        pass
+
+    @abstractmethod
+    def set_stop_frequency(self, freq_hz: float):
+        pass
+
+    @abstractmethod
+    def set_points(self, num_points: int):
+        pass
+
+    @abstractmethod
+    def get_trace_data(self, measurement_name: str) -> list[float]:
+        """Returns the formatted data trace."""
+        pass

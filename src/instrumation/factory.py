@@ -1,8 +1,9 @@
 from .config import is_sim_mode
-from .drivers.simulated import SimulatedMultimeter, SimulatedPowerSupply, SimulatedSpectrumAnalyzer, SimulatedDriver
+from .drivers.simulated import SimulatedMultimeter, SimulatedPowerSupply, SimulatedSpectrumAnalyzer, SimulatedNetworkAnalyzer, SimulatedDriver
 # Import real drivers (assuming we have wrappers or generic SCPI ones)
 # For now, we reuse the generic RealDriver structure or import specific ones
 from .drivers.real import RealDriver 
+from .drivers.keysight import KeysightPNA
 
 def get_driver(resource_address: str):
     """Legacy factory for generic driver (defaults to DMM behavior)."""
@@ -17,7 +18,7 @@ def get_instrument(resource_address: str, driver_type: str):
     
     Args:
         resource_address: VISA address or dummy string
-        driver_type: "DMM", "PSU", "SA"
+        driver_type: "DMM", "PSU", "SA", "NA"
     """
     if is_sim_mode():
         if driver_type == "DMM":
@@ -26,10 +27,15 @@ def get_instrument(resource_address: str, driver_type: str):
             return SimulatedPowerSupply(resource_address)
         elif driver_type == "SA":
             return SimulatedSpectrumAnalyzer(resource_address)
+        elif driver_type == "NA":
+            return SimulatedNetworkAnalyzer(resource_address)
         else:
             raise ValueError(f"Unknown driver type: {driver_type}")
     else:
         # Real Hardware Logic (Placeholder)
+        if driver_type == "NA":
+            return KeysightPNA(resource_address)
+        
         # In a real scenario, we might return a generic SCPI wrapper 
         # or use auto-detection (like connect_instrument logic)
         # For this example, we return the generic RealDriver 
