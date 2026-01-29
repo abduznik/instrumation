@@ -23,6 +23,18 @@ class SimulatedMultimeter(Multimeter):
         # Simulate a 1k resistor with noise
         return 1000.0 + random.gauss(0, 5.0)
 
+    def measure_frequency(self) -> float:
+        # Simulate frequency measurement (e.g., 1kHz signal with noise)
+        return 1000.0 + random.gauss(0, 50.0)
+
+    def measure_duty_cycle(self) -> float:
+        # Simulate duty cycle measurement (percentage, 0-100%)
+        return 50.0 + random.gauss(0, 5.0)
+
+    def measure_v_peak_to_peak(self) -> float:
+        # Simulate peak-to-peak voltage measurement
+        return 2.0 + random.gauss(0, 0.1)
+
 class SimulatedPowerSupply(PowerSupply):
     def __init__(self, resource):
         super().__init__(resource)
@@ -49,6 +61,18 @@ class SimulatedPowerSupply(PowerSupply):
             return (self.setpoint / 100.0) + random.gauss(0, 0.001)
         return 0.0
 
+    def measure_frequency(self) -> float:
+        # Simulate frequency measurement (e.g., 1kHz signal with noise)
+        return 1000.0 + random.gauss(0, 50.0)
+
+    def measure_duty_cycle(self) -> float:
+        # Simulate duty cycle measurement (percentage, 0-100%)
+        return 50.0 + random.gauss(0, 5.0)
+
+    def measure_v_peak_to_peak(self) -> float:
+        # Simulate peak-to-peak voltage measurement
+        return 2.0 + random.gauss(0, 0.1)
+
 class SimulatedSpectrumAnalyzer(SpectrumAnalyzer):
     def connect(self):
         print("[SIM-SA] Connected")
@@ -68,6 +92,18 @@ class SimulatedSpectrumAnalyzer(SpectrumAnalyzer):
     def get_marker_amplitude(self) -> float:
         # Simulate a signal around -20 dBm
         return -20.0 + random.gauss(0, 0.5)
+
+    def measure_frequency(self) -> float:
+        # Simulate frequency measurement (e.g., 1GHz signal with noise)
+        return 1000000000.0 + random.gauss(0, 10000000.0)
+
+    def measure_duty_cycle(self) -> float:
+        # Simulate duty cycle measurement (percentage, 0-100%)
+        return 50.0 + random.gauss(0, 5.0)
+
+    def measure_v_peak_to_peak(self) -> float:
+        # Simulate peak-to-peak voltage measurement
+        return 1.0 + random.gauss(0, 0.05)
 
 class SimulatedNetworkAnalyzer(NetworkAnalyzer):
     def connect(self):
@@ -103,6 +139,18 @@ class SimulatedNetworkAnalyzer(NetworkAnalyzer):
              val = -20 + 10 * math.sin(i / points * 3.14) + random.gauss(0, 0.5)
              data.append(val)
         return data
+
+    def measure_frequency(self) -> float:
+        # PNA usually measures frequency via markers or CW mode, but for ABC compliance:
+        return 1000000000.0
+
+    def measure_duty_cycle(self) -> float:
+        # Not typical for VNA
+        return 0.0
+
+    def measure_v_peak_to_peak(self) -> float:
+        # Not typical for VNA
+        return 0.0
 
 # Keep a generic SimulatedDriver for backward compatibility if needed, 
 # or map it to DMM.

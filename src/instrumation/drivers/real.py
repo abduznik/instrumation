@@ -35,3 +35,21 @@ class RealDriver(InstrumentDriver):
         if self.inst:
              return float(self.inst.query(f"MEAS:VOLT:DC? (@{channel})"))
         return 0.0
+
+    def measure_frequency(self) -> float:
+        if self.inst:
+            # SCPI command for frequency measurement
+            return float(self.inst.query("MEAS:FREQ?"))
+        return 0.0
+
+    def measure_duty_cycle(self) -> float:
+        if self.inst:
+            # SCPI command for duty cycle measurement
+            return float(self.inst.query("MEAS:DUTY?"))
+        return 0.0
+
+    def measure_v_peak_to_peak(self) -> float:
+        if self.inst:
+            # SCPI command for peak-to-peak voltage measurement
+            return float(self.inst.query("MEAS:VPP?"))
+        return 0.0
