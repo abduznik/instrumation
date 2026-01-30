@@ -3,7 +3,8 @@ from .drivers.simulated import SimulatedMultimeter, SimulatedPowerSupply, Simula
 # Import real drivers (assuming we have wrappers or generic SCPI ones)
 # For now, we reuse the generic RealDriver structure or import specific ones
 from .drivers.real import RealDriver 
-from .drivers.keysight import KeysightPNA
+from .drivers.keysight import KeysightPNA, KeysightMXA
+from .drivers.tdk import TDKLambdaZPlus
 
 def get_driver(resource_address: str):
     """Legacy factory for generic driver (defaults to DMM behavior)."""
@@ -35,8 +36,12 @@ def get_instrument(resource_address: str, driver_type: str):
         # Real Hardware Logic (Placeholder)
         if driver_type == "NA":
             return KeysightPNA(resource_address)
+        elif driver_type == "PSU":
+            return TDKLambdaZPlus(resource_address)
+        elif driver_type == "SA":
+            return KeysightMXA(resource_address)
         
-        # In a real scenario, we might return a generic SCPI wrapper 
+        # In a real scenario, we might return a generic SCPI wrapper  
         # or use auto-detection (like connect_instrument logic)
         # For this example, we return the generic RealDriver 
         # but in a real app, we'd wrap it in the correct class.
