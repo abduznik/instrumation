@@ -41,7 +41,7 @@ def get_instrument(resource_address: str, driver_type: str):
         elif driver_type == "SA":
             return KeysightMXA(resource_address)
         
-        # In a real scenario, we might return a generic SCPI wrapper  
+        # In a real scenario, we might return a generic SCPI wrapper 
         # or use auto-detection (like connect_instrument logic)
         # For this example, we return the generic RealDriver 
         # but in a real app, we'd wrap it in the correct class.
