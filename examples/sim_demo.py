@@ -22,6 +22,7 @@ def run_simulation_demo():
     target_v = 12.0
     print(f"   Setting Voltage to {target_v}V...")
     psu.set_voltage(target_v)
+    psu.set_output(True)
     
     curr = psu.get_current()
     print(f"   Measured Current Draw: {curr:.3f} A")

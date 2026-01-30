@@ -39,6 +39,8 @@ class SimulatedPowerSupply(PowerSupply):
     def __init__(self, resource):
         super().__init__(resource)
         self.setpoint = 0.0
+        self.current_limit = 1.0
+        self.output_enabled = False
 
     def connect(self):
         print("[SIM-PSU] Connected")
@@ -55,11 +57,28 @@ class SimulatedPowerSupply(PowerSupply):
         print(f"[SIM-PSU] Output set to {voltage}V")
         self.setpoint = voltage
 
+    def get_voltage(self) -> float:
+        if self.output_enabled:
+            return self.setpoint + random.gauss(0, 0.005)
+        return 0.0
+
+    def set_current_limit(self, current: float):
+        print(f"[SIM-PSU] Current limit set to {current}A")
+        self.current_limit = current
+
     def get_current(self) -> float:
         # Simulate load: I = V / R (assume 100 ohm load)
-        if self.setpoint > 0:
-            return (self.setpoint / 100.0) + random.gauss(0, 0.001)
+        if self.output_enabled and self.setpoint > 0:
+            current = (self.setpoint / 100.0) + random.gauss(0, 0.001)
+            return min(current, self.current_limit)
         return 0.0
+
+    def set_output(self, state: bool):
+        print(f"[SIM-PSU] Output {'ENABLED' if state else 'DISABLED'}")
+        self.output_enabled = state
+
+    def get_output(self) -> bool:
+        return self.output_enabled
 
     def measure_frequency(self) -> float:
         # Simulate frequency measurement (e.g., 1kHz signal with noise)
