@@ -2,7 +2,23 @@
 
 Thank you for your interest in contributing to **Instrumation**! We welcome contributions from the community to help make this the best hardware abstraction layer for test benches.
 
-## 🚀 Running the Digital Twin (Local Development)
+## Local Development Setup
+
+To set up your local development environment:
+
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/abduznik/instrumation.git
+    cd instrumation
+    ```
+
+2.  **Install in editable mode**:
+    This allows you to test your changes immediately without re-installing.
+    ```bash
+    pip install -e .
+    ```
+
+## Digital Twin Mode
 
 You don't need physical hardware to contribute. You can run the library in **Digital Twin** mode, which simulates instruments with realistic physics/noise.
 
@@ -26,7 +42,7 @@ python examples/sim_demo.py
 ```
 You should see output indicating connection to `[SIM-PSU]`, `[SIM-DMM]`, etc.
 
-## 🧪 Running Tests
+## Running Tests
 We use `pytest` for testing. Ensure you are in Simulation Mode before running tests (unless you have the specific hardware config).
 
 ```bash
@@ -37,7 +53,7 @@ export INSTRUMATION_MODE=SIM
 pytest
 ```
 
-## ➕ Adding a New Instrument Driver
+## Adding a New Instrument Driver
 
 Want to add support for a new device (e.g., Anritsu Spectrum Analyzer)? Follow these steps:
 
@@ -57,13 +73,13 @@ Want to add support for a new device (e.g., Anritsu Spectrum Analyzer)? Follow t
     ```
 
 2.  **Update the Factory**:
-    Open `src/instrumation/__init__.py` (for auto-connect) or `src/instrumation/factory.py`.
-    Import your new class and add logic to detect it based on the `*IDN?` string.
+    Open `src/instrumation/factory.py`.
+    Import your new class and add logic to return it based on the `driver_type`.
 
     ```python
-    # Inside connect_instrument or factory logic
-    if "Anritsu" in idn_string:
-        return AnritsuMS2720T(resource)
+    # Inside get_instrument or factory logic
+    if driver_type == "SA":
+        return AnritsuMS2720T(resource_address)
     ```
 
 3.  **Submit a Pull Request**:
