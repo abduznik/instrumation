@@ -167,3 +167,32 @@ class NetworkAnalyzer(InstrumentDriver):
             list[float]: The trace data points.
         """
         pass
+
+class Oscilloscope(InstrumentDriver):
+    """Abstract Base Class for Oscilloscopes."""
+    @abstractmethod
+    def run(self):
+        """Starts acquisition."""
+        pass
+
+    @abstractmethod
+    def stop(self):
+        """Stops acquisition."""
+        pass
+
+    @abstractmethod
+    def single(self):
+        """Sets the oscilloscope to single acquisition mode."""
+        pass
+
+    @abstractmethod
+    def get_waveform(self, channel: int) -> list[float]:
+        """Returns the waveform data for the specified channel.
+
+        Args:
+            channel (int): The channel number to read from.
+
+        Returns:
+            list[float]: The waveform data points.
+        """
+        pass
