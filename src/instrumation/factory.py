@@ -14,12 +14,17 @@ def get_driver(resource_address: str):
         return RealDriver(resource_address)
 
 def get_instrument(resource_address: str, driver_type: str):
-    """
-    Factory to get specific instrument types.
-    
+    """Factory to get specific instrument types.
+
     Args:
-        resource_address: VISA address or dummy string
-        driver_type: "DMM", "PSU", "SA", "NA"
+        resource_address (str): VISA address or dummy string.
+        driver_type (str): The type of driver to create ("DMM", "PSU", "SA", "NA").
+
+    Returns:
+        InstrumentDriver: An instance of the requested instrument driver.
+
+    Raises:
+        ValueError: If the driver_type is not recognized.
     """
     if is_sim_mode():
         if driver_type == "DMM":
@@ -31,19 +36,39 @@ def get_instrument(resource_address: str, driver_type: str):
         elif driver_type == "NA":
             return SimulatedNetworkAnalyzer(resource_address)
         else:
-            raise ValueError(f"Unknown driver type: {driver_type}")
+            raise ValueError(f"Unknown driver type for simulation: {driver_type}")
     else:
-        # Real Hardware Logic (Placeholder)
+        # Real Hardware Logic
         if driver_type == "NA":
             return KeysightPNA(resource_address)
         elif driver_type == "PSU":
             return TDKLambdaZPlus(resource_address)
         elif driver_type == "SA":
             return KeysightMXA(resource_address)
-        
-        # In a real scenario, we might return a generic SCPI wrapper 
-        # or use auto-detection (like connect_instrument logic)
-        # For this example, we return the generic RealDriver 
-        # but in a real app, we'd wrap it in the correct class.
-        print(f"[Real] Warning: returning generic driver for {driver_type}")
-        return RealDriver(resource_address)
+        elif driver_type == "DMM":
+            # For DMM, we might return a generic SCPI wrapper or specific one
+            print(f"[Real] Warning: returning generic driver for {driver_type}")
+            return RealDriver(resource_address)
+        else:
+            raise ValueError(f"Unknown driver type for real hardware: {driver_type}")
+
+def get_instrument_from_config(config: dict):
+    """Creates an instrument driver from a configuration dictionary.
+
+    The configuration dictionary must contain 'address' and 'type' keys.
+
+    Args:
+        config (dict): Configuration dictionary containing 'address' and 'type'.
+
+    Returns:
+        InstrumentDriver: An instance of the requested instrument driver.
+
+    Raises:
+        ValueError: If 'address' or 'type' keys are missing, or if the driver type is unrecognized.
+    """
+    required_keys = ["address", "type"]
+    for key in required_keys:
+        if key not in config:
+            raise ValueError(f"Missing required configuration key: '{key}'")
+
+    return get_instrument(config["address"], config["type"])
