@@ -1,9 +1,49 @@
 import random
 import time
 import math
-from .base import Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer
+from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer
 
-class SimulatedMultimeter(Multimeter):
+class SimulatedBaseDriver(InstrumentDriver):
+    """Base class for all simulated drivers to provide standard SCPI-like behavior.
+
+    Attributes:
+        latency (float): Configurable delay to mimic real transport delays.
+        responses (dict): Dictionary mapping SCPI commands to their simulated responses.
+    """
+    def __init__(self, resource, latency=0.01):
+        super().__init__(resource)
+        self.latency = latency
+        self.responses = {
+            "*IDN?": self.get_id,
+            "*OPC?": "1",
+            "*STB?": "0",
+            "*ESR?": "0",
+        }
+
+    def _delay(self):
+        """Injects a delay based on the configured latency."""
+        if self.latency > 0:
+            time.sleep(self.latency)
+
+    def write(self, command: str):
+        """Simulates writing a command to the instrument."""
+        self._delay()
+        print(f"[SIM] Write: {command}")
+
+    def query(self, command: str) -> str:
+        """Simulates querying the instrument with a SCPI command."""
+        self._delay()
+        response = self.responses.get(command.strip().upper(), "0")
+        
+        if callable(response):
+            result = str(response())
+        else:
+            result = str(response)
+            
+        print(f"[SIM] Query: {command} -> {result}")
+        return result
+
+class SimulatedMultimeter(SimulatedBaseDriver, Multimeter):
     def connect(self):
         print("[SIM-DMM] Connected")
         self.connected = True
@@ -35,9 +75,9 @@ class SimulatedMultimeter(Multimeter):
         # Simulate peak-to-peak voltage measurement
         return 2.0 + random.gauss(0, 0.1)
 
-class SimulatedPowerSupply(PowerSupply):
-    def __init__(self, resource):
-        super().__init__(resource)
+class SimulatedPowerSupply(SimulatedBaseDriver, PowerSupply):
+    def __init__(self, resource, latency=0.01):
+        super().__init__(resource, latency)
         self.setpoint = 0.0
         self.current_limit = 1.0
         self.output_enabled = False
@@ -81,18 +121,15 @@ class SimulatedPowerSupply(PowerSupply):
         return self.output_enabled
 
     def measure_frequency(self) -> float:
-        # Simulate frequency measurement (e.g., 1kHz signal with noise)
         return 1000.0 + random.gauss(0, 50.0)
 
     def measure_duty_cycle(self) -> float:
-        # Simulate duty cycle measurement (percentage, 0-100%)
         return 50.0 + random.gauss(0, 5.0)
 
     def measure_v_peak_to_peak(self) -> float:
-        # Simulate peak-to-peak voltage measurement
         return 2.0 + random.gauss(0, 0.1)
 
-class SimulatedSpectrumAnalyzer(SpectrumAnalyzer):
+class SimulatedSpectrumAnalyzer(SimulatedBaseDriver, SpectrumAnalyzer):
     def connect(self):
         print("[SIM-SA] Connected")
         self.connected = True
@@ -113,18 +150,21 @@ class SimulatedSpectrumAnalyzer(SpectrumAnalyzer):
         return -20.0 + random.gauss(0, 0.5)
 
     def measure_frequency(self) -> float:
-        # Simulate frequency measurement (e.g., 1GHz signal with noise)
         return 1000000000.0 + random.gauss(0, 10000000.0)
 
     def measure_duty_cycle(self) -> float:
-        # Simulate duty cycle measurement (percentage, 0-100%)
         return 50.0 + random.gauss(0, 5.0)
 
     def measure_v_peak_to_peak(self) -> float:
-        # Simulate peak-to-peak voltage measurement
         return 1.0 + random.gauss(0, 0.05)
 
-class SimulatedNetworkAnalyzer(NetworkAnalyzer):
+class SimulatedNetworkAnalyzer(SimulatedBaseDriver, NetworkAnalyzer):
+    def __init__(self, resource, latency=0.01):
+        super().__init__(resource, latency)
+        self.start_freq = 1e6
+        self.stop_freq = 1e9
+        self.points = 201
+
     def connect(self):
         print("[SIM-VNA] Connected")
         self.connected = True
@@ -149,29 +189,21 @@ class SimulatedNetworkAnalyzer(NetworkAnalyzer):
         self.points = num_points
 
     def get_trace_data(self, measurement_name: str) -> list[float]:
-        # Generate fake S-parameter data (e.g., a filter shape)
         print(f"[SIM-VNA] Getting trace for {measurement_name}")
-        points = getattr(self, 'points', 201)
         data = []
-        for i in range(points):
-             # Simple sine wave pattern to look like a filter
-             val = -20 + 10 * math.sin(i / points * 3.14) + random.gauss(0, 0.5)
+        for i in range(self.points):
+             val = -20 + 10 * math.sin(i / self.points * 3.14) + random.gauss(0, 0.5)
              data.append(val)
         return data
 
     def measure_frequency(self) -> float:
-        # PNA usually measures frequency via markers or CW mode, but for ABC compliance:
         return 1000000000.0
 
     def measure_duty_cycle(self) -> float:
-        # Not typical for VNA
         return 0.0
 
     def measure_v_peak_to_peak(self) -> float:
-        # Not typical for VNA
         return 0.0
 
-# Keep a generic SimulatedDriver for backward compatibility if needed, 
-# or map it to DMM.
 class SimulatedDriver(SimulatedMultimeter):
     pass
