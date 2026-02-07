@@ -1,12 +1,5 @@
-import sys
-from unittest.mock import MagicMock
-
-# Mock serial module
-sys.modules["serial"] = MagicMock()
-sys.modules["serial.tools"] = MagicMock()
-sys.modules["serial.tools.list_ports"] = MagicMock()
-
 import unittest
+from unittest.mock import MagicMock
 from instrumation.drivers.rigol import RigolDSA
 
 class TestRigolDSA(unittest.TestCase):

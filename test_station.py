@@ -1,57 +1,25 @@
-import pyvisa
-import serial
 import time
 import csv
 import os
 from datetime import datetime
-
-class InstrumentController:
-    """Handles VISA instruments (Keysight, Tektronix, etc.)"""
-    def __init__(self, resource_manager, address):
-        self.inst = resource_manager.open_resource(address)
-        # Standard SCPI initialization
-        self.inst.timeout = 5000 
-        self.inst.write("*CLS") # Clear errors
-
-    def measure_voltage(self):
-        """Example: Ask DMM for a reading"""
-        return float(self.inst.query("MEAS:VOLT:DC?"))
-
-    def set_frequency(self, freq):
-        """Example: Set Signal Generator frequency"""
-        self.inst.write(f"FREQ {freq}")
-
-class ControlBox:
-    """Handles the custom UART box that controls UUT DC power"""
-    def __init__(self, port, baudrate=9600):
-        self.ser = serial.Serial(port, baudrate, timeout=1)
-        time.sleep(2) # Wait for serial connection to stabilize
-
-    def set_dc_state(self, state):
-        """
-        Sends a command to the box to turn DC ON or OFF.
-        Adjust the command string ('ON', 'OFF', or Hex) to match your box's protocol.
-        """
-        command = b'DC_ON\n' if state else b'DC_OFF\n'
-        self.ser.write(command)
-        # Check for acknowledgement from the box if it sends one
-        response = self.ser.readline()
-        return response
+from instrumation.factory import get_instrument
+from instrumation.transport import SerialDriver
+from instrumation.config import get_config
 
 class UUTTestStation:
     """
     The High-Level API.
-    Combines VISA and Serial into one logical unit.
+    Combines Instrument drivers and Serial transport into one logical unit.
     """
-    def __init__(self, visa_address, serial_port, log_file="test_report.csv"):
-        self.rm = pyvisa.ResourceManager()
+    def __init__(self, visa_address, serial_port, instrument_type="DMM", log_file="test_report.csv"):
         self.log_file = log_file
         
-        print(f"Connecting to Instrument at {visa_address}...")
-        self.instrument = InstrumentController(self.rm, visa_address)
+        print(f"Connecting to {instrument_type} at {visa_address}...")
+        self.instrument = get_instrument(visa_address, instrument_type)
+        self.instrument.connect()
         
         print(f"Connecting to Control Box at {serial_port}...")
-        self.box = ControlBox(serial_port)
+        self.box = SerialDriver(serial_port)
         
         # Initialize log file with headers if it doesn't exist
         if not os.path.exists(self.log_file):
@@ -74,12 +42,18 @@ class UUTTestStation:
         test_name = "Power Efficiency"
         result = "FAIL"
         
-        # 1. Use UART to turn on the UUT
-        self.box.set_dc_state(True)
+        # 1. Use Serial to turn on the UUT
+        self.box.send_command("DC_ON")
         time.sleep(1) # Wait for UUT boot
         
-        # 2. Use VISA to measure the result
-        voltage = self.instrument.measure_voltage()
+        # 2. Use the instrument driver to measure the result
+        # Note: We assume the instrument is a DMM/Multimeter for this test
+        try:
+            voltage = self.instrument.measure_voltage()
+        except AttributeError:
+            print(f"Error: Selected instrument {type(self.instrument).__name__} does not support measure_voltage()")
+            voltage = 0.0
+
         print(f"UUT Voltage: {voltage}V")
         
         # 3. Logic based on readings
@@ -94,21 +68,23 @@ class UUTTestStation:
         self.log_result(test_name, voltage, result)
 
         # 5. Clean up
-        self.box.set_dc_state(False)
+        self.box.send_command("DC_OFF")
 
     def close(self):
-        self.instrument.inst.close()
-        self.box.ser.close()
-        self.rm.close()
+        self.instrument.disconnect()
+        self.box.close()
 
 # --- USAGE EXAMPLE ---
-# This is how you would use it in your actual test scripts:
 if __name__ == "__main__":
-    # Replace these with your actual IDs
-    VISA_ADDR = 'USB0::0x2A8D::0x1301::MY54400000::0::INSTR' 
-    SERIAL_PORT = 'COM3' # On Linux/Termux this might be '/dev/ttyUSB0'
+    # Load configuration from config.py
+    config = get_config()
 
-    station = UUTTestStation(VISA_ADDR, SERIAL_PORT)
+    station = UUTTestStation(
+        config["visa_address"], 
+        config["serial_port"],
+        instrument_type=config["instrument_type"],
+        log_file=config["log_file"]
+    )
     
     try:
         station.run_power_efficiency_test()

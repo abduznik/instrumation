@@ -1,12 +1,3 @@
-import sys
-from unittest.mock import MagicMock
-
-# Mock dependencies
-sys.modules["serial"] = MagicMock()
-sys.modules["serial.tools"] = MagicMock()
-sys.modules["serial.tools.list_ports"] = MagicMock()
-sys.modules["pyvisa"] = MagicMock()
-
 import unittest
 import os
 from instrumation.factory import get_instrument
