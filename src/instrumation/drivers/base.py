@@ -196,3 +196,32 @@ class Oscilloscope(InstrumentDriver):
             list[float]: The waveform data points.
         """
         pass
+
+class SignalGenerator(InstrumentDriver):
+    """Abstract Base Class for Signal Generators."""
+    @abstractmethod
+    def set_frequency(self, hz: float):
+        """Sets the output frequency.
+
+        Args:
+            hz (float): The frequency level to set in Hz.
+        """
+        pass
+
+    @abstractmethod
+    def set_amplitude(self, dbm: float):
+        """Sets the output amplitude.
+
+        Args:
+            dbm (float): The amplitude level to set in dBm.
+        """
+        pass
+
+    @abstractmethod
+    def set_output(self, state: bool):
+        """Enables or disables the signal output.
+
+        Args:
+            state (bool): True to enable, False to disable.
+        """
+        pass
