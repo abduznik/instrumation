@@ -3,6 +3,7 @@ from .device import UUTHandler
 import pyvisa
 from .drivers.keysight import KeysightMXA
 from .drivers.rigol import RigolDSA
+from .drivers.siglent import SiglentSDS
 
 # Global storage for the last found devices to help with auto-connect
 _discovered_devices = []
@@ -61,11 +62,16 @@ def connect_instrument(visa_address):
          idn_string = "Unknown"
 
     # 2. Decide which driver to load based on the response
-    if "Keysight" in idn_string or "Agilent" in idn_string:
+    idn_upper = idn_string.upper()
+    
+    if "KEYSIGHT" in idn_upper or "AGILENT" in idn_upper:
         return KeysightMXA(resource)
     
-    elif "Rigol" in idn_string:
+    elif "RIGOL" in idn_upper:
         return RigolDSA(resource)
+    
+    elif "SIGLENT" in idn_upper:
+        return SiglentSDS(resource)
     
     else:
         # Fallback or error
