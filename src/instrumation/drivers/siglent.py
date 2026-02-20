@@ -4,7 +4,8 @@ from .real import RealDriver
 class SiglentSDS(RealDriver, Oscilloscope):
     """Driver for Siglent SDS Series Oscilloscopes (SDS1000, SDS2000, etc.).
 
-    This driver uses SCPI commands to control the oscilloscope and retrieve waveform data.
+    This driver provides support for basic acquisition control and waveform retrieval
+    using standard Siglent SCPI commands.
     """
 
     def run(self):
@@ -27,53 +28,66 @@ class SiglentSDS(RealDriver, Oscilloscope):
         """Returns the waveform data for the specified channel.
 
         Args:
-            channel (int): The channel number (1, 2, 3, or 4).
+            channel (int): The channel number (e.g., 1, 2).
 
         Returns:
-            list[float]: The waveform data points.
+            list[float]: The waveform data points as raw code values.
         """
         if not self.inst:
             return []
 
         # Request data for the specified channel
-        # DAT2 returns only the data block without the descriptor (for some models)
-        # However, Siglent often returns a header anyway.
+        # DAT2 returns only the data block without the descriptor
         query_cmd = f"C{channel}:WF? DAT2"
         
         # Siglent response format for C<n>:WF? DAT2:
         # C<n>:WF DAT2,#9000000000<length><data>\n\n
-        # We use query_binary_values if possible, but let's do it manually for compatibility
         
-        raw_response = self.inst.query_binary_values(query_cmd, datatype='b', container=list)
-        
-        # Note: query_binary_values handles the #<n><length> part.
-        # But Siglent adds "C<n>:WF DAT2," before the #.
-        # PyVISA's query_binary_values might struggle if there's text before the #.
-        
-        # Alternative approach: manual read
+        # Manual read to skip the prefix "C<n>:WF DAT2,"
         self.inst.write(query_cmd)
-        header = self.inst.read_bytes(len(f"C{channel}:WF DAT2,"))
-        # Now the pointer should be at #
+        
+        # Calculate prefix length: C<channel>:WF DAT2,
+        prefix = f"C{channel}:WF DAT2,"
+        self.inst.read_bytes(len(prefix))
+        
+        # Now use PyVISA's query_binary_values to parse the IEEE header and data
         data = self.inst.query_binary_values("", datatype='b', container=list)
         
-        # Some models might return actual floats, but DAT2 usually returns raw bytes (0-255)
-        # We convert to float for the interface requirement
+        # Return as list of floats to match the interface
         return [float(b) for b in data]
 
-    # Implement other abstract methods from InstrumentDriver if needed, 
-    # though RealDriver handles most.
+    # Implement abstract methods from InstrumentDriver
     def measure_frequency(self) -> float:
+        """Measures the frequency on Channel 1.
+
+        Returns:
+            float: The measured frequency in Hz.
+        """
         if self.inst:
-             # Siglent specific measure command
-             return float(self.inst.query("C1:PAVA? FREQ").split(',')[-1].split('V')[0])
+             # Query parameter value for frequency
+             val = self.inst.query("C1:PAVA? FREQ").split(',')[-1]
+             # Parse value (e.g., '1.23e+03V' or '1.23e+03Hz')
+             return float(val.strip().rstrip('VHz '))
         return 0.0
 
     def measure_duty_cycle(self) -> float:
-         if self.inst:
-             return float(self.inst.query("C1:PAVA? DUTY").split(',')[-1].split('%')[0])
-         return 0.0
+        """Measures the duty cycle on Channel 1.
+
+        Returns:
+            float: The duty cycle in percent (0-100).
+        """
+        if self.inst:
+             val = self.inst.query("C1:PAVA? DUTY").split(',')[-1]
+             return float(val.strip().rstrip('% '))
+        return 0.0
 
     def measure_v_peak_to_peak(self) -> float:
-         if self.inst:
-              return float(self.inst.query("C1:PAVA? PKPK").split(',')[-1].split('V')[0])
-         return 0.0
+        """Measures the peak-to-peak voltage on Channel 1.
+
+        Returns:
+            float: The peak-to-peak voltage in Volts.
+        """
+        if self.inst:
+              val = self.inst.query("C1:PAVA? PKPK").split(',')[-1]
+              return float(val.strip().rstrip('V '))
+        return 0.0

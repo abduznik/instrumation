@@ -12,6 +12,18 @@ class TestSiglentSDS(unittest.TestCase):
             self.driver = SiglentSDS("USB0::0x1AB1::0x04CE::SDS1000::INSTR")
             self.driver.inst = self.mock_resource
             self.driver.connected = True
+        
+        # Ensure we are NOT in SIM mode for these tests by default
+        import os
+        self._old_mode = os.environ.get("INSTRUMATION_MODE")
+        os.environ["INSTRUMATION_MODE"] = "REAL"
+
+    def tearDown(self):
+        import os
+        if self._old_mode is None:
+            del os.environ["INSTRUMATION_MODE"]
+        else:
+            os.environ["INSTRUMATION_MODE"] = self._old_mode
 
     def test_run(self):
         self.driver.run()

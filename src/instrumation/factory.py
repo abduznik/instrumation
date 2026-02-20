@@ -36,6 +36,9 @@ def get_instrument(resource_address: str, driver_type: str):
             return SimulatedSpectrumAnalyzer(resource_address)
         elif driver_type == "NA":
             return SimulatedNetworkAnalyzer(resource_address)
+        elif driver_type == "SCOPE":
+            # Return a generic simulated driver or update to SimulatedOscilloscope when available
+            return SimulatedDriver(resource_address)
         else:
             raise ValueError(f"Unknown driver type for simulation: {driver_type}")
     else:
