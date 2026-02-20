@@ -21,6 +21,7 @@ classifiers = [
 dependencies = [
     "pyvisa",
     "pyserial",
+    "toml",
 ]
 
 [project.urls]

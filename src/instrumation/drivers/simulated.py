@@ -1,7 +1,7 @@
 import random
 import time
 import math
-from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer
+from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope
 
 class SimulatedBaseDriver(InstrumentDriver):
     """Base class for all simulated drivers to provide standard SCPI-like behavior.
@@ -196,14 +196,46 @@ class SimulatedNetworkAnalyzer(SimulatedBaseDriver, NetworkAnalyzer):
              data.append(val)
         return data
 
-    def measure_frequency(self) -> float:
-        return 1000000000.0
-
-    def measure_duty_cycle(self) -> float:
-        return 0.0
-
     def measure_v_peak_to_peak(self) -> float:
         return 0.0
+
+class SimulatedOscilloscope(SimulatedBaseDriver, Oscilloscope):
+    def connect(self):
+        print("[SIM-SCOPE] Connected")
+        self.connected = True
+
+    def disconnect(self):
+        print("[SIM-SCOPE] Disconnected")
+        self.connected = False
+
+    def get_id(self):
+        return "SIM_SCOPE_SDS"
+
+    def run(self):
+        print("[SIM-SCOPE] Acquisition Started")
+
+    def stop(self):
+        print("[SIM-SCOPE] Acquisition Stopped")
+
+    def single(self):
+        print("[SIM-SCOPE] Single Acquisition Triggered")
+
+    def get_waveform(self, channel: int) -> list[float]:
+        print(f"[SIM-SCOPE] Getting waveform from CH{channel}")
+        import math
+        # Simulate a 1kHz sine wave sampled at 100kHz (1000 points)
+        points = 1000
+        data = [math.sin(2 * math.pi * 1000 * (i / 100000)) + random.gauss(0, 0.05) for i in range(points)]
+        return data
+
+    def measure_frequency(self) -> float:
+        return 1000.0 + random.gauss(0, 50.0)
+
+    def measure_duty_cycle(self) -> float:
+        return 50.0 + random.gauss(0, 5.0)
+
+    def measure_v_peak_to_peak(self) -> float:
+        return 2.0 + random.gauss(0, 0.1)
 
 class SimulatedDriver(SimulatedMultimeter):
     pass
