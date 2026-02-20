@@ -1,5 +1,5 @@
 from .config import is_sim_mode
-from .drivers.simulated import SimulatedMultimeter, SimulatedPowerSupply, SimulatedSpectrumAnalyzer, SimulatedNetworkAnalyzer, SimulatedDriver
+from .drivers.simulated import SimulatedMultimeter, SimulatedPowerSupply, SimulatedSpectrumAnalyzer, SimulatedNetworkAnalyzer, SimulatedOscilloscope, SimulatedDriver
 # Import real drivers (assuming we have wrappers or generic SCPI ones)
 # For now, we reuse the generic RealDriver structure or import specific ones
 from .drivers.real import RealDriver 
@@ -37,8 +37,7 @@ def get_instrument(resource_address: str, driver_type: str):
         elif driver_type == "NA":
             return SimulatedNetworkAnalyzer(resource_address)
         elif driver_type == "SCOPE":
-            # Return a generic simulated driver or update to SimulatedOscilloscope when available
-            return SimulatedDriver(resource_address)
+            return SimulatedOscilloscope(resource_address)
         else:
             raise ValueError(f"Unknown driver type for simulation: {driver_type}")
     else:
