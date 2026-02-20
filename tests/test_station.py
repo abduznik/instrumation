@@ -1,5 +1,6 @@
 import unittest
-from unittest.mock import MagicMock, patch, mock_open
+import logging
+from unittest.mock import MagicMock, patch
 from instrumation.station import Station
 
 class TestStation(unittest.TestCase):
@@ -26,17 +27,17 @@ class TestStation(unittest.TestCase):
         # Reload station with mocked config
         self.station.load()
 
-        # Verify attributes attached
-        self.assertTrue(has_attr(self.station, "sa_main"))
-        self.assertTrue(has_attr(self.station, "psu_val"))
-        self.assertEqual(self.station.sa_main, mock_inst1)
-        self.assertEqual(self.station.psu_val, mock_inst2)
+        # Verify attributes attached to instr namespace
+        self.assertTrue(hasattr(self.station.instr, "sa_main"))
+        self.assertTrue(hasattr(self.station.instr, "psu_val"))
+        self.assertEqual(self.station.instr.sa_main, mock_inst1)
+        self.assertEqual(self.station.instr.psu_val, mock_inst2)
 
     @patch('os.path.exists', return_value=True)
     @patch('toml.load')
     @patch('instrumation.station.get_instrument')
-    def test_reserved_names(self, mock_get_inst, mock_toml_load, mock_exists):
-        # Setup mock data with a reserved name 'connect'
+    def test_reserved_names_in_namespace(self, mock_get_inst, mock_toml_load, mock_exists):
+        # Setup mock data with a name that was previously reserved like 'connect'
         mock_toml_load.return_value = {
             "instruments": {
                 "connect": {"driver": "DMM", "address": "GPIB::1::INSTR"}
@@ -48,10 +49,10 @@ class TestStation(unittest.TestCase):
         # Reload station
         self.station.load()
 
-        # 'connect' should be renamed to 'inst_connect'
-        self.assertFalse(has_attr(self.station, "connect") and self.station.connect == mock_inst)
-        self.assertTrue(has_attr(self.station, "inst_connect"))
-        self.assertEqual(self.station.inst_connect, mock_inst)
+        # 'connect' should be fine inside 'instr' and NOT collide with Station.connect
+        self.assertTrue(hasattr(self.station.instr, "connect"))
+        self.assertEqual(self.station.instr.connect, mock_inst)
+        self.assertNotEqual(self.station.connect, mock_inst) # Method remains intact
 
     @patch('os.path.exists', return_value=False)
     def test_missing_file_handled_gracefully(self, mock_exists):
@@ -60,14 +61,39 @@ class TestStation(unittest.TestCase):
         self.assertEqual(len(self.station.instruments), 0)
 
     @patch('os.path.exists', return_value=True)
-    @patch('toml.load', side_effect=Exception("TOML Syntax Error"))
-    def test_invalid_toml_handled_gracefully(self, mock_toml_load, mock_exists):
-        self.station.load()
-        self.assertEqual(len(self.station.instruments), 0)
+    @patch('toml.load')
+    def test_invalid_config_raises_validation_error(self, mock_toml_load, mock_exists):
+        # Missing 'address' field
+        mock_toml_load.return_value = {
+            "instruments": {
+                "bad_inst": {"driver": "SA"}
+            }
+        }
+        with self.assertRaises(ValueError):
+            self.station.load()
 
-def has_attr(obj, name):
-    # Helper to check if attribute exists and is NOT a method from the class itself
-    return hasattr(obj, name) and name not in Station.__dict__
+    @patch('os.path.exists', return_value=True)
+    @patch('toml.load', side_effect=Exception("TOML Syntax Error"))
+    def test_invalid_toml_raises_exception(self, mock_toml_load, mock_exists):
+        with self.assertRaises(Exception):
+            self.station.load()
+
+    @patch('os.path.exists', return_value=True)
+    @patch('toml.load')
+    @patch('instrumation.station.get_instrument')
+    def test_logging_on_connect(self, mock_get_inst, mock_toml_load, mock_exists):
+        mock_toml_load.return_value = {
+            "instruments": {"sa": {"driver": "SA", "address": "ADDR"}}
+        }
+        mock_inst = MagicMock()
+        mock_inst.resource = "ADDR"
+        mock_get_inst.return_value = mock_inst
+        
+        self.station.load()
+        
+        with self.assertLogs('instrumation.station', level='INFO') as cm:
+            self.station.connect()
+            self.assertTrue(any("Connected to sa at ADDR" in output for output in cm.output))
 
 if __name__ == "__main__":
     unittest.main()
