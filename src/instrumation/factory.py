@@ -5,6 +5,7 @@ from .drivers.simulated import SimulatedMultimeter, SimulatedPowerSupply, Simula
 from .drivers.real import RealDriver 
 from .drivers.keysight import KeysightPNA, KeysightMXA
 from .drivers.tdk import TDKLambdaZPlus
+from .drivers.siglent import SiglentSDS
 
 def get_driver(resource_address: str):
     """Legacy factory for generic driver (defaults to DMM behavior)."""
@@ -18,7 +19,7 @@ def get_instrument(resource_address: str, driver_type: str):
 
     Args:
         resource_address (str): VISA address or dummy string.
-        driver_type (str): The type of driver to create ("DMM", "PSU", "SA", "NA").
+        driver_type (str): The type of driver to create ("DMM", "PSU", "SA", "NA", "SCOPE").
 
     Returns:
         InstrumentDriver: An instance of the requested instrument driver.
@@ -45,6 +46,8 @@ def get_instrument(resource_address: str, driver_type: str):
             return TDKLambdaZPlus(resource_address)
         elif driver_type == "SA":
             return KeysightMXA(resource_address)
+        elif driver_type == "SCOPE":
+            return SiglentSDS(resource_address)
         elif driver_type == "DMM":
             # For DMM, we might return a generic SCPI wrapper or specific one
             print(f"[Real] Warning: returning generic driver for {driver_type}")
