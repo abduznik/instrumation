@@ -222,7 +222,6 @@ class SimulatedOscilloscope(SimulatedBaseDriver, Oscilloscope):
 
     def get_waveform(self, channel: int) -> list[float]:
         print(f"[SIM-SCOPE] Getting waveform from CH{channel}")
-        import math
         # Simulate a 1kHz sine wave sampled at 100kHz (1000 points)
         points = 1000
         data = [math.sin(2 * math.pi * 1000 * (i / 100000)) + random.gauss(0, 0.05) for i in range(points)]
