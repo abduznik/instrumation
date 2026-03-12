@@ -34,7 +34,7 @@ It features a **Digital Twin** mode, enabling you to develop and test your scrip
 1.  **Download or Clone the repository:**
     You can download the source code as a ZIP file and extract it, or clone the repository using Git:
     ```bash
-    git clone https://github.com/yourusername/instrumation.git
+    git clone https://github.com/abduznik/instrumation.git
     cd instrumation
     ```
 2.  **Install the library:**
@@ -75,7 +75,7 @@ If you are running this on Termux (Android) or a Linux machine:
 3.  **Download or Clone and Install:** 
     ```powershell
     # If cloning (requires Git):
-    git clone https://github.com/yourusername/instrumation.git
+    git clone https://github.com/abduznik/instrumation.git
     cd instrumation
     
     # Or if you downloaded the ZIP and extracted it, navigate to the extracted folder:
