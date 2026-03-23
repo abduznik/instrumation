@@ -137,9 +137,19 @@ def cmd_measure(args):
         return 1
 
     try:
-        driver = _get_driver(args.address, args.type.upper())
-        value  = _MEASURE_DISPATCH[key](driver)
-        driver.disconnect()
+        if args.json:
+            # Suppress driver connect/disconnect chatter so stdout is pure JSON
+            import io
+            from contextlib import redirect_stdout
+            _sink = io.StringIO()
+            with redirect_stdout(_sink):
+                driver = _get_driver(args.address, args.type.upper())
+                value  = _MEASURE_DISPATCH[key](driver)
+                driver.disconnect()
+        else:
+            driver = _get_driver(args.address, args.type.upper())
+            value  = _MEASURE_DISPATCH[key](driver)
+            driver.disconnect()
     except Exception as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
