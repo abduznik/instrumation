@@ -1,0 +1,78 @@
+name: Test CLI Tool
+
+on:
+  push:
+    branches:
+      - "claude/**"
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  test-cli:
+    runs-on: ubuntu-latest
+    env:
+      INSTRUMATION_MODE: SIM
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+
+      - name: Install package (installs instrumation entry point)
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest flake8
+          pip install -e .
+
+      - name: Lint CLI module
+        run: |
+          flake8 src/instrumation/cli.py --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 tests/test_cli.py       --count --select=E9,F63,F7,F82 --show-source --statistics
+
+      - name: Verify entry point is installed
+        run: |
+          instrumation --help
+
+      - name: Smoke-test scan (SIM mode)
+        run: |
+          instrumation scan
+
+      - name: Smoke-test identify (SIM mode)
+        run: |
+          instrumation identify --address DUMMY::SIM
+
+      - name: Smoke-test measure DMM voltage (SIM mode)
+        run: |
+          instrumation measure --address DUMMY --type DMM --param voltage
+
+      - name: Smoke-test measure SA peak (SIM mode)
+        run: |
+          instrumation measure --address DUMMY --type SA --param peak
+
+      - name: Smoke-test measure PSU current (SIM mode)
+        run: |
+          instrumation measure --address DUMMY --type PSU --param current
+
+      - name: Smoke-test measure SCOPE vpp (SIM mode)
+        run: |
+          instrumation measure --address DUMMY --type SCOPE --param vpp
+
+      - name: Smoke-test measure JSON output
+        run: |
+          instrumation measure --address DUMMY --type DMM --param voltage --json
+
+      - name: Smoke-test broadcast (3 packets, no listener needed)
+        run: |
+          instrumation broadcast --address DUMMY --type DMM --param voltage \
+            --host 127.0.0.1 --port 59910 --interval 0.05 --count 3
+
+      - name: Run CLI unit tests
+        run: |
+          pytest tests/test_cli.py -v
+
+      - name: Run full regression suite
+        run: |
+          pytest -v

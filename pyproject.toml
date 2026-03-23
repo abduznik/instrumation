@@ -29,5 +29,8 @@ dependencies = [
 "Repository" = "https://github.com/abduznik/instrumation"
 "Bug Tracker" = "https://github.com/abduznik/instrumation/issues"
 
+[project.scripts]
+instrumation = "instrumation.cli:main"
+
 [tool.setuptools.packages.find]
 where = ["src"]
