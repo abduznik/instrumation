@@ -1,6 +1,7 @@
 from .scanner import scan
 from .device import UUTHandler
 from .station import Station
+from .utils import DataBroadcaster
 import pyvisa
 from .drivers.keysight import KeysightMXA
 from .drivers.rigol import RigolDSA
