@@ -21,6 +21,18 @@ RF test bench automation is painful. Every instrument brand has its own quirks, 
 
 ---
 
+--- 
+
+## Live Data Streaming 
+
+Instrumation includes a built-in `DataBroadcaster` for streaming live readings over UDP. This allows you to build real-time dashboards or loggers with zero external dependencies. 
+
+- **Zero-lag** — UDP delivery doesn't block your test flow. 
+- **Zero-config** — Broadcast to any host/port as JSON packets. 
+- **Zero-dep** — Built-in with Python standard library. 
+
+See [examples/broadcast_demo.py](examples/broadcast_demo.py) and [examples/dashboard.py](examples/dashboard.py) for usage. 
+
 ## Features
 
 - **Auto-Discovery** — scans VISA and Serial buses, identifies what's connected
