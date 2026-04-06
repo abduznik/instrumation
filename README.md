@@ -1,155 +1,149 @@
 # Instrumation
 
-[![PyPI version](https://img.shields.io/pypi/v/instrumation)](https://pypi.org/project/instrumation/) [![License](https://img.shields.io/pypi/l/instrumation)](https://pypi.org/project/instrumation/) [![Python Versions](https://img.shields.io/pypi/pyversions/instrumation)](https://pypi.org/project/instrumation/)
+[![PyPI version](https://img.shields.io/pypi/v/instrumation)](https://pypi.org/project/instrumation/)
+[![License](https://img.shields.io/pypi/l/instrumation)](https://pypi.org/project/instrumation/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/instrumation)](https://pypi.org/project/instrumation/)
+[![Stars](https://img.shields.io/github/stars/abduznik/instrumation?style=flat)](https://github.com/abduznik/instrumation/stargazers)
 
 ![Example](assets/example.gif)
 
-A high-level Hardware Abstraction Layer (HAL) for RF test stations, designed to simplify interactions with VISA instruments and Serial control boxes.
+A high-level Hardware Abstraction Layer (HAL) for RF test stations. Stop wrestling with PyVISA boilerplate — write test logic, not connection code.
 
-# About The Project
-**Instrumation** is a Python library that provides a unified interface for controlling hardware test benches. It abstracts away the low-level details of PyVISA and PySerial, allowing you to focus on writing test logic rather than connection code.
+---
 
-It features a **Digital Twin** mode, enabling you to develop and test your scripts offline using simulated drivers that generate realistic data with noise.
+## Why Instrumation?
 
-## Tech Usage
-* **Language:** Python 3.7+
-* **Libraries:** PyVISA, PySerial
-* **Architecture:** Factory Pattern, Polymorphism
-* **Standards:** SCPI (Standard Commands for Programmable Instruments)
+RF test bench automation is painful. Every instrument brand has its own quirks, SCPI dialects vary, and testing your scripts requires physical hardware on your desk. Instrumation fixes all three:
+
+- **One API for everything** — same code works on Keysight, Rigol, and any other supported brand
+- **Digital Twin mode** — develop and debug offline with simulated instruments that emit realistic Gaussian noise
+- **Smart auto-detection** — scans connected devices and loads the right driver automatically, no manual config
+
+---
 
 ## Features
-* **Auto-Discovery:** Automatically scans and identifies connected devices (VISA & Serial).
-* **Smart Factory:** Detects connected hardware (e.g., Keysight vs. Rigol) and loads the correct driver automatically.
-* **Digital Twin:** Simulation mode with realistic Gaussian noise for offline development.
-* **Unified API:** Use the same code for different hardware brands.
-* **Logging:** Built-in CSV logging for test results.
 
-# Getting Started
+- **Auto-Discovery** — scans VISA and Serial buses, identifies what's connected
+- **Smart Factory** — detects instrument brand and loads the correct driver
+- **Digital Twin** — full simulation mode for offline development and CI pipelines
+- **Unified API** — write once, run on any supported hardware
+- **Built-in CSV logging** — test results logged out of the box
 
-## Prerequisites
-* Python 3.7 or higher
-* Git (optional, if cloning the repository)
+---
 
 ## Installation
-1.  **Download or Clone the repository:**
-    You can download the source code as a ZIP file and extract it, or clone the repository using Git:
-    ```bash
-    git clone https://github.com/abduznik/instrumation.git
-    cd instrumation
-    ```
-2.  **Install the library:**
-    Navigate to the `instrumation` project root directory (where `setup.py` is located) and install:
-    ```bash
-    pip install .
-    ```
-    For developers, you might want to install in editable mode:
-    ```bash
-    pip install -e .
-    ```
 
-# Setup Guide
+```bash
+pip install instrumation
+```
 
-## Linux / Termux (Android)
-If you are running this on Termux (Android) or a Linux machine:
+Or install from source:
 
-1.  **Install dependencies:**
-    ```bash
-    pkg install python # Add git if you plan to clone the repo
-    ```
-    *(On standard Linux, use `sudo apt install python3` and optionally `git`)*
+```bash
+git clone https://github.com/abduznik/instrumation.git
+cd instrumation
+pip install .
+```
 
-2.  **Setup Virtual Environment (Optional but Recommended):**
-    ```bash
-    python -m venv .venv
-    source .venv/bin/activate
-    ```
+> **Windows users:** You may need [NI-VISA](https://www.ni.com/en/support/downloads/drivers/download.ni-visa.html) or [Keysight IO Libraries Suite](https://www.keysight.com/us/en/lib/software-detail/computer-software/io-libraries-suite-downloads-2175637.html) for physical hardware access.
 
-3.  **Install the library:**
-    ```bash
-    pip install .
-    ```
+---
 
-## Windows
-1.  **Open PowerShell** as Administrator (for driver installation if needed).
-2.  **Install Python:** Download from [python.org](https://www.python.org/).
-3.  **Download or Clone and Install:** 
-    ```powershell
-    # If cloning (requires Git):
-    git clone https://github.com/abduznik/instrumation.git
-    cd instrumation
-    
-    # Or if you downloaded the ZIP and extracted it, navigate to the extracted folder:
-    # cd path\to\instrumation-main
-    
-    pip install .
-    ```
-4.  **VISA Backend:** You may need to install NI-VISA or Keysight IO Libraries Suite for physical hardware access.
+## Quick Start
 
-# Usage
-
-### 1. Real Hardware Mode
-Connect your devices and run:
+### Real hardware
 
 ```python
 import instrumation
 
-# Auto-connect to first found instrument
-sa = instrumation.connect_instrument("USB0::0x2A8D::...") 
+sa = instrumation.connect_instrument("USB0::0x2A8D::...")
 
-# Works on ANY supported device (Keysight, Rigol, etc.)
 peak_power = sa.get_peak_value()
 print(f"Peak Power: {peak_power} dBm")
 ```
 
-### 2. Digital Twin (Simulation) Mode
-Develop offline without hardware.
+### Digital Twin (no hardware needed)
 
-**Enable Simulation:**
-*   **Linux/Termux:** `export INSTRUMATION_MODE=SIM`
-*   **Windows (PowerShell):** `$env:INSTRUMATION_MODE="SIM"`
-*   **Windows (CMD):** `set INSTRUMATION_MODE=SIM`
+```python
+# Linux/macOS
+export INSTRUMATION_MODE=SIM
 
-**Run Code:**
+# Windows PowerShell
+$env:INSTRUMATION_MODE="SIM"
+```
+
 ```python
 from instrumation.factory import get_driver
 
-# Address is ignored in SIM mode
 driver = get_driver("DUMMY_ADDRESS")
 driver.connect()
 
-print(f"ID: {driver.get_id()}")
+print(driver.get_id())
 print(f"Voltage: {driver.measure_voltage(1)} V")
 ```
 
-| Command | Description | 
-| :--- | :--- | 
-| `scan()` | Lists all connected Serial and VISA devices. | 
-| `connect()` | Auto-connects to a generic Test Station (Box + Inst). | 
-| `connect_instrument(addr)` | Connects to a specific instrument (loading correct driver). | 
+---
 
-# Development & Testing
+## API Reference
 
-If you want to contribute or run the tests, follow these steps to avoid import errors.
+| Command | Description |
+| :--- | :--- |
+| `scan()` | Lists all connected Serial and VISA devices |
+| `connect()` | Auto-connects to a generic Test Station (Box + Instrument) |
+| `connect_instrument(addr)` | Connects to a specific instrument with auto driver detection |
 
-1.  **Install in Editable Mode**: 
-    This is crucial for tests to find your local changes.
-    ```bash
-    pip install -e .
-    ```
+---
 
-2.  **Install Test Dependencies**: 
-    ```bash
-    pip install pytest flake8
-    ```
+## Platform Support
 
-3.  **Run Tests**: 
-    Enable simulation mode and run pytest.
-    ```bash
-    # Linux / Termux
-    export INSTRUMATION_MODE=SIM
-    pytest
+| Platform | Status |
+| :--- | :--- |
+| Windows | Supported |
+| Linux | Supported |
+| Termux (Android) | Supported |
+| macOS | Supported |
 
-    # Windows PowerShell
-    $env:INSTRUMATION_MODE="SIM"
-    pytest
-    ```
+---
+
+## Development
+
+```bash
+# Install in editable mode (required for tests to pick up local changes)
+pip install -e .
+
+# Install test dependencies
+pip install pytest flake8
+
+# Run tests (simulation mode)
+export INSTRUMATION_MODE=SIM  # Linux/macOS
+pytest
+```
+
+---
+
+## Tech Stack
+
+- **Language:** Python 3.7+
+- **Libraries:** PyVISA, PySerial
+- **Architecture:** Smart Factory Pattern, Polymorphism
+- **Standards:** SCPI (Standard Commands for Programmable Instruments)
+
+---
+
+## Support the Project
+
+Instrumation is maintained in my spare time alongside a full-time RF technician job. If it's saved you hours of boilerplate or made your test bench easier to automate, consider supporting:
+
+[![GitHub Sponsors](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?logo=github)](https://github.com/sponsors/abduznik)
+
+Commercial support or custom driver development? Reach out via GitHub Issues or Discussions.
+
+---
+
+## Contributing
+
+PRs and driver contributions are welcome. Open an issue first to discuss larger changes.
+
+## License
+
+See [LICENSE](LICENSE) for details.
