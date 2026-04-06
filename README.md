@@ -110,6 +110,8 @@ print(f"Voltage: {driver.measure_voltage(1)} V")
 ```bash
 # Install in editable mode (required for tests to pick up local changes)
 pip install -e .
+# This project uses pyproject.toml (PEP 517/518). No setup.py is required.
+
 
 # Install test dependencies
 pip install pytest flake8
