@@ -3,9 +3,6 @@ from .device import UUTHandler
 from .station import Station
 from .utils import DataBroadcaster
 import pyvisa
-from .drivers.keysight import KeysightMXA
-from .drivers.rigol import RigolDSA
-from .drivers.siglent import SiglentSDS
 
 # Global storage for the last found devices to help with auto-connect
 _discovered_devices = []
@@ -67,12 +64,15 @@ def connect_instrument(visa_address):
     idn_upper = idn_string.upper()
     
     if "KEYSIGHT" in idn_upper or "AGILENT" in idn_upper:
+        from .drivers.keysight import KeysightMXA
         return KeysightMXA(resource)
     
     elif "RIGOL" in idn_upper:
+        from .drivers.rigol import RigolDSA
         return RigolDSA(resource)
     
     elif "SIGLENT" in idn_upper:
+        from .drivers.siglent import SiglentSDS
         return SiglentSDS(resource)
     
     else:
