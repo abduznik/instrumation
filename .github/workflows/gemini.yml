@@ -1,0 +1,24 @@
+name: Gemini Assistant
+on:
+  pull_request:
+    types: [opened, synchronized]
+  issue_comment:
+    types: [created]
+
+jobs:
+  gemini:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Gemini CLI
+        uses: google/gemini-cli@main # Or the specific marketplace action
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Example: Tell it to review the PR if someone comments "@gemini-cli review"
+          command: "/review"
