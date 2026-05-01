@@ -46,6 +46,9 @@ nav:
       - Simulation (Digital Twins): user_guide/simulation.md
       - Asynchronous Measurements: user_guide/async.md
       - Golden Master (Record/Replay): user_guide/golden_master.md
+      - Unified Exceptions: user_guide/exceptions.md
+      - Complex Data & Multi-Channel: user_guide/complex_data.md
+      - Virtual Front Panel (VFP): user_guide/vfp.md
       - Examples & Showcases:
           - Basic Scripting: examples/basic_scripting.md
           - Async Parallelism: examples/async_parallel.md
