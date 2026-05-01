@@ -39,13 +39,13 @@ plugins:
 nav:
   - Home: index.md
   - Getting Started:
-      - Installation: installation.md
-      - Quick Start: quickstart.md
+      - Installation: getting_started/installation.md
+      - Quick Start: getting_started/quickstart.md
   - User Guide:
-      - Hardware Connection: hardware.md
-      - Simulation (Digital Twins): simulation.md
-      - Asynchronous Measurements: async.md
-      - Golden Master (Record/Replay): golden_master.md
+      - Hardware Connection: user_guide/hardware.md
+      - Simulation (Digital Twins): user_guide/simulation.md
+      - Asynchronous Measurements: user_guide/async.md
+      - Golden Master (Record/Replay): user_guide/golden_master.md
       - Examples & Showcases:
           - Basic Scripting: examples/basic_scripting.md
           - Async Parallelism: examples/async_parallel.md
@@ -55,7 +55,7 @@ nav:
       - Scanning & Discovery: cli/scanning.md
       - Measuring Hardware: cli/measuring.md
       - Record & Replay: cli/recording.md
-  - API Reference: api.md
+  - API Reference: api_ref/index.md
   - Contributing: contributing.md
 
 markdown_extensions:
