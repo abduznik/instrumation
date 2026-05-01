@@ -64,6 +64,17 @@ nav:
       - Measuring Hardware: cli/measuring.md
       - Record & Replay: cli/recording.md
   - API Reference: api_ref/index.md
+  - Development Logs:
+      - Overview: logs/index.md
+      - 2026-05-01:
+          - Binary Optimization: logs/2026-05-01/binary_optimization.md
+          - Async & Latency Fixes: logs/2026-05-01/async_latency_fix.md
+          - HAL Unification: logs/2026-05-01/hal_standardization.md
+          - Test Bench Modernization: logs/2026-05-01/modern_test_bench.md
+          - Base Driver Restoration: logs/2026-05-01/base_driver_restoration.md
+          - MeasurementResult Upgrades: logs/2026-05-01/measurement_result_upgrade.md
+          - VNAs & Telemetry: logs/2026-05-01/vna_telemetry_features.md
+          - Squashing VNA Bugs: logs/2026-05-01/vna_fixes.md
   - Contributing: contributing.md
 
 markdown_extensions:
