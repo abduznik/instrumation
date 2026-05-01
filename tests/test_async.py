@@ -36,7 +36,7 @@ async def test_async_spectrum_analyzer():
     sa = get_instrument("SA_ADDR", "SA")
     sa.latency = 0.1
     
-    await sa.set_center_freq(1.5e9)
-    res = await sa.async_get_peak_value()
+    await sa.async_set_center_freq(1.5e9)
+    res = await sa.async_get_marker_amplitude()
     assert res.unit == "dBm"
     assert -25 < res.value < -15

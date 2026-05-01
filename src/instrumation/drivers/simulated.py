@@ -51,9 +51,15 @@ class SimulatedBaseDriver(InstrumentDriver):
 class SimulatedMultimeter(SimulatedBaseDriver, Multimeter):
     def configure_voltage_dc(self): pass
     def configure_voltage_ac(self): pass
-    def measure_voltage(self, ac=False): return MeasurementResult(5.0, "V")
-    def measure_resistance(self, four_wire: bool = False): return MeasurementResult(1000.0, "Ohm")
-    def measure_current(self, ac: bool = False): return MeasurementResult(0.01, "A")
+    def measure_voltage(self, ac=False): 
+        time.sleep(self.latency)
+        return MeasurementResult(5.0, "V")
+    def measure_resistance(self, four_wire: bool = False): 
+        time.sleep(self.latency)
+        return MeasurementResult(1000.0, "Ohm")
+    def measure_current(self, ac: bool = False): 
+        time.sleep(self.latency)
+        return MeasurementResult(0.01, "A")
     def set_auto_range(self, state): pass
 
 @register_driver("PSU")
@@ -62,7 +68,9 @@ class SimulatedPowerSupply(SimulatedBaseDriver, PowerSupply):
         print(f"[SIM] Setting PSU Voltage: {voltage}")
     def get_voltage(self): return 0.0
     def set_current_limit(self, current): pass
-    def get_current(self): return MeasurementResult(0.0, "A")
+    def get_current(self): 
+        time.sleep(self.latency)
+        return MeasurementResult(0.0, "A")
     def set_output(self, state): pass
     def get_output(self): return False
     def set_ovp(self, voltage): pass
@@ -71,7 +79,9 @@ class SimulatedPowerSupply(SimulatedBaseDriver, PowerSupply):
 @register_driver("SA")
 class SimulatedSpectrumAnalyzer(SimulatedBaseDriver, SpectrumAnalyzer):
     def peak_search(self): pass
-    def get_marker_amplitude(self): return MeasurementResult(-20.0, "dBm")
+    def get_marker_amplitude(self): 
+        time.sleep(self.latency)
+        return MeasurementResult(-20.0, "dBm")
     def set_center_freq(self, hz):
         self._validate_frequency(hz)
         print(f"[SIM] Setting SA Center Freq: {hz}")
