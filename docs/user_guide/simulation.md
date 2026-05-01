@@ -2,6 +2,32 @@
 
 One of the unique features of Instrumation is the ability to write code using "Digital Twins". This allows you to develop your automation scripts at home or in the office, and then take them to the lab when ready.
 
+## Enabling Simulation Mode
+
+To enable simulation mode, set the `INSTRUMATION_MODE` environment variable to `SIM`.
+
+=== "Windows (PowerShell)"
+    ```powershell
+    # Enable SIM mode
+    $env:INSTRUMATION_MODE="SIM"
+    
+    # Revert to REAL mode (or just unset)
+    $env:INSTRUMATION_MODE="REAL"
+    # OR
+    Remove-Item Env:INSTRUMATION_MODE
+    ```
+
+=== "macOS / Linux"
+    ```bash
+    # Enable SIM mode
+    export INSTRUMATION_MODE="SIM"
+    
+    # Revert to REAL mode
+    export INSTRUMATION_MODE="REAL"
+    # OR
+    unset INSTRUMATION_MODE
+    ```
+
 ## How it Works
 
 When `INSTRUMATION_MODE` is set to `SIM`, the `get_instrument` factory will return a `Simulated` version of the driver you requested.
