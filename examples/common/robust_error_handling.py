@@ -1,18 +1,26 @@
+import os
+import sys
 from instrumation.factory import get_instrument
 from instrumation.exceptions import InstrumentTimeout, ConnectionLost, InstrumentError
 
-def measure_with_retry(address, retries=3):
+# Ensure src is in path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
+
+def main():
     """
     Attempts to measure voltage with a robust retry mechanism using unified exceptions.
     """
+    address = "AUTO"
+    retries = 3
     attempt = 0
+    
     while attempt < retries:
         try:
             print(f"Attempt {attempt + 1}: Connecting to DMM...")
             with get_instrument(address, "DMM") as dmm:
                 res = dmm.measure_voltage()
-                print(f"Measurement Success: {res}")
-                return res
+                print(f"Measurement Success: {res.value} {res.unit}")
+                return
         except InstrumentTimeout:
             print("Timeout occurred. Retrying...")
             attempt += 1
@@ -24,7 +32,6 @@ def measure_with_retry(address, retries=3):
             attempt += 1
     
     print("Failed to complete measurement.")
-    return None
 
 if __name__ == "__main__":
-    measure_with_retry("TCPIP0::127.0.0.1::inst0::INSTR")
+    main()

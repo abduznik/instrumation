@@ -1,0 +1,2 @@
+[console_scripts]
+instrumation = instrumation.cli:main

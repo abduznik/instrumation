@@ -6,6 +6,8 @@ from .drivers.real import RealDriver
 from .drivers.keysight import KeysightPNA, KeysightMXA
 from .drivers.tdk import TDKLambdaZPlus
 from .drivers.siglent import SiglentSDS
+from .drivers.rs import RohdeSchwarzSG, RohdeSchwarzSA
+from .drivers.anritsu import AnritsuSA, AnritsuVNA
 from .drivers.registry import DriverRegistry
 from .drivers.replay import ReplayDriver
 import importlib.util

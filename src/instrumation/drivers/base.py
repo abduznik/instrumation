@@ -1,211 +1,235 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Dict
 import asyncio
+import re
 from ..results import MeasurementResult
 from ..exceptions import InstrumentError, InstrumentTimeout, ConnectionLost, OverloadError, ConfigurationError
 
 class InstrumentDriver(ABC):
-    """Abstract Base Class for all instrument drivers."""
+    """Abstract Base Class for all instrument drivers following the 'Abstract Hardware' spec."""
     def __init__(self, resource: str):
         self.resource = resource
         self.connected = False
+        self.is_simulated = False
+        
+        # Identity & Capabilities
+        self.identity: Dict[str, str] = {"manufacturer": "", "model": "", "serial": "", "version": ""}
+        self.options: List[str] = []
+        self.error_stack: List[str] = []
+        
+        # Software Safety Guardrails
+        self.min_frequency = 0.0
+        self.max_frequency = 1e12
+        self.max_power_dbm = 0.0
+        self.max_voltage = 0.0
+
+    def __getattr__(self, name: str):
+        """Dynamic async wrapper for all driver methods."""
+        if name.startswith("async_"):
+            sync_name = name[6:]
+            if hasattr(self, sync_name):
+                sync_method = getattr(self, sync_name)
+                async def wrapper(*args, **kwargs):
+                    return await asyncio.to_thread(sync_method, *args, **kwargs)
+                return wrapper
+        raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
+
 
     @property
     def resource_address(self) -> str:
-        """Alias for self.resource for backward compatibility."""
         return self.resource
 
     @abstractmethod
     def connect(self):
-        """Establishes a connection to the instrument."""
+        """Establishes connection and performs identity/option discovery."""
         pass
 
     @abstractmethod
     def disconnect(self):
-        """Closes the connection to the instrument."""
+        """Safely tears down connection."""
         pass
 
     def close(self):
-        """Alias for disconnect()."""
         self.disconnect()
 
-    def write(self, command: str):
-        """Sends a SCPI command to the instrument."""
-        raise NotImplementedError(f"write() not implemented in {self.__class__.__name__}")
-
-    def query(self, command: str) -> str:
-        """Sends a SCPI command and returns the response."""
-        raise NotImplementedError(f"query() not implemented in {self.__class__.__name__}")
+    @abstractmethod
+    def write(self, command: str): pass
 
     @abstractmethod
-    def get_id(self) -> str:
-        """Returns the identification string of the instrument."""
-        pass
+    def query(self, command: str) -> str: pass
 
-    # Basic measurements available on most instruments
-    @abstractmethod
-    def measure_frequency(self) -> MeasurementResult:
-        """Measures frequency."""
-        pass
+    def safe_send(self, command: str):
+        """Sends command and immediately checks SYST:ERR?."""
+        raise NotImplementedError()
 
-    @abstractmethod
-    def measure_duty_cycle(self) -> MeasurementResult:
-        """Measures duty cycle."""
-        pass
+    def query_ascii(self, command: str) -> str:
+        """Sends command, reads response, and checks for errors."""
+        raise NotImplementedError()
 
     @abstractmethod
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        """Measures peak-to-peak voltage."""
+    def get_id(self) -> str: pass
+
+    # --- Global Logic & Synchronization ---
+    @abstractmethod
+    def preset(self, automation_optimized: bool = True): pass
+
+    @abstractmethod
+    def clear_status(self):
+        """Executes *CLS."""
         pass
+
+    @abstractmethod
+    def sync_config(self):
+        """Executes *CLS and *WAI for a clean slate."""
+        pass
+
+    @abstractmethod
+    def wait_ready(self, timeout: float = 30.0):
+        """Standard polling loop for *OPC?."""
+        pass
+
+    @abstractmethod
+    def shutdown_safety(self):
+        """Emergency shutdown protocol (Outputs OFF, Power/Volt 0)."""
+        pass
+
+    @abstractmethod
+    def check_errors(self):
+        """Queries SYST:ERR? and updates local error_stack."""
+        pass
+
+    # --- Unit Guards & Formatting ---
+    def format_frequency(self, val: Union[float, str]) -> str:
+        """Ensures input is Hz and formats for SCPI (e.g. 1.5e9 -> '1.5 GHz')."""
+        hz = float(val)
+        self._validate_frequency(hz)
+        if hz >= 1e9: return f"{hz/1e9:.6f} GHz"
+        if hz >= 1e6: return f"{hz/1e6:.6f} MHz"
+        if hz >= 1e3: return f"{hz/1e3:.6f} kHz"
+        return f"{hz:.0f} Hz"
+
+    def format_power(self, dbm: float) -> str:
+        self._validate_power(dbm)
+        return f"{dbm:.2f} DBM"
+
+    def _unsupported_feature(self, feature_name: str):
+        print(f"Warning: Feature '{feature_name}' is not supported by {self.identity.get('model', 'Instrument')}")
+
+    def _validate_frequency(self, hz: float):
+        if hz < self.min_frequency or hz > self.max_frequency:
+            raise ConfigurationError(f"Frequency {hz} Hz out of safety range")
+
+    def _validate_power(self, dbm: float):
+        if dbm > self.max_power_dbm:
+            raise OverloadError(f"Power {dbm} dBm exceeds safety limit")
+
+    # --- Measurements ---
+    @abstractmethod
+    def measure_frequency(self) -> MeasurementResult: pass
+    @abstractmethod
+    def measure_duty_cycle(self) -> MeasurementResult: pass
+    @abstractmethod
+    def measure_v_peak_to_peak(self) -> MeasurementResult: pass
 
     def __enter__(self):
         self.connect()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        try:
+            self.shutdown_safety()
+        except:
+            pass
         self.disconnect()
 
-    def __getattr__(self, name: str):
-        """Dynamic async wrapper for any method starting with 'async_'."""
-        if name.startswith("async_"):
-            real_method_name = name[6:]
-            if hasattr(self, real_method_name):
-                method = getattr(self, real_method_name)
-                if callable(method):
-                    return lambda *args, **kwargs: asyncio.to_thread(method, *args, **kwargs)
-        
-        raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
-
 class Multimeter(InstrumentDriver):
-    """Interface for Digital Multimeters (DMM)."""
     @abstractmethod
-    def measure_voltage(self) -> MeasurementResult:
-        """Measures DC Voltage."""
-        pass
-
+    def configure_voltage_dc(self): pass
     @abstractmethod
-    def measure_resistance(self) -> MeasurementResult:
-        """Measures Resistance."""
-        pass
+    def configure_voltage_ac(self): pass
+    @abstractmethod
+    def measure_voltage(self, ac: bool = False) -> MeasurementResult: pass
+    @abstractmethod
+    def measure_resistance(self, four_wire: bool = False) -> MeasurementResult: pass
+    @abstractmethod
+    def measure_current(self, ac: bool = False) -> MeasurementResult: pass
+    @abstractmethod
+    def set_auto_range(self, state: bool): pass
 
 class PowerSupply(InstrumentDriver):
-    """Interface for Programmable Power Supplies (PSU)."""
     @abstractmethod
-    def set_voltage(self, voltage: float):
-        """Sets the output voltage level."""
-        pass
-
+    def set_voltage(self, voltage: float): pass
     @abstractmethod
-    def get_voltage(self) -> float:
-        """Reads the currently set output voltage."""
-        pass
-
+    def get_voltage(self) -> float: pass
     @abstractmethod
-    def set_current_limit(self, current: float):
-        """Sets the output current limit."""
-        pass
-
+    def set_current_limit(self, current: float): pass
     @abstractmethod
-    def get_current(self) -> MeasurementResult:
-        """Measures the actual output current."""
-        pass
-
+    def get_current(self) -> MeasurementResult: pass
     @abstractmethod
-    def set_output(self, state: bool):
-        """Enables or disables the output."""
-        pass
-
+    def set_output(self, state: bool): pass
     @abstractmethod
-    def get_output(self) -> bool:
-        """Checks if the output is enabled."""
-        pass
+    def get_output(self) -> bool: pass
+    @abstractmethod
+    def set_ovp(self, voltage: float): pass
+    @abstractmethod
+    def set_ocp(self, current: float): pass
 
 class SpectrumAnalyzer(InstrumentDriver):
-    """Interface for Spectrum Analyzers (SA)."""
     @abstractmethod
-    def peak_search(self):
-        """Moves a marker to the highest peak."""
-        pass
-
+    def peak_search(self): pass
     @abstractmethod
-    def get_marker_amplitude(self) -> MeasurementResult:
-        """Returns the amplitude at the current marker."""
-        pass
-
-    def get_peak_value(self) -> MeasurementResult:
-        """Combined Peak Search + Amplitude measurement."""
-        self.peak_search()
-        return self.get_marker_amplitude()
+    def get_marker_amplitude(self) -> MeasurementResult: pass
+    @abstractmethod
+    def set_center_freq(self, hz: float): pass
+    @abstractmethod
+    def set_span(self, hz: float): pass
+    @abstractmethod
+    def set_rbw(self, hz: float): pass
+    @abstractmethod
+    def set_vbw(self, hz: float): pass
+    @abstractmethod
+    def get_trace_data(self) -> MeasurementResult: pass
 
 class NetworkAnalyzer(InstrumentDriver):
-    """Interface for Vector Network Analyzers (VNA)."""
     @abstractmethod
-    def set_start_frequency(self, freq_hz: float):
-        """Sets the sweep start frequency."""
-        pass
-
+    def set_start_frequency(self, freq_hz: float): pass
     @abstractmethod
-    def set_stop_frequency(self, freq_hz: float):
-        """Sets the sweep stop frequency."""
-        pass
-
+    def set_stop_frequency(self, freq_hz: float): pass
     @abstractmethod
-    def set_points(self, num_points: int):
-        """Sets the number of data points."""
-        pass
-
+    def set_points(self, num_points: int): pass
     @abstractmethod
-    def get_trace_data(self, measurement_name: str) -> MeasurementResult:
-        """Acquires formatted trace data."""
-        pass
-
+    def get_trace_data(self, measurement_name: str) -> MeasurementResult: pass
     @abstractmethod
-    def get_complex_trace(self, measurement_name: str) -> MeasurementResult:
-        """Acquires complex (I/Q) trace data."""
-        pass
+    def get_complex_trace(self, measurement_name: str) -> MeasurementResult: pass
 
 class Oscilloscope(InstrumentDriver):
-    """Interface for Digital Storage Oscilloscopes (DSO)."""
     @abstractmethod
-    def run(self):
-        """Starts acquisition."""
-        pass
-
+    def run(self): pass
     @abstractmethod
-    def stop(self):
-        """Stops acquisition."""
-        pass
-
+    def stop(self): pass
     @abstractmethod
-    def single(self):
-        """Triggers a single acquisition."""
-        pass
-
+    def single(self): pass
     @abstractmethod
-    def get_waveform(self, channel: int) -> MeasurementResult:
-        """Acquires the time-domain waveform."""
-        pass
-
-class MixedSignalOscilloscope(Oscilloscope):
-    """Interface for Oscilloscopes with digital logic channels."""
+    def get_waveform(self, channel: int) -> MeasurementResult: pass
     @abstractmethod
-    def get_digital_waveform(self, pod: int) -> MeasurementResult:
-        """Acquires digital logic data."""
-        pass
+    def auto_scale(self): pass
+    @abstractmethod
+    def set_trigger(self, source: str, level: float, slope: str): pass
+    @abstractmethod
+    def get_screenshot(self) -> bytes: pass
 
 class SignalGenerator(InstrumentDriver):
-    """Interface for RF Signal Generators (SG)."""
     @abstractmethod
-    def set_frequency(self, hz: float):
-        """Sets the output carrier frequency."""
-        pass
-
+    def set_frequency(self, hz: float): pass
     @abstractmethod
-    def set_amplitude(self, dbm: float):
-        """Sets the output amplitude level."""
-        pass
-
+    def set_amplitude(self, dbm: float): pass
     @abstractmethod
-    def set_output(self, state: bool):
-        """Enables or disables the RF output."""
-        pass
+    def set_output(self, state: bool): pass
+    @abstractmethod
+    def set_mod_state(self, mod_type: str, state: bool): pass
+    @abstractmethod
+    def start_sweep(self, start: float, stop: float, points: int, dwell: float): pass
+    @abstractmethod
+    def configure_list_sweep(self, freq_list: List[float], power_list: List[float]): pass
+    @abstractmethod
+    def set_reference_clock(self, source: str): pass

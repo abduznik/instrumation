@@ -1,13 +1,18 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+import os
+import sys
+
+# Ensure src is in path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
+
 from instrumation.factory import get_instrument
 
-def characterization_test():
+def main():
     """
     Sweep a frequency range, capture power levels, save to CSV, and generate a plot.
-    Matches docs/examples/plotting_and_data.md
     """
-    # 1. Connect (Works in SIM or REAL mode)
+    # 1. Connect (Auto-discovery)
     with get_instrument("AUTO", "SA") as sa:
         
         data = []
@@ -17,13 +22,13 @@ def characterization_test():
         
         # 2. Collect Data
         for freq in frequencies:
-            # sa.set_center_frequency(freq)
-            res = sa.get_peak_value()
+            sa.set_center_freq(freq)
+            sa.peak_search()
+            res = sa.get_marker_amplitude()
             
             data.append({
                 "Frequency_Hz": freq,
-                "Power_dBm": res.value,
-                "Status": res.status
+                "Power_dBm": res.value
             })
             
         # 3. Process with Pandas
@@ -42,9 +47,9 @@ def characterization_test():
         print("Plot saved to characterization_plot.png")
 
 if __name__ == "__main__":
-    # Set INSTRUMATION_MODE=SIM to run without hardware
-    # Note: Requires 'pandas' and 'matplotlib' installed
     try:
-        characterization_test()
+        main()
     except ImportError:
         print("Error: This example requires 'pandas' and 'matplotlib' installed.")
+    except Exception as e:
+        print(f"An error occurred: {e}")

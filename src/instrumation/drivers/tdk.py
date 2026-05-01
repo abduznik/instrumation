@@ -5,58 +5,44 @@ from ..results import MeasurementResult
 
 @register_driver("PSU")
 class TDKLambdaZPlus(RealDriver, PowerSupply):
-    """Driver for TDK-Lambda Z+ Series Programmable Power Supplies (e.g., Z36-6).
+    """Driver for TDK-Lambda Z+ Series Power Supplies."""
 
-    This driver supports setting and reading voltage and current, 
-    as well as controlling the output state.
-    """
+    def preset(self, automation_optimized: bool = True):
+        self.write("*RST")
+        self.sync_config()
 
     def set_voltage(self, voltage: float):
-        """Sets the output voltage.
+        self.safe_send(f":VOLT {voltage}")
 
-        Args:
-            voltage (float): The voltage level to set in Volts.
-        """
-        self.inst.write(f":VOLT {voltage}")
-
-    def get_voltage(self) -> MeasurementResult:
-        """Reads back the actual output voltage.
-
-        Returns:
-            MeasurementResult: THE measured voltage in Volts.
-        """
-        return MeasurementResult(float(self.inst.query(":MEAS:VOLT?")), "V")
+    def get_voltage(self) -> float:
+        return float(self.query_ascii(":VOLT?"))
 
     def set_current_limit(self, current: float):
-        """Sets the output current limit.
-
-        Args:
-            current (float): The current limit to set in Amperes.
-        """
-        self.inst.write(f":CURR {current}")
+        self.safe_send(f":CURR {current}")
 
     def get_current(self) -> MeasurementResult:
-        """Reads back the actual output current.
-
-        Returns:
-            MeasurementResult: The measured current in Amperes.
-        """
-        return MeasurementResult(float(self.inst.query(":MEAS:CURR?")), "A")
+        val = self.query_ascii(":MEAS:CURR?")
+        return MeasurementResult(float(val), "A")
 
     def set_output(self, state: bool):
-        """Enables (True) or disables (False) the output.
-
-        Args:
-            state (bool): True to enable, False to disable.
-        """
-        self.inst.write(f":OUTP {'ON' if state else 'OFF'}")
+        self.write(f":OUTP {'ON' if state else 'OFF'}")
 
     def get_output(self) -> bool:
-        """Returns the current output state.
-
-        Returns:
-            bool: True if output is ON, False if OFF.
-        """
-        state = self.inst.query(":OUTP?").strip()
-        # Some returns "ON" or "1", handle both
+        state = self.query_ascii(":OUTP?")
         return state == "1" or state.upper() == "ON"
+
+    def set_ovp(self, voltage: float):
+        self.safe_send(f":VOLT:PROT {voltage}")
+
+    def set_ocp(self, current: float):
+        self.safe_send(f":CURR:PROT {current}")
+
+    def measure_frequency(self) -> MeasurementResult: return MeasurementResult(0.0, "Hz")
+    def measure_duty_cycle(self) -> MeasurementResult: return MeasurementResult(0.0, "%")
+    def measure_v_peak_to_peak(self) -> MeasurementResult: return MeasurementResult(0.0, "V")
+
+    def shutdown_safety(self):
+        """Safety first: Disable output and zero voltage."""
+        self.set_output(False)
+        self.set_voltage(0.0)
+        self.sync_config()

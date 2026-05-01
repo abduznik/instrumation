@@ -6,7 +6,7 @@ class TestSimulatedSCPI(unittest.TestCase):
     def test_idn_query(self):
         driver = SimulatedMultimeter("USB::SIM::DMM", latency=0)
         res = driver.query("*IDN?")
-        self.assertEqual(res, "SIM_DMM_X1000")
+        self.assertEqual(res, "SIM,SIM_DRIVER,123,1.0")
 
     def test_opc_query(self):
         driver = SimulatedMultimeter("USB::SIM::DMM", latency=0)

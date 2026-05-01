@@ -2,15 +2,15 @@ from .scanner import scan
 from .device import UUTHandler
 from .station import Station
 from .utils import DataBroadcaster
+from .factory import get_instrument, get_instrument_from_config
 import pyvisa
+import os
 
 # Global storage for the last found devices to help with auto-connect
 _discovered_devices = []
 
 def search_devices():
-    """
-    Returns a user-friendly list of available devices.
-    """
+    """Returns a user-friendly list of available devices."""
     global _discovered_devices
     _discovered_devices = scan()
     
@@ -21,10 +21,7 @@ def search_devices():
     return _discovered_devices
 
 def connect(serial_id=None, visa_id=None):
-    """
-    Creates the connection object for the full test station (Serial + VISA).
-    """
-    
+    """Creates the connection object for the full test station (Serial + VISA)."""
     if not _discovered_devices and (serial_id is None or visa_id is None):
         search_devices()
 
@@ -42,44 +39,31 @@ def connect(serial_id=None, visa_id=None):
     
     return UUTHandler(serial_port=serial_id, visa_address=visa_id)
 
-def connect_instrument(visa_address):
+def connect_instrument(visa_address: str, driver_type: str = None):
+    """Smart Factory: Connects to a specific instrument and loads the correct driver.
+    
+    If driver_type is None, it attempts to detect the hardware via *IDN?.
     """
-    Smart Factory: Connects to a specific instrument and loads the correct driver.
-    """
-    rm = pyvisa.ResourceManager()
+    if driver_type:
+        return get_instrument(visa_address, driver_type)
+        
+    # Auto-detection logic
     try:
+        rm = pyvisa.ResourceManager()
         resource = rm.open_resource(visa_address)
-    except Exception as e:
-        raise ConnectionError(f"Could not open resource {visa_address}: {e}")
-    
-    # 1. Ask the device what it is
-    try:
-        idn_string = resource.query("*IDN?").strip()
-        print(f"Detected Hardware: {idn_string}")
-    except Exception as e:
-         print(f"Error querying IDN: {e}")
-         idn_string = "Unknown"
-
-    # 2. Decide which driver to load based on the response
-    idn_upper = idn_string.upper()
-    
-    if "KEYSIGHT" in idn_upper or "AGILENT" in idn_upper:
-        from .drivers.keysight import KeysightMXA
-        return KeysightMXA(resource)
-    
-    elif "RIGOL" in idn_upper:
-        from .drivers.rigol import RigolDSA
-        return RigolDSA(resource)
-    
-    elif "SIGLENT" in idn_upper:
-        from .drivers.siglent import SiglentSDS
-        return SiglentSDS(resource)
-    
-    else:
-        # Fallback or error
-        # For now, if we can't identify, we might return a generic wrapper or raise error
-        # Letting the user know is best.
-        print(f"Warning: Unknown device '{idn_string}'. No specific driver found.")
-        # We could return a generic SpectrumAnalyzer if we had a concrete one, 
-        # but for now let's raise or return None
-        raise ValueError(f"Unknown device: {idn_string}. No driver found.")
+        idn = resource.query("*IDN?").upper()
+        resource.close()
+        
+        if "KEYSIGHT" in idn or "AGILENT" in idn:
+            if "MXA" in idn: return get_instrument(visa_address, "SA")
+            if "EXG" in idn or "MXG" in idn: return get_instrument(visa_address, "SG")
+            return get_instrument(visa_address, "SG") # Default Keysight
+        if "SIGLENT" in idn: return get_instrument(visa_address, "SCOPE")
+        if "RIGOL" in idn: return get_instrument(visa_address, "SA")
+        if "TEKTRONIX" in idn: return get_instrument(visa_address, "SCOPE")
+        if "ROHDE" in idn: return get_instrument(visa_address, "SG")
+        
+    except:
+        pass
+        
+    return get_instrument(visa_address, "DMM") # Fallback

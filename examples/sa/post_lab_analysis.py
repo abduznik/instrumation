@@ -1,13 +1,16 @@
 import os
+import sys
 import matplotlib.pyplot as plt
+
+# Ensure src is in path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
+
 from instrumation.factory import get_instrument
 
-def generate_report():
+def main():
     """
     Demonstrates using the replay:// protocol to perform offline analysis.
-    Matches docs/examples/recording_to_plot.md
     """
-    # Use the replay protocol - no hardware needed!
     # Look for the data file in the same directory as this script
     current_dir = os.path.dirname(os.path.abspath(__file__))
     data_file = os.path.join(current_dir, "lab_data.json")
@@ -17,13 +20,11 @@ def generate_report():
         with get_instrument(address, "DMM") as dmm:
             results = []
             
-            # This will pull the exact values you recorded
             print(f"Replaying data from: {data_file}")
             for _ in range(10):
                 res = dmm.measure_voltage()
                 results.append(res.value)
                 
-            # Generate the visualization
             plt.plot(results, 'r-x')
             plt.title("Post-Lab Analysis (Replay Mode)")
             plt.ylabel("Voltage (V)")
@@ -36,4 +37,4 @@ def generate_report():
         print(f"An error occurred: {e}")
 
 if __name__ == "__main__":
-    generate_report()
+    main()

@@ -1,53 +1,55 @@
 from .base import Multimeter
 from .registry import register_driver
+from .real import RealDriver
 from ..results import MeasurementResult
 
 @register_driver("DMM")
-class Keithley2000(Multimeter):
-    def connect(self):
-        if self.resource:
-            self.connected = True
-            self.resource.write("*CLS")
+class Keithley2000(RealDriver, Multimeter):
+    """Driver for Keithley 2000 Series Digital Multimeters."""
 
-    def disconnect(self):
-        if self.resource:
-            self.resource.close()
-        self.connected = False
+    def preset(self, automation_optimized: bool = True):
+        self.write("*RST")
+        self.wait_ready()
 
-    def get_id(self) -> str:
-        if self.resource:
-            return self.resource.query("*IDN?").strip()
-        return "Not Connected"
+    def configure_voltage_dc(self):
+        self.safe_send(":CONF:VOLT:DC")
 
-    def measure_voltage(self) -> MeasurementResult:
-        """Measures DC Voltage."""
-        if self.resource:
-            return MeasurementResult(float(self.resource.query(":MEAS:VOLT:DC?")), "V")
-        return MeasurementResult(0.0, "V")
+    def configure_voltage_ac(self):
+        self.safe_send(":CONF:VOLT:AC")
 
-    def measure_resistance(self) -> MeasurementResult:
-        """Measures 2-wire Resistance."""
-        if self.resource:
-            return MeasurementResult(float(self.resource.query(":MEAS:RES?")), "Ohm")
-        return MeasurementResult(0.0, "Ohm")
+    def measure_voltage(self, ac: bool = False) -> MeasurementResult:
+        self.configure_voltage_ac() if ac else self.configure_voltage_dc()
+        val = self.query_ascii(":READ?")
+        return MeasurementResult(float(val), "V")
 
-    def measure_current(self) -> float:
-        """Measures DC Current."""
-        if self.resource:
-            return float(self.resource.query(":MEAS:CURR:DC?"))
-        return 0.0
+    def measure_resistance(self, four_wire: bool = False) -> MeasurementResult:
+        cmd = ":CONF:FRES" if four_wire else ":CONF:RES"
+        self.safe_send(cmd)
+        val = self.query_ascii(":READ?")
+        return MeasurementResult(float(val), "Ohm")
 
-    # Implement other abstract methods
+    def measure_current(self, ac: bool = False) -> MeasurementResult:
+        cmd = ":CONF:CURR:AC" if ac else ":CONF:CURR:DC"
+        self.safe_send(cmd)
+        val = self.query_ascii(":READ?")
+        return MeasurementResult(float(val), "A")
+
+    def set_auto_range(self, state: bool):
+        val = "ON" if state else "OFF"
+        self.safe_send(f":VOLT:RANG:AUTO {val}")
+
     def measure_frequency(self) -> MeasurementResult:
-        if self.resource:
-             return MeasurementResult(float(self.resource.query(":MEAS:FREQ?")), "Hz")
-        return MeasurementResult(0.0, "Hz")
+        val = self.query_ascii(":MEAS:FREQ?")
+        return MeasurementResult(float(val), "Hz")
 
     def measure_duty_cycle(self) -> MeasurementResult:
-         # Keithley 2000 might not have direct duty cycle measurement?
-         # Returning 0 for now as placeholder or simulation behavior
-         return MeasurementResult(0.0, "%")
+        self._unsupported_feature("Duty Cycle")
+        return MeasurementResult(0.0, "%")
 
     def measure_v_peak_to_peak(self) -> MeasurementResult:
-         # Placeholder
-         return MeasurementResult(0.0, "Vpp")
+        self._unsupported_feature("Vpp")
+        return MeasurementResult(0.0, "V")
+
+    def shutdown_safety(self):
+        self.set_auto_range(True)
+        self.sync_config()

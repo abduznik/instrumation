@@ -1,10 +1,15 @@
+import os
+import sys
 import time
+
+# Ensure src is in path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
+
 from instrumation.factory import get_instrument
 
-def run_basic_example():
+def main():
     """
     Connects to a Digital Multimeter, sets it up for DC Voltage, and takes 5 readings.
-    Matches docs/examples/basic_scripting.md
     """
     # 1. Connect (Auto-discovery for first DMM found)
     with get_instrument("AUTO", "DMM") as dmm:
@@ -17,9 +22,7 @@ def run_basic_example():
             print(f"Reading {i+1}: {result.value} {result.unit}")
             time.sleep(0.5)
 
-    # 3. Clean exit (handled by context manager)
     print("Done.")
 
 if __name__ == "__main__":
-    # Set INSTRUMATION_MODE=SIM to run without hardware
-    run_basic_example()
+    main()

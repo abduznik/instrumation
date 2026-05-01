@@ -2,321 +2,117 @@ import random
 import time
 import math
 import asyncio
-from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, MixedSignalOscilloscope, SignalGenerator
+from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, SignalGenerator
 from .registry import register_driver
 from ..results import MeasurementResult
 
 class SimulatedBaseDriver(InstrumentDriver):
-    """Base class for all simulated drivers to provide standard SCPI-like behavior.
-
-    Attributes:
-        latency (float): Configurable delay to mimic real transport delays.
-        responses (dict): Dictionary mapping SCPI commands to their simulated responses.
-    """
-    def __init__(self, resource, latency=0.01):
+    def __init__(self, resource: str, latency: float = 0.01):
         super().__init__(resource)
         self.latency = latency
-        self.responses = {
-            "*IDN?": self.get_id,
-            "*OPC?": "1",
-            "*STB?": "0",
-            "*ESR?": "0",
-        }
 
-    def _delay(self):
-        """Injects a delay based on the configured latency."""
-        if self.latency > 0:
-            time.sleep(self.latency)
+    def connect(self):
+        self.connected = True
+        self.identity = {"manufacturer": "SIM", "model": "SIM_DRIVER", "serial": "123", "version": "1.0"}
 
-    async def _async_delay(self):
-        """Injects an asynchronous delay based on the configured latency."""
-        if self.latency > 0:
-            await asyncio.sleep(self.latency)
-
+    def disconnect(self): self.connected = False
+    
     def write(self, command: str):
-        """Simulates writing a command to the instrument."""
-        self._delay()
         print(f"[SIM] Write: {command}")
+        time.sleep(self.latency)
+
+    def safe_send(self, command: str):
+        print(f"[SIM] Safe Send: {command}")
+        time.sleep(self.latency)
 
     def query(self, command: str) -> str:
-        """Simulates querying the instrument with a SCPI command."""
-        self._delay()
-        response = self.responses.get(command.strip().upper(), "0")
-        
-        if callable(response):
-            result = str(response())
-        else:
-            result = str(response)
-            
-        print(f"[SIM] Query: {command} -> {result}")
-        return result
+        print(f"[SIM] Query: {command}")
+        time.sleep(self.latency)
+        if "*IDN?" in command: return "SIM,SIM_DRIVER,123,1.0"
+        if "SYST:ERR?" in command: return '+0,"No error"'
+        if "*OPC?" in command: return "1"
+        return "0"
 
-    def measure_frequency(self) -> MeasurementResult:
-        """Default simulated frequency measurement."""
-        return MeasurementResult(1000.0 + random.gauss(0, 1.0), "Hz")
+    def query_ascii(self, command: str) -> str:
+        return self.query(command)
 
-    def measure_duty_cycle(self) -> MeasurementResult:
-        """Default simulated duty cycle measurement."""
-        return MeasurementResult(50.0 + random.gauss(0, 0.1), "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        """Default simulated peak-to-peak measurement."""
-        return MeasurementResult(1.0 + random.gauss(0, 0.01), "Vpp")
-
-    # --- Async Support ---
-    # We use the default to_thread implementation from the base class 
-    # to avoid double-delaying in simulation mode.
+    def get_id(self): return "SIM_DRIVER"
+    def preset(self, automation_optimized=True): pass
+    def clear_status(self): pass
+    def sync_config(self): pass
+    def wait_ready(self, timeout=30): pass
+    def shutdown_safety(self): pass
+    def check_errors(self): pass
+    def measure_frequency(self): return MeasurementResult(1000.0, "Hz")
+    def measure_duty_cycle(self): return MeasurementResult(50.0, "%")
+    def measure_v_peak_to_peak(self): return MeasurementResult(2.0, "V")
 
 @register_driver("DMM")
 class SimulatedMultimeter(SimulatedBaseDriver, Multimeter):
-    def connect(self):
-        print("[SIM-DMM] Connected")
-        self.connected = True
-
-    def disconnect(self):
-        print("[SIM-DMM] Disconnected")
-        self.connected = False
-
-    def get_id(self):
-        return "SIM_DMM_X1000"
-
-    def measure_voltage(self) -> MeasurementResult:
-        self._delay()
-        # Simulate measuring a 5V rail with noise
-        return MeasurementResult(5.0 + random.gauss(0, 0.01), "V")
-
-    def measure_resistance(self) -> MeasurementResult:
-        self._delay()
-        # Simulate a 1k resistor with noise
-        return MeasurementResult(1000.0 + random.gauss(0, 5.0), "Ohm")
-
-    def measure_frequency(self) -> MeasurementResult:
-        self._delay()
-        # Simulate frequency measurement (e.g., 1kHz signal with noise)
-        return MeasurementResult(1000.0 + random.gauss(0, 50.0), "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        self._delay()
-        # Simulate duty cycle measurement (percentage, 0-100%)
-        return MeasurementResult(50.0 + random.gauss(0, 5.0), "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        self._delay()
-        # Simulate peak-to-peak voltage measurement
-        return MeasurementResult(2.0 + random.gauss(0, 0.1), "Vpp")
+    def configure_voltage_dc(self): pass
+    def configure_voltage_ac(self): pass
+    def measure_voltage(self, ac=False): return MeasurementResult(5.0, "V")
+    def measure_resistance(self, four_wire: bool = False): return MeasurementResult(1000.0, "Ohm")
+    def measure_current(self, ac: bool = False): return MeasurementResult(0.01, "A")
+    def set_auto_range(self, state): pass
 
 @register_driver("PSU")
 class SimulatedPowerSupply(SimulatedBaseDriver, PowerSupply):
-    def __init__(self, resource, latency=0.01):
-        super().__init__(resource, latency)
-        self.setpoint = 0.0
-        self.current_limit = 1.0
-        self.output_enabled = False
-
-    def connect(self):
-        print("[SIM-PSU] Connected")
-        self.connected = True
-
-    def disconnect(self):
-        print("[SIM-PSU] Disconnected")
-        self.connected = False
-
-    def get_id(self):
-        return "SIM_PSU_PRO"
-
-    def set_voltage(self, voltage: float):
-        print(f"[SIM-PSU] Output set to {voltage}V")
-        self.setpoint = voltage
-
-    def get_voltage(self) -> float:
-        if self.output_enabled:
-            return self.setpoint + random.gauss(0, 0.005)
-        return 0.0
-
-    def set_current_limit(self, current: float):
-        print(f"[SIM-PSU] Current limit set to {current}A")
-        self.current_limit = current
-
-    def get_current(self) -> MeasurementResult:
-        self._delay()
-        # Simulate load: I = V / R (assume 100 ohm load)
-        if self.output_enabled and self.setpoint > 0:
-            current = (self.setpoint / 100.0) + random.gauss(0, 0.001)
-            val = min(current, self.current_limit)
-            return MeasurementResult(val, "A")
-        return MeasurementResult(0.0, "A")
-
-    def set_output(self, state: bool):
-        print(f"[SIM-PSU] Output {'ENABLED' if state else 'DISABLED'}")
-        self.output_enabled = state
-
-    def get_output(self) -> bool:
-        return self.output_enabled
-
-    def measure_frequency(self) -> MeasurementResult:
-        return MeasurementResult(1000.0 + random.gauss(0, 50.0), "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(50.0 + random.gauss(0, 5.0), "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(2.0 + random.gauss(0, 0.1), "Vpp")
+    def set_voltage(self, voltage): 
+        print(f"[SIM] Setting PSU Voltage: {voltage}")
+    def get_voltage(self): return 0.0
+    def set_current_limit(self, current): pass
+    def get_current(self): return MeasurementResult(0.0, "A")
+    def set_output(self, state): pass
+    def get_output(self): return False
+    def set_ovp(self, voltage): pass
+    def set_ocp(self, current): pass
 
 @register_driver("SA")
 class SimulatedSpectrumAnalyzer(SimulatedBaseDriver, SpectrumAnalyzer):
-    def connect(self):
-        print("[SIM-SA] Connected")
-        self.connected = True
-
-    def disconnect(self):
-        print("[SIM-SA] Disconnected")
-        self.connected = False
-
-    def get_id(self):
-        return "SIM_SA_GEN3"
-
-    def peak_search(self):
-        print("[SIM-SA] Searching for peak...")
-        self._delay() # Use configurable latency
-
-    def get_marker_amplitude(self) -> MeasurementResult:
-        self._delay()
-        # Simulate a signal around -20 dBm
-        return MeasurementResult(-20.0 + random.gauss(0, 0.5), "dBm")
-
-    def measure_frequency(self) -> MeasurementResult:
-        return MeasurementResult(1000000000.0 + random.gauss(0, 10000000.0), "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(50.0 + random.gauss(0, 5.0), "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(1.0 + random.gauss(0, 0.05), "Vpp")
+    def peak_search(self): pass
+    def get_marker_amplitude(self): return MeasurementResult(-20.0, "dBm")
+    def set_center_freq(self, hz):
+        self._validate_frequency(hz)
+        print(f"[SIM] Setting SA Center Freq: {hz}")
+    def set_span(self, hz): pass
+    def set_rbw(self, hz): pass
+    def set_vbw(self, hz): pass
+    def get_trace_data(self): return MeasurementResult([0.0]*1001, "dBm")
 
 @register_driver("NA")
 class SimulatedNetworkAnalyzer(SimulatedBaseDriver, NetworkAnalyzer):
-    def __init__(self, resource, latency=0.01):
-        super().__init__(resource, latency)
-        self.start_freq = 1e6
-        self.stop_freq = 1e9
-        self.points = 201
-
-    def connect(self):
-        print("[SIM-VNA] Connected")
-        self.connected = True
-
-    def disconnect(self):
-        print("[SIM-VNA] Disconnected")
-        self.connected = False
-
-    def get_id(self):
-        return "SIM_VNA_E8363C"
-
-    def set_start_frequency(self, freq_hz: float):
-        print(f"[SIM-VNA] Start Freq set to {freq_hz} Hz")
-        self.start_freq = freq_hz
-
-    def set_stop_frequency(self, freq_hz: float):
-        print(f"[SIM-VNA] Stop Freq set to {freq_hz} Hz")
-        self.stop_freq = freq_hz
-
-    def set_points(self, num_points: int):
-        print(f"[SIM-VNA] Points set to {num_points}")
-        self.points = num_points
-
-    def get_trace_data(self, measurement_name: str) -> MeasurementResult:
-        print(f"[SIM-VNA] Getting trace for {measurement_name}")
-        data = []
-        for i in range(self.points):
-             val = -20 + 10 * math.sin(i / self.points * 3.14) + random.gauss(0, 0.5)
-             data.append(val)
-        return MeasurementResult(data, "dB")
-
-    def get_complex_trace(self, measurement_name: str) -> MeasurementResult:
-        print(f"[SIM-VNA] Getting complex trace for {measurement_name}")
-        data = []
-        for i in range(self.points):
-             # Simulating S21 magnitude/phase
-             mag = 0.1 * math.sin(i / self.points * 3.14) + random.gauss(0, 0.01)
-             phase = i / self.points * 2 * math.pi
-             val = complex(mag * math.cos(phase), mag * math.sin(phase))
-             data.append(val)
-        return MeasurementResult(data, "IQ")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "Vpp")
-
-    async def async_get_trace_data(self, measurement_name: str) -> MeasurementResult:
-        return await asyncio.to_thread(self.get_trace_data, measurement_name)
+    def set_start_frequency(self, freq_hz): pass
+    def set_stop_frequency(self, freq_hz): pass
+    def set_points(self, num_points): pass
+    def get_trace_data(self, measurement_name): return MeasurementResult([0.0]*201, "dB")
+    def get_complex_trace(self, measurement_name): return MeasurementResult([complex(0,0)]*201, "IQ")
 
 @register_driver("SCOPE")
 class SimulatedOscilloscope(SimulatedBaseDriver, Oscilloscope):
-    def connect(self):
-        print("[SIM-SCOPE] Connected")
-        self.connected = True
-
-    def disconnect(self):
-        print("[SIM-SCOPE] Disconnected")
-        self.connected = False
-
-    def get_id(self):
-        return "SIM_SCOPE_SDS"
-
-    def run(self):
-        print("[SIM-SCOPE] Acquisition Started")
-
-    def stop(self):
-        print("[SIM-SCOPE] Acquisition Stopped")
-
-    def single(self):
-        print("[SIM-SCOPE] Single Acquisition Triggered")
-
+    def run(self): pass
+    def stop(self): pass
+    def single(self): pass
     def get_waveform(self, channel: int) -> MeasurementResult:
-        print(f"[SIM-SCOPE] Getting waveform from CH{channel}")
-        # Simulate a 1kHz sine wave sampled at 100kHz (1000 points)
-        points = 1000
-        data = [math.sin(2 * math.pi * 1000 * (i / 100000)) + random.gauss(0, 0.05) for i in range(points)]
+        data = [math.sin(i * 0.1) for i in range(1000)]
         return MeasurementResult(data, "V")
-
-    def measure_frequency(self) -> MeasurementResult:
-        return MeasurementResult(1000.0 + random.gauss(0, 50.0), "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(50.0 + random.gauss(0, 5.0), "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(2.0 + random.gauss(0, 0.1), "Vpp")
+    def auto_scale(self): pass
+    def set_trigger(self, source, level, slope): pass
+    def get_screenshot(self): return b"SIM_SCREENSHOT"
 
 @register_driver("SG")
 class SimulatedSignalGenerator(SimulatedBaseDriver, SignalGenerator):
-    def __init__(self, resource, latency=0.01):
-        super().__init__(resource, latency)
-        self.freq = 1e6
-        self.amp = -10.0
-        self.output_enabled = False
-
-    def connect(self):
-        print("[SIM-SG] Connected")
-        self.connected = True
-
-    def disconnect(self):
-        print("[SIM-SG] Disconnected")
-        self.connected = False
-
-    def get_id(self):
-        return "SIM_SG_KEY"
-
-    def set_frequency(self, hz: float):
-        print(f"[SIM-SG] Frequency set to {hz} Hz")
-        self.freq = hz
-
-    def set_amplitude(self, dbm: float):
-        print(f"[SIM-SG] Amplitude set to {dbm} dBm")
-        self.amp = dbm
-
-    def set_output(self, state: bool):
-        print(f"[SIM-SG] Output {'ON' if state else 'OFF'}")
-        self.output_enabled = state
+    def set_frequency(self, hz):
+        self._validate_frequency(hz)
+        print(f"[SIM] Setting SG Frequency: {hz}")
+    def set_amplitude(self, dbm):
+        self._validate_power(dbm)
+        print(f"[SIM] Setting SG Amplitude: {dbm}")
+    def set_output(self, state): pass
+    def set_mod_state(self, mod_type, state): pass
+    def start_sweep(self, start, stop, points, dwell): pass
+    def configure_list_sweep(self, freq_list, power_list): pass
+    def set_reference_clock(self, source): pass
 
 class SimulatedDriver(SimulatedMultimeter):
     pass

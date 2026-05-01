@@ -1,80 +1,60 @@
 from .base import Oscilloscope
 from .registry import register_driver
+from .real import RealDriver
 from ..results import MeasurementResult
 
 @register_driver("SCOPE")
-class TektronixTDS(Oscilloscope):
-    def connect(self):
-        # Assuming resource is a pyvisa Resource object
-        if self.resource:
-            self.connected = True
+class TektronixTDS(RealDriver, Oscilloscope):
+    """Refined Driver for Tektronix TDS Series Oscilloscopes."""
 
-    def disconnect(self):
-        if self.resource:
-            self.resource.close()
-        self.connected = False
+    def preset(self, automation_optimized: bool = True):
+        self.write("*RST")
+        self.wait_ready()
 
-    def get_id(self) -> str:
-        if self.resource:
-            return self.resource.query("*IDN?").strip()
-        return "Not Connected"
-
-    def run(self):
-        """Starts acquisition."""
-        if self.resource:
-            self.resource.write(":ACQUIRE:STATE ON")
-
-    def stop(self):
-        """Stops acquisition."""
-        if self.resource:
-            self.resource.write(":ACQUIRE:STATE OFF")
-
+    def run(self): self.write(":ACQUIRE:STATE ON")
+    def stop(self): self.write(":ACQUIRE:STATE OFF")
     def single(self):
-        """Sets the oscilloscope to single acquisition mode."""
-        # Tektronix TDS usually uses ACQUIRE:STOPAFTER SEQUENCE for single shot behavior
-        # or just STOP then RUN? The issue didn't specify the command for single,
-        # but common SCPI is :ACQUIRE:STOPAFTER SEQUENCE
-        if self.resource:
-            self.resource.write(":ACQUIRE:STOPAFTER SEQUENCE")
-            self.resource.write(":ACQUIRE:STATE ON")
+        self.write(":ACQUIRE:STOPAFTER SEQUENCE")
+        self.write(":ACQUIRE:STATE ON")
 
     def get_waveform(self, channel: int) -> MeasurementResult:
-        """Returns the waveform data for the specified channel."""
-        if not self.resource:
-            return MeasurementResult([], "V")
+        self.write(f":DATA:SOURCE CH{channel}")
+        self.write(":DATA:ENC ASC")
+        self.write(":DATA:WIDTH 1")
+        raw_data = self.query_ascii(":CURVE?")
+        data = [float(x) for x in raw_data.split(',')]
+        return MeasurementResult(data, "V")
 
-        # Set source
-        self.resource.write(f":DATA:SOURCE CH{channel}")
-        
-        # Ensure ASCII encoding for simplicity in this driver
-        self.resource.write(":DATA:ENC ASC")
-        
-        # Get width in bytes (1 or 2) - mostly 1 for simple usage
-        self.resource.write(":DATA:WIDTH 1")
-        
-        # Get the data
-        # :CURVE? returns comma separated values in ASCII mode
-        raw_data = self.resource.query(":CURVE?")
-        
-        try:
-            # Parse CSV string to list of floats
-            data = [float(x) for x in raw_data.split(',')]
-            return MeasurementResult(data, "V")
-        except ValueError:
-            print(f"Error parsing waveform data: {raw_data[:20]}...")
-            return MeasurementResult([], "V")
+    def auto_scale(self):
+        self.safe_send("AUTOSC")
 
-    # Implement other abstract methods from InstrumentDriver
-    def measure_frequency(self) -> MeasurementResult:
-        # Placeholder or use generic MEAS command
-        if self.resource:
-             return MeasurementResult(float(self.resource.query("MEASU:IMM:VAL?")), "Hz")
-        return MeasurementResult(0.0, "Hz")
+    def set_trigger(self, source: str, level: float, slope: str):
+        self.safe_send(f"TRIG:MAIN:EDGE:SOURCE {source}")
+        self.safe_send(f"TRIG:MAIN:LEVEL {level}")
+        self.safe_send(f"TRIG:MAIN:EDGE:SLOPE {slope.upper()}")
 
-    def measure_duty_cycle(self) -> MeasurementResult:
-         # Placeholder
-         return MeasurementResult(0.0, "%")
+    def get_screenshot(self) -> bytes:
+        self.write("HARDCOPY START")
+        return b"TEK_SCREENSHOT_DATA"
 
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-         # Placeholder
-         return MeasurementResult(0.0, "Vpp")
+    def _measure_imm(self, channel: int, measure_type: str) -> float:
+        self.safe_send(f":MEASUREMENT:IMMED:SOURCE CH{channel}")
+        self.safe_send(f":MEASUREMENT:IMMED:TYPE {measure_type}")
+        val = self.query_ascii(":MEASUREMENT:IMMED:VALUE?")
+        return float(val)
+
+    def measure_frequency(self, channel: int = 1) -> MeasurementResult:
+        val = self._measure_imm(channel, "FREQUENCY")
+        return MeasurementResult(val, "Hz")
+
+    def measure_duty_cycle(self, channel: int = 1) -> MeasurementResult:
+        val = self._measure_imm(channel, "DUTY")
+        return MeasurementResult(val, "%")
+
+    def measure_v_peak_to_peak(self, channel: int = 1) -> MeasurementResult:
+        val = self._measure_imm(channel, "PKPK")
+        return MeasurementResult(val, "V")
+
+    def shutdown_safety(self):
+        self.stop()
+        self.sync_config()

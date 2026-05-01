@@ -1,0 +1,11 @@
+pyvisa
+pyserial
+toml
+
+[docs]
+mkdocs-material
+mkdocstrings[python]
+
+[test]
+pytest
+pytest-asyncio

@@ -73,34 +73,41 @@ class ReplayDriver(InstrumentDriver):
         print("[REPLAY] Finished replay session")
 
     def write(self, command: str):
-        # In replay mode, we just advance the pointer if the command matches
         if self.ptr < len(self.master.transactions):
             expected = self.master.transactions[self.ptr].command
             if command.strip().upper() == expected.strip().upper():
-                print(f"[REPLAY] Write: {command} (Matched)")
                 self.ptr += 1
-            else:
-                print(f"[REPLAY] Warning: command mismatch. Expected '{expected}', got '{command}'")
         else:
-             print(f"[REPLAY] Warning: end of log reached. Ignoring write '{command}'")
+             pass
 
     def query(self, command: str) -> str:
         if self.ptr < len(self.master.transactions):
             tx = self.master.transactions[self.ptr]
             if command.strip().upper() == tx.command.strip().upper():
-                print(f"[REPLAY] Query: {command} -> {tx.response}")
                 self.ptr += 1
                 return tx.response
-            else:
-                print(f"[REPLAY] Warning: command mismatch. Expected '{tx.command}', got '{command}'")
-                return "0"
         return "0"
 
-    # Minimal implementations for abstract methods
-    # These will use query/write which are replayed
+    def safe_send(self, command: str):
+        self.write(command)
+        self.check_errors()
+
+    def query_ascii(self, command: str) -> str:
+        resp = self.query(command)
+        self.check_errors()
+        return resp
+
     def get_id(self): return self.query("*IDN?")
-    def measure_voltage(self): return MeasurementResult(float(self.query("MEAS:VOLT?")), "V")
-    def measure_resistance(self): return MeasurementResult(float(self.query("MEAS:RES?")), "Ohm")
+    def preset(self, automation_optimized=True): pass
+    def clear_status(self): pass
+    def sync_config(self): pass
+    def wait_ready(self, timeout=30): pass
+    def shutdown_safety(self): pass
+    def check_errors(self): pass
+
+    def measure_voltage(self, ac: bool = False): return MeasurementResult(float(self.query("MEAS:VOLT?")), "V")
+    def measure_resistance(self, four_wire: bool = False): return MeasurementResult(float(self.query("MEAS:RES?")), "Ohm")
+    def measure_current(self, ac: bool = False): return MeasurementResult(float(self.query("MEAS:CURR?")), "A")
     def measure_frequency(self): return MeasurementResult(float(self.query("MEAS:FREQ?")), "Hz")
-    def measure_duty_cycle(self): return MeasurementResult(float(self.query("MEAS:DUTY?")), "%")
-    def measure_v_peak_to_peak(self): return MeasurementResult(float(self.query("MEAS:PKPK?")), "Vpp")
+    def measure_duty_cycle(self): return MeasurementResult(0.0, "%")
+    def measure_v_peak_to_peak(self): return MeasurementResult(0.0, "V")

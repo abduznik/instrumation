@@ -1,21 +1,26 @@
 import time
 import random
+import os
+import sys
+
+# Ensure src is in path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
+
 from instrumation.utils import DataBroadcaster
 from instrumation.results import MeasurementResult
 
-def stream_to_vfp():
+def main():
     """
     Simulates a long-running test that streams live data to the Virtual Front Panel.
     """
     print("Starting VFP Telemetry Stream...")
-    print("Make sure 'python -m instrumation.vfp_bridge' is running!")
     
     with DataBroadcaster() as broadcaster:
-        for i in range(100):
+        max_iters = 5 if os.environ.get("INSTRUMATION_MODE") == "SIM" else 100
+        for i in range(max_iters):
             # Simulate a fluctuating measurement
             val = 24.0 + random.uniform(-0.5, 0.5)
             
-            # Create a result with metadata for the dashboard
             res = MeasurementResult(
                 value=round(val, 3),
                 unit="dBm",
@@ -27,7 +32,6 @@ def stream_to_vfp():
                 }
             )
             
-            # Send to bridge via UDP
             broadcaster.send(res.to_dict())
             
             if i % 10 == 0:
@@ -36,4 +40,4 @@ def stream_to_vfp():
             time.sleep(0.5)
 
 if __name__ == "__main__":
-    stream_to_vfp()
+    main()
