@@ -7,6 +7,7 @@ from .drivers.keysight import KeysightPNA, KeysightMXA
 from .drivers.tdk import TDKLambdaZPlus
 from .drivers.siglent import SiglentSDS
 from .drivers.registry import DriverRegistry
+from .drivers.replay import ReplayDriver
 import importlib.util
 import sys
 import os
@@ -42,6 +43,11 @@ def get_instrument(resource_address: str, driver_type: str):
     
     drivers = DriverRegistry.get_drivers_by_type(driver_type)
     
+    # Check for replay mode (address starts with 'replay://')
+    if resource_address.startswith("replay://"):
+        master_file = resource_address.replace("replay://", "")
+        return ReplayDriver("REPLAY_DEVICE", master_file)
+
     if is_sim_mode():
         # Find a simulated driver for this type
         for drv_cls in drivers:
