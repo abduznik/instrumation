@@ -10,15 +10,15 @@ pip install instrumation
 
 ## Hardware Requirements
 
-To communicate with physical instruments, you need a VISA implementation installed on your system.
+To communicate with physical instruments, you have two options for the transport layer.
 
-### Windows
-Download and install either:
+### Option 1: Vendor VISA (Recommended for Windows/GPIB)
+Install a vendor VISA implementation for maximum performance and mandatory GPIB support:
 - [NI-VISA](https://www.ni.com/en/support/downloads/drivers/download.ni-visa.html)
 - [Keysight IO Libraries Suite](https://www.keysight.com/us/en/lib/software-detail/computer-software/io-libraries-suite-downloads-2175637.html)
 
-### macOS (ARM64/Intel)
-If you are on a Mac (like the MacBook Neo), install `pyvisa-py`:
+### Option 2: Pure Python (Ethernet/USB/Serial)
+If you are only using Ethernet (LAN) or USB/Serial, you can avoid heavy vendor software by using `pyvisa-py`. This uses raw sockets and native USB drivers:
 
 ```bash
 pip install pyvisa-py psutil

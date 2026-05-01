@@ -3,9 +3,10 @@
 This page explains how to connect to physical instruments.
 
 ## VISA Implementation
-You must have a VISA library installed:
-- **Windows**: NI-VISA or Keysight IO Libraries.
-- **macOS/Linux**: `pyvisa-py`.
+You have two main paths for connecting your instruments:
+
+1. **Vendor Backend**: Use NI-VISA or Keysight IO Libraries. Mandatory for **GPIB** hardware and high-performance automated testing.
+2. **Python Backend (`pyvisa-py`)**: Use for **Ethernet (TCPIP)**, **USB**, or **Serial**. This uses raw sockets and doesn't require extra software installation.
 
 ## Connection Strings
 Addresses typically follow the VISA standard:
