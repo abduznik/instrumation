@@ -85,13 +85,64 @@ $env:INSTRUMATION_MODE="SIM"
 ```
 
 ```python
-from instrumation.factory import get_driver
+from instrumation.factory import get_instrument
 
-driver = get_driver("DUMMY_ADDRESS")
-driver.connect()
+# Safer usage with context manager
+with get_instrument("DUMMY_ADDRESS", "DMM") as dmm:
+    print(dmm.get_id())
+    result = dmm.measure_voltage()
+    print(f"Voltage: {result}")
+```
 
-print(driver.get_id())
-print(f"Voltage: {driver.measure_voltage(1)} V")
+---
+
+## Station Manager (TOML)
+
+Manage complex test stations with multiple instruments using a `station.toml` file.
+
+```toml
+[instruments.sa_main]
+driver = "SA"
+address = "USB0::0x2A8D::0x0101::MY12345678::0::INSTR"
+
+[instruments.psu_dut]
+driver = "PSU"
+address = "TCPIP0::192.168.1.100::inst0::INSTR"
+```
+
+Use it in your code:
+
+```python
+from instrumation import Station
+
+station = Station("station.toml")
+station.connect()
+
+# Access instruments via dot notation
+res = station.instr.sa_main.get_peak_value()
+print(f"Peak: {res}")
+
+station.disconnect()
+```
+
+---
+
+## Command Line Interface
+
+Instrumation comes with a powerful CLI for quick interaction and diagnostics.
+
+```bash
+# Scan for connected hardware
+instrumation scan
+
+# Take a quick measurement
+instrumation measure USB0::... DMM measure_voltage
+
+# List instruments in your station.toml
+instrumation station list
+
+# Measure using a named instrument from your station
+instrumation station measure sa_main get_peak_value
 ```
 
 ---
