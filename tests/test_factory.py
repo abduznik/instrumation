@@ -14,7 +14,7 @@ class TestFactory(unittest.TestCase):
     def test_get_instrument_invalid_type(self):
         with self.assertRaises(ValueError) as cm:
             get_instrument("USB::0x1234::SIM", "INVALID")
-        self.assertIn("Unknown driver type", str(cm.exception))
+        self.assertIn("No simulated driver found", str(cm.exception))
 
     def test_get_instrument_from_config_valid(self):
         config = {"address": "USB::0x1234::SIM", "type": "DMM"}
