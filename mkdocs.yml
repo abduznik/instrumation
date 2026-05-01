@@ -46,7 +46,15 @@ nav:
       - Simulation (Digital Twins): simulation.md
       - Asynchronous Measurements: async.md
       - Golden Master (Record/Replay): golden_master.md
-  - Headstart: headstart.md
+      - Examples & Showcases:
+          - Basic Scripting: examples/basic_scripting.md
+          - Async Parallelism: examples/async_parallel.md
+          - Signal Sequencing: examples/sg_sequencing.md
+  - CLI Tool:
+      - Overview: cli/overview.md
+      - Scanning & Discovery: cli/scanning.md
+      - Measuring Hardware: cli/measuring.md
+      - Record & Replay: cli/recording.md
   - API Reference: api.md
   - Contributing: contributing.md
 
