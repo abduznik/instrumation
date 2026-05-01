@@ -4,7 +4,7 @@ from .real import RealDriver
 from ..results import MeasurementResult
 
 @register_driver("SA")
-class KeysightMXA(SpectrumAnalyzer):
+class KeysightMXA(RealDriver, SpectrumAnalyzer):
     """Driver for Keysight MXA Series Spectrum Analyzers.
 
     This driver provides support for basic spectrum analysis functions
@@ -73,6 +73,23 @@ class KeysightPNA(RealDriver, NetworkAnalyzer):
         # Convert comma-separated string to list of floats
         data = [float(x) for x in data_str.split(',')]
         return MeasurementResult(data, "dB")
+
+    def get_complex_trace(self, measurement_name: str) -> MeasurementResult:
+        """Selects the measurement and queries the complex (I/Q) data.
+        
+        Args:
+            measurement_name (str): The name of the measurement/trace.
+            
+        Returns:
+            MeasurementResult: The complex data points.
+        """
+        # Select the measurement (Trace)
+        self.inst.write(f"CALC:PAR:SEL '{measurement_name}'")
+        # Query Complex Data (SDATA returns Real, Imaginary pairs)
+        data_str = self.inst.query("CALC:DATA? SDATA")
+        raw_data = [float(x) for x in data_str.split(',')]
+        data = [complex(raw_data[i], raw_data[i+1]) for i in range(0, len(raw_data), 2)]
+        return MeasurementResult(data, "IQ")
 
 @register_driver("SG")
 class KeysightSG(RealDriver, SignalGenerator):

@@ -2,7 +2,7 @@ import random
 import time
 import math
 import asyncio
-from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, SignalGenerator
+from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, MixedSignalOscilloscope, SignalGenerator
 from .registry import register_driver
 from ..results import MeasurementResult
 
@@ -231,6 +231,17 @@ class SimulatedNetworkAnalyzer(SimulatedBaseDriver, NetworkAnalyzer):
              val = -20 + 10 * math.sin(i / self.points * 3.14) + random.gauss(0, 0.5)
              data.append(val)
         return MeasurementResult(data, "dB")
+
+    def get_complex_trace(self, measurement_name: str) -> MeasurementResult:
+        print(f"[SIM-VNA] Getting complex trace for {measurement_name}")
+        data = []
+        for i in range(self.points):
+             # Simulating S21 magnitude/phase
+             mag = 0.1 * math.sin(i / self.points * 3.14) + random.gauss(0, 0.01)
+             phase = i / self.points * 2 * math.pi
+             val = complex(mag * math.cos(phase), mag * math.sin(phase))
+             data.append(val)
+        return MeasurementResult(data, "IQ")
 
     def measure_v_peak_to_peak(self) -> MeasurementResult:
         return MeasurementResult(0.0, "Vpp")
