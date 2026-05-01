@@ -1,6 +1,9 @@
 from .base import PowerSupply
+from .registry import register_driver
 from .real import RealDriver
+from ..results import MeasurementResult
 
+@register_driver("PSU")
 class TDKLambdaZPlus(RealDriver, PowerSupply):
     """Driver for TDK-Lambda Z+ Series Programmable Power Supplies (e.g., Z36-6).
 
@@ -16,13 +19,13 @@ class TDKLambdaZPlus(RealDriver, PowerSupply):
         """
         self.inst.write(f":VOLT {voltage}")
 
-    def get_voltage(self) -> float:
+    def get_voltage(self) -> MeasurementResult:
         """Reads back the actual output voltage.
 
         Returns:
-            float: THE measured voltage in Volts.
+            MeasurementResult: THE measured voltage in Volts.
         """
-        return float(self.inst.query(":MEAS:VOLT?"))
+        return MeasurementResult(float(self.inst.query(":MEAS:VOLT?")), "V")
 
     def set_current_limit(self, current: float):
         """Sets the output current limit.
@@ -32,13 +35,13 @@ class TDKLambdaZPlus(RealDriver, PowerSupply):
         """
         self.inst.write(f":CURR {current}")
 
-    def get_current(self) -> float:
+    def get_current(self) -> MeasurementResult:
         """Reads back the actual output current.
 
         Returns:
-            float: The measured current in Amperes.
+            MeasurementResult: The measured current in Amperes.
         """
-        return float(self.inst.query(":MEAS:CURR?"))
+        return MeasurementResult(float(self.inst.query(":MEAS:CURR?")), "A")
 
     def set_output(self, state: bool):
         """Enables (True) or disables (False) the output.

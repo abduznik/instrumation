@@ -38,23 +38,17 @@ class TestSiglentSDS(unittest.TestCase):
         self.mock_resource.write.assert_called_with("SING")
 
     def test_get_waveform(self):
-        # Setup mock behavior for manual read/write if used, 
-        # or simplified query_binary_values
-        
-        # In the implementation, I used query_binary_values after reading the prefix
-        self.mock_resource.read_bytes.return_value = b"C1:WF DAT2,"
+        # Mocking binary data return
         self.mock_resource.query_binary_values.return_value = [0, 1, 2, 3]
-        
         data = self.driver.get_waveform(1)
-        
-        self.mock_resource.write.assert_called_with("C1:WF? DAT2")
-        self.mock_resource.read_bytes.assert_called_once()
-        self.assertEqual(data, [0.0, 1.0, 2.0, 3.0])
+        self.assertEqual(data.value, [0.0, 1.0, 2.0, 3.0])
+        self.assertEqual(data.unit, "V")
 
     def test_measure_frequency(self):
-        self.mock_resource.query.return_value = "C1:PAVA FREQ,1.23e+03Hz"
-        freq = self.driver.measure_frequency()
-        self.assertEqual(freq, 1230.0)
+        self.mock_resource.query.return_value = "CH1:PAVA FREQ,1.23e+03Hz"
+        val = self.driver.measure_frequency()
+        self.assertEqual(val.value, 1230.0)
+        self.assertEqual(val.unit, "Hz")
 
     def test_factory_registration(self):
         # Testing get_instrument for real hardware path

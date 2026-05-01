@@ -1,6 +1,9 @@
 from .base import SpectrumAnalyzer, NetworkAnalyzer
+from .registry import register_driver
 from .real import RealDriver
+from ..results import MeasurementResult
 
+@register_driver("SA")
 class KeysightMXA(SpectrumAnalyzer):
     """Driver for Keysight MXA Series Spectrum Analyzers.
 
@@ -12,16 +15,17 @@ class KeysightMXA(SpectrumAnalyzer):
         # Keysight command for Peak Search
         self.inst.write(":CALC:MARK1:MAX") 
 
-    def get_marker_amplitude(self) -> float:
+    def get_marker_amplitude(self) -> MeasurementResult:
         """Queries the amplitude value of Marker 1.
 
         Returns:
-            float: The amplitude value in dBm.
+            MeasurementResult: The amplitude value in dBm.
         """
         # Keysight command to read Y-axis value
         val = self.inst.query(":CALC:MARK1:Y?")
-        return float(val)
+        return MeasurementResult(float(val), "dBm")
 
+@register_driver("NA")
 class KeysightPNA(RealDriver, NetworkAnalyzer):
     """Driver for Keysight PNA Series (e.g., E8363C).
 
@@ -53,18 +57,19 @@ class KeysightPNA(RealDriver, NetworkAnalyzer):
         """
         self.inst.write(f"SENS:SWE:POIN {num_points}")
 
-    def get_trace_data(self, measurement_name: str) -> list[float]:
+    def get_trace_data(self, measurement_name: str) -> MeasurementResult:
         """Selects the measurement and queries the formatted data.
 
         Args:
             measurement_name (str): The name of the measurement (Trace) to select.
 
         Returns:
-            list[float]: The formatted trace data points.
+            MeasurementResult: The formatted trace data points.
         """
         # Select the measurement (Trace)
         self.inst.write(f"CALC:PAR:SEL '{measurement_name}'")
         # Query Formatted Data
         data_str = self.inst.query("CALC:DATA? FDATA")
         # Convert comma-separated string to list of floats
-        return [float(x) for x in data_str.split(',')]
+        data = [float(x) for x in data_str.split(',')]
+        return MeasurementResult(data, "dB")

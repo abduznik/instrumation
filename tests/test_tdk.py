@@ -27,17 +27,19 @@ class TestTDKLambdaZPlus(unittest.TestCase):
         self.mock_inst.query.return_value = "5.001"
         val = self.driver.get_voltage()
         self.mock_inst.query.assert_called_with(":MEAS:VOLT?")
-        self.assertEqual(val, 5.001)
+        self.assertEqual(val.value, 5.001)
+        self.assertEqual(val.unit, "V")
 
     def test_set_current_limit(self):
         self.driver.set_current_limit(1.5)
         self.mock_inst.write.assert_called_with(":CURR 1.5")
 
     def test_get_current(self):
-        self.mock_inst.query.return_value = "0.1"
+        self.mock_inst.query.return_value = "1.234"
         val = self.driver.get_current()
         self.mock_inst.query.assert_called_with(":MEAS:CURR?")
-        self.assertEqual(val, 0.1)
+        self.assertEqual(val.value, 1.234)
+        self.assertEqual(val.unit, "A")
 
     def test_set_output(self):
         self.driver.set_output(True)
