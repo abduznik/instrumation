@@ -2,7 +2,7 @@ import random
 import time
 import math
 import asyncio
-from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope
+from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, SignalGenerator
 from .registry import register_driver
 from ..results import MeasurementResult
 
@@ -275,6 +275,37 @@ class SimulatedOscilloscope(SimulatedBaseDriver, Oscilloscope):
 
     def measure_v_peak_to_peak(self) -> MeasurementResult:
         return MeasurementResult(2.0 + random.gauss(0, 0.1), "Vpp")
+
+@register_driver("SG")
+class SimulatedSignalGenerator(SimulatedBaseDriver, SignalGenerator):
+    def __init__(self, resource, latency=0.01):
+        super().__init__(resource, latency)
+        self.freq = 1e6
+        self.amp = -10.0
+        self.output_enabled = False
+
+    def connect(self):
+        print("[SIM-SG] Connected")
+        self.connected = True
+
+    def disconnect(self):
+        print("[SIM-SG] Disconnected")
+        self.connected = False
+
+    def get_id(self):
+        return "SIM_SG_KEY"
+
+    def set_frequency(self, hz: float):
+        print(f"[SIM-SG] Frequency set to {hz} Hz")
+        self.freq = hz
+
+    def set_amplitude(self, dbm: float):
+        print(f"[SIM-SG] Amplitude set to {dbm} dBm")
+        self.amp = dbm
+
+    def set_output(self, state: bool):
+        print(f"[SIM-SG] Output {'ON' if state else 'OFF'}")
+        self.output_enabled = state
 
 class SimulatedDriver(SimulatedMultimeter):
     pass

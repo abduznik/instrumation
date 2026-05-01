@@ -9,4 +9,5 @@ test_report.csv
 
 .gemini/
 gha-creds-*.json
+programming/
 

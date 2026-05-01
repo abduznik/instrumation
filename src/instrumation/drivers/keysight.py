@@ -1,4 +1,4 @@
-from .base import SpectrumAnalyzer, NetworkAnalyzer
+from .base import SpectrumAnalyzer, NetworkAnalyzer, SignalGenerator
 from .registry import register_driver
 from .real import RealDriver
 from ..results import MeasurementResult
@@ -73,3 +73,16 @@ class KeysightPNA(RealDriver, NetworkAnalyzer):
         # Convert comma-separated string to list of floats
         data = [float(x) for x in data_str.split(',')]
         return MeasurementResult(data, "dB")
+
+@register_driver("SG")
+class KeysightSG(RealDriver, SignalGenerator):
+    """Driver for Keysight Signal Generators (EXG/MXG)."""
+    def set_frequency(self, hz: float):
+        self.inst.write(f":FREQ {hz}")
+
+    def set_amplitude(self, dbm: float):
+        self.inst.write(f":POW {dbm}")
+
+    def set_output(self, state: bool):
+        val = "ON" if state else "OFF"
+        self.inst.write(f":OUTP {val}")
