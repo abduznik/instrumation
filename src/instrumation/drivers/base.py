@@ -66,6 +66,10 @@ class InstrumentDriver(ABC):
         """Sends command, reads response, and checks for errors."""
         raise NotImplementedError()
 
+    def query_binary_values(self, command: str, datatype: str = 'f', is_big_endian: bool = False) -> List[float]:
+        """High-speed binary data transfer."""
+        raise NotImplementedError()
+
     @abstractmethod
     def get_id(self) -> str: pass
 

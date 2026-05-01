@@ -25,10 +25,12 @@ class TestKeysightPNA(unittest.TestCase):
         self.mock_inst.write.assert_called_with("SENS:SWE:POIN 201")
 
     def test_get_trace_data(self):
-        self.mock_inst.query.return_value = "1.0,2.0,3.0"
+        self.mock_inst.query_binary_values.return_value = [1.0, 2.0, 3.0]
         data = self.driver.get_trace_data("MyTrace")
-        self.mock_inst.write.assert_called_with("CALC:PAR:SEL 'MyTrace'")
-        self.mock_inst.query.assert_called_with("CALC:DATA? FDATA")
+        # Verify sequence: Select trace -> Set binary -> Query binary
+        self.mock_inst.write.assert_any_call("CALC:PAR:SEL 'MyTrace'")
+        self.mock_inst.write.assert_any_call("FORM:DATA REAL,32")
+        self.mock_inst.query_binary_values.assert_called_with("CALC:DATA? FDATA", datatype='f', is_big_endian=False)
         self.assertEqual(data.value, [1.0, 2.0, 3.0])
         self.assertEqual(data.unit, "dB")
 

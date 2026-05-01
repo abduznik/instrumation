@@ -31,9 +31,10 @@ class RigolDSA(RealDriver, SpectrumAnalyzer):
         self.safe_send(f":SENS:BAND:VID {hz}")
 
     def get_trace_data(self) -> MeasurementResult:
-        data_str = self.query_ascii(":TRAC? TRACE1")
-        data = [float(x) for x in data_str.split(',')]
-        return MeasurementResult(data, "dBm")
+        # Optimization: Use binary transfer
+        self.write(":FORM:TRAC:DATA REAL")
+        data = self.query_binary_values(":TRAC? TRACE1", datatype='f', is_big_endian=False)
+        return MeasurementResult(list(data), "dBm")
 
     def measure_frequency(self) -> MeasurementResult:
         return MeasurementResult(0.0, "Hz")

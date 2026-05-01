@@ -87,6 +87,7 @@ class RohdeSchwarzSA(RealDriver, SpectrumAnalyzer):
         self.safe_send(f":BAND:VID {self.format_frequency(hz)}")
 
     def get_trace_data(self) -> MeasurementResult:
-        data_str = self.query_ascii(":TRAC? TRACE1")
-        data = [float(x) for x in data_str.split(',')]
-        return MeasurementResult(data, "dBm")
+        # Optimization: Use 32-bit float binary transfer
+        self.write("FORM REAL,32")
+        data = self.query_binary_values(":TRAC? TRACE1", datatype='f', is_big_endian=False)
+        return MeasurementResult(list(data), "dBm")

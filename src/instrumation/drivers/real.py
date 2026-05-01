@@ -69,6 +69,10 @@ class RealDriver(InstrumentDriver):
         self.check_errors()
         return resp
 
+    def query_binary_values(self, command: str, datatype: str = 'f', is_big_endian: bool = False) -> list:
+        if not self.inst: raise ConnectionLost("Not connected.")
+        return self.inst.query_binary_values(command, datatype=datatype, is_big_endian=is_big_endian)
+
     # --- Global Logic & Sync ---
     def clear_status(self):
         self.write("*CLS")

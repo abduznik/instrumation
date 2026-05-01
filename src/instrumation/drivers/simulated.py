@@ -36,6 +36,11 @@ class SimulatedBaseDriver(InstrumentDriver):
     def query_ascii(self, command: str) -> str:
         return self.query(command)
 
+    def query_binary_values(self, command: str, datatype: str = 'f', is_big_endian: bool = False) -> list:
+        print(f"[SIM] Binary Query: {command}")
+        time.sleep(self.latency * 2) # Binary takes a bit longer to simulate transfer
+        return [random.uniform(-100, 0) for _ in range(1001)]
+
     def get_id(self): return "SIM_DRIVER"
     def preset(self, automation_optimized=True): pass
     def clear_status(self): pass

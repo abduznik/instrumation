@@ -19,7 +19,7 @@ class SiglentSDS(RealDriver, Oscilloscope):
         self.write(f"C{channel}:WF? DAT2")
         prefix = f"C{channel}:WF DAT2,"
         self.inst.read_bytes(len(prefix))
-        data = self.inst.query_binary_values("", datatype='b', container=list)
+        data = self.query_binary_values("", datatype='b')
         return MeasurementResult([float(b) for b in data], "V")
 
     def auto_scale(self):

@@ -35,9 +35,10 @@ class KeysightMXA(RealDriver, SpectrumAnalyzer):
         self.safe_send(f":SENS:BAND:VID {hz}")
 
     def get_trace_data(self) -> MeasurementResult:
-        data_str = self.query_ascii(":TRAC? TRACE1")
-        data = [float(x) for x in data_str.split(',')]
-        return MeasurementResult(data, "dBm")
+        # Optimization: Use 32-bit float binary transfer instead of ASCII
+        self.write(":FORM:DATA REAL,32")
+        data = self.query_binary_values(":TRAC? TRACE1", datatype='f', is_big_endian=False)
+        return MeasurementResult(list(data), "dBm")
 
     def measure_frequency(self) -> MeasurementResult: return MeasurementResult(0.0, "Hz")
     def measure_duty_cycle(self) -> MeasurementResult: return MeasurementResult(0.0, "%")
@@ -61,14 +62,14 @@ class KeysightPNA(RealDriver, NetworkAnalyzer):
 
     def get_trace_data(self, measurement_name: str) -> MeasurementResult:
         self.safe_send(f"CALC:PAR:SEL '{measurement_name}'")
-        data_str = self.query_ascii("CALC:DATA? FDATA")
-        data = [float(x) for x in data_str.split(',')]
-        return MeasurementResult(data, "dB")
+        self.write("FORM:DATA REAL,32")
+        data = self.query_binary_values("CALC:DATA? FDATA", datatype='f', is_big_endian=False)
+        return MeasurementResult(list(data), "dB")
 
     def get_complex_trace(self, measurement_name: str) -> MeasurementResult:
         self.safe_send(f"CALC:PAR:SEL '{measurement_name}'")
-        data_str = self.query_ascii("CALC:DATA? SDATA")
-        raw_data = [float(x) for x in data_str.split(',')]
+        self.write("FORM:DATA REAL,32")
+        raw_data = self.query_binary_values("CALC:DATA? SDATA", datatype='f', is_big_endian=False)
         data = [complex(raw_data[i], raw_data[i+1]) for i in range(0, len(raw_data), 2)]
         return MeasurementResult(data, "IQ")
 
