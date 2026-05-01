@@ -75,6 +75,10 @@ nav:
           - MeasurementResult Upgrades: logs/2026-05-01/measurement_result_upgrade.md
           - VNAs & Telemetry: logs/2026-05-01/vna_telemetry_features.md
           - Squashing VNA Bugs: logs/2026-05-01/vna_fixes.md
+      - 2026-04-30:
+          - Golden Master Infrastructure: logs/2026-04-30/golden_master.md
+          - MkDocs Migration: logs/2026-04-30/mkdocs_migration.md
+          - Typed Results: logs/2026-04-30/typed_results.md
   - Contributing: contributing.md
 
 markdown_extensions:

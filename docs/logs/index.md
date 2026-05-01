@@ -12,5 +12,10 @@ A quick look at how we've been building and breaking things. These logs track th
 - [VNAs & Telemetry: New Features](2026-05-01/vna_telemetry_features.md) - VNA aliases and live VFP streaming.
 - [Squashing VNA Bugs](2026-05-01/vna_fixes.md) - Fixing abstract method implementation errors.
 
+## 2026-04-30
+- [Golden Master Infrastructure](2026-04-30/golden_master.md) - Recording and replaying real hardware traffic.
+- [MkDocs-Material Migration](2026-04-30/mkdocs_migration.md) - Professional documentation site for the HAL.
+- [Typed Results & Driver Registration](2026-04-30/typed_results.md) - Standardizing measurement outputs and factory discovery.
+
 ---
 *Keeping the R&D machine running smooth.*
