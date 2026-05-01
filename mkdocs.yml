@@ -53,6 +53,9 @@ nav:
           - Basic Scripting: examples/basic_scripting.md
           - Async Parallelism: examples/async_parallel.md
           - Signal Sequencing: examples/sg_sequencing.md
+          - Robust Error Handling: examples/error_handling.md
+          - VNA Complex Traces: examples/vna_complex.md
+          - Live VFP Dashboard: examples/vfp_dashboard.md
           - Data Analysis & Plotting: examples/plotting_and_data.md
           - Recording to Plot: examples/recording_to_plot.md
   - CLI Tool:
