@@ -31,6 +31,28 @@ class MeasurementResult:
         chan_str = f" [CH {self.channel}]" if self.channel is not None else ""
         return f"{self.value} {self.unit}{chan_str} ({self.status}) @ {self.timestamp.isoformat()}"
 
+    def __format__(self, format_spec):
+        """Allows MeasurementResult to be used in f-strings with float formatting."""
+        if isinstance(self.value, (float, int)):
+            return format(float(self.value), format_spec)
+        return format(str(self.value), format_spec)
+
+    def __float__(self):
+        """Allows direct conversion to float if the value is a scalar."""
+        return float(self.value)
+
+    def __len__(self):
+        """Allows MeasurementResult to be used with len() if the value is a collection."""
+        return len(self.value)
+
+    def __getitem__(self, key):
+        """Allows indexing into the MeasurementResult value."""
+        return self.value[key]
+
+    def __iter__(self):
+        """Allows iterating over the MeasurementResult value."""
+        return iter(self.value)
+
     def to_dict(self) -> Dict[str, Any]:
         """Converts the result to a JSON-serializable dictionary."""
         val = self.value
