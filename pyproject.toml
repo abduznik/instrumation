@@ -29,6 +29,10 @@ test = [
     "pytest",
     "pytest-asyncio",
 ]
+docs = [
+    "mkdocs-material",
+    "mkdocstrings[python]",
+]
 
 [project.scripts]
 instrumation = "instrumation.cli:main"
