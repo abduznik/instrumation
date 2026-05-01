@@ -1,15 +1,13 @@
-# Log: High-Speed Binary Trace Extraction
-**Date**: 2026-05-01
+# Log: Turbo-charging Traces (Binary REAL)
 **Commit**: `95ccc87`
 
 ## Overview
-Optimized trace and waveform extraction by replacing ASCII string parsing with native REAL binary data transfer.
+Parsing 10,001 floats from an ASCII string is just... painful. It's slow, it's CPU-intensive, and it feels like 1995. We finally moved all major drivers (Keysight, R&S, Anritsu, Rigol) to native binary REAL data transfer.
 
-## Technical Changes
-- **Core**: Added `query_binary_values()` to `InstrumentDriver` and implemented it in `RealDriver` via PyVISA.
-- **Drivers**: Updated Keysight, R&S, Anritsu, and Rigol drivers to use binary modes (e.g., `:FORM REAL,32`).
-- **Optimization**: Significant reduction in I/O overhead and CPU cycles for high-resolution traces (up to 10k points).
-- **Verification**: Updated PNA unit tests to mock and verify binary command sequences.
+## Technical Lowdown
+- **PyVISA Magic**: We're now using `query_binary_values()` instead of `query_ascii()`.
+- **Command Overhaul**: Standardized commands like `:FORM REAL,32` and `:FORM:TRAC:DATA REAL` across different brands.
+- **Speed Win**: Data hits your Python script as a ready-to-go list/numpy array without the "comma-split-float-convert" dance.
 
-## Why
-ASCII parsing of 10,001 comma-separated floats is extremely slow and prone to buffer overflows on some interfaces. Binary transfer is the industry standard for production-grade ATE performance.
+## Why it matters
+In high-throughput ATE, every millisecond counts. Moving to binary is the single biggest performance win for SA and VNA trace extraction we've had yet.
