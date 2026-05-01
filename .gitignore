@@ -6,3 +6,7 @@ build/
 dist/
 *.egg-info/venv/
 test_report.csv
+
+.gemini/
+gha-creds-*.json
+
