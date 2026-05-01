@@ -68,6 +68,12 @@ def main():
     parser = argparse.ArgumentParser(prog="instrumation", description="Instrumation CLI - RF Test Station HAL")
     subparsers = parser.add_subparsers(dest="command", help="Command to execute")
 
+    # record
+    record_parser = subparsers.add_parser("record", help="Record SCPI session to a Golden Master file")
+    record_parser.add_argument("address", help="Instrument address")
+    record_parser.add_argument("type", help="Instrument type (DMM, SA, etc.)")
+    record_parser.add_argument("output", help="Output .json file")
+
     # Scan command
     subparsers.add_parser("scan", help="Scan for available instruments")
 
@@ -91,7 +97,35 @@ def main():
 
     args = parser.parse_args()
 
-    if args.command == "scan":
+    if args.command == "record":
+        from .drivers.replay import GoldenMaster, RecordingWrapper
+        master = GoldenMaster(args.output)
+        try:
+            real_instr = get_instrument(args.address, args.type)
+            instr = RecordingWrapper(real_instr, master)
+            
+            print(f"Recording session for {args.address} to {args.output}...")
+            print("Enter SCPI commands (or 'quit' to save and exit):")
+            
+            with real_instr: # Use context manager
+                while True:
+                    cmd = input("> ").strip()
+                    if cmd.lower() in ['quit', 'exit', 'q']:
+                        break
+                    
+                    if cmd.endswith("?"):
+                        res = instr.query(cmd)
+                        print(res)
+                    else:
+                        instr.write(cmd)
+            
+            master.save()
+            print(f"Session saved to {args.output}")
+        except Exception as e:
+            print(f"Error: {e}")
+            sys.exit(1)
+
+    elif args.command == "scan":
         handle_scan(args)
     elif args.command == "measure":
         handle_measure(args)
