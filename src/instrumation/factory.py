@@ -41,6 +41,10 @@ def get_instrument(resource_address: str, driver_type: str):
     # 1. Ensure plugins are loaded
     # (Optional: we could call this once at module level or on demand)
     
+    # Normalize aliases
+    if driver_type.upper() == "VNA":
+        driver_type = "NA"
+    
     drivers = DriverRegistry.get_drivers_by_type(driver_type)
     
     # Check for replay mode (address starts with 'replay://')

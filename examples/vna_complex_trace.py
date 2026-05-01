@@ -7,6 +7,7 @@ def run_vna_example(address="AUTO"):
     """
     print(f"Connecting to VNA at {address}...")
     
+    # Works with both "NA" and "VNA" aliases
     with get_instrument(address, "VNA") as vna:
         print(f"Connected to: {vna.get_id()}")
         
