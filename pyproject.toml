@@ -24,6 +24,12 @@ dependencies = [
     "toml",
 ]
 
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-asyncio",
+]
+
 [project.scripts]
 instrumation = "instrumation.cli:main"
 
