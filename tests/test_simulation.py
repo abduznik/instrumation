@@ -28,8 +28,7 @@ class TestSimulation(unittest.TestCase):
         
         driver.disconnect()
         
-        self.assertIsInstance(voltage, float)
-        self.assertGreater(voltage, 0.0)
+        self.assertGreater(voltage.value, 0.0)
 
     def test_oscilloscope(self):
         """Assert that the simulated oscilloscope returns valid waveforms and measurements."""
@@ -40,7 +39,8 @@ class TestSimulation(unittest.TestCase):
         driver.connect()
         
         # 1. Waveform acquisition
-        waveform = driver.get_waveform(1)
+        waveform_res = driver.get_waveform(1)
+        waveform = waveform_res.value
         self.assertIsInstance(waveform, list)
         self.assertEqual(len(waveform), 1000)
         
@@ -54,12 +54,10 @@ class TestSimulation(unittest.TestCase):
         vpp = driver.measure_v_peak_to_peak()
         
         # Specific assertions for the simulated 1kHz sine wave
-        self.assertIsInstance(freq, float)
-        self.assertAlmostEqual(freq, 1000.0, delta=200.0) # 1kHz +/- noise
+        self.assertAlmostEqual(freq.value, 1000.0, delta=200.0) # 1kHz +/- noise
         
         # Vpp should be around 2.0V based on driver implementation
-        self.assertIsInstance(vpp, float)
-        self.assertAlmostEqual(vpp, 2.0, delta=0.5) 
+        self.assertAlmostEqual(vpp.value, 2.0, delta=0.5) 
         
         driver.disconnect()
 

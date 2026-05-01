@@ -1,7 +1,10 @@
 import random
 import time
 import math
+import asyncio
 from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope
+from .registry import register_driver
+from ..results import MeasurementResult
 
 class SimulatedBaseDriver(InstrumentDriver):
     """Base class for all simulated drivers to provide standard SCPI-like behavior.
@@ -25,6 +28,11 @@ class SimulatedBaseDriver(InstrumentDriver):
         if self.latency > 0:
             time.sleep(self.latency)
 
+    async def _async_delay(self):
+        """Injects an asynchronous delay based on the configured latency."""
+        if self.latency > 0:
+            await asyncio.sleep(self.latency)
+
     def write(self, command: str):
         """Simulates writing a command to the instrument."""
         self._delay()
@@ -43,6 +51,23 @@ class SimulatedBaseDriver(InstrumentDriver):
         print(f"[SIM] Query: {command} -> {result}")
         return result
 
+    def measure_frequency(self) -> MeasurementResult:
+        """Default simulated frequency measurement."""
+        return MeasurementResult(1000.0 + random.gauss(0, 1.0), "Hz")
+
+    def measure_duty_cycle(self) -> MeasurementResult:
+        """Default simulated duty cycle measurement."""
+        return MeasurementResult(50.0 + random.gauss(0, 0.1), "%")
+
+    def measure_v_peak_to_peak(self) -> MeasurementResult:
+        """Default simulated peak-to-peak measurement."""
+        return MeasurementResult(1.0 + random.gauss(0, 0.01), "Vpp")
+
+    # --- Async Support ---
+    # We use the default to_thread implementation from the base class 
+    # to avoid double-delaying in simulation mode.
+
+@register_driver("DMM")
 class SimulatedMultimeter(SimulatedBaseDriver, Multimeter):
     def connect(self):
         print("[SIM-DMM] Connected")
@@ -55,26 +80,32 @@ class SimulatedMultimeter(SimulatedBaseDriver, Multimeter):
     def get_id(self):
         return "SIM_DMM_X1000"
 
-    def measure_voltage(self) -> float:
+    def measure_voltage(self) -> MeasurementResult:
+        self._delay()
         # Simulate measuring a 5V rail with noise
-        return 5.0 + random.gauss(0, 0.01)
+        return MeasurementResult(5.0 + random.gauss(0, 0.01), "V")
 
-    def measure_resistance(self) -> float:
+    def measure_resistance(self) -> MeasurementResult:
+        self._delay()
         # Simulate a 1k resistor with noise
-        return 1000.0 + random.gauss(0, 5.0)
+        return MeasurementResult(1000.0 + random.gauss(0, 5.0), "Ohm")
 
-    def measure_frequency(self) -> float:
+    def measure_frequency(self) -> MeasurementResult:
+        self._delay()
         # Simulate frequency measurement (e.g., 1kHz signal with noise)
-        return 1000.0 + random.gauss(0, 50.0)
+        return MeasurementResult(1000.0 + random.gauss(0, 50.0), "Hz")
 
-    def measure_duty_cycle(self) -> float:
+    def measure_duty_cycle(self) -> MeasurementResult:
+        self._delay()
         # Simulate duty cycle measurement (percentage, 0-100%)
-        return 50.0 + random.gauss(0, 5.0)
+        return MeasurementResult(50.0 + random.gauss(0, 5.0), "%")
 
-    def measure_v_peak_to_peak(self) -> float:
+    def measure_v_peak_to_peak(self) -> MeasurementResult:
+        self._delay()
         # Simulate peak-to-peak voltage measurement
-        return 2.0 + random.gauss(0, 0.1)
+        return MeasurementResult(2.0 + random.gauss(0, 0.1), "Vpp")
 
+@register_driver("PSU")
 class SimulatedPowerSupply(SimulatedBaseDriver, PowerSupply):
     def __init__(self, resource, latency=0.01):
         super().__init__(resource, latency)
@@ -106,12 +137,14 @@ class SimulatedPowerSupply(SimulatedBaseDriver, PowerSupply):
         print(f"[SIM-PSU] Current limit set to {current}A")
         self.current_limit = current
 
-    def get_current(self) -> float:
+    def get_current(self) -> MeasurementResult:
+        self._delay()
         # Simulate load: I = V / R (assume 100 ohm load)
         if self.output_enabled and self.setpoint > 0:
             current = (self.setpoint / 100.0) + random.gauss(0, 0.001)
-            return min(current, self.current_limit)
-        return 0.0
+            val = min(current, self.current_limit)
+            return MeasurementResult(val, "A")
+        return MeasurementResult(0.0, "A")
 
     def set_output(self, state: bool):
         print(f"[SIM-PSU] Output {'ENABLED' if state else 'DISABLED'}")
@@ -120,15 +153,16 @@ class SimulatedPowerSupply(SimulatedBaseDriver, PowerSupply):
     def get_output(self) -> bool:
         return self.output_enabled
 
-    def measure_frequency(self) -> float:
-        return 1000.0 + random.gauss(0, 50.0)
+    def measure_frequency(self) -> MeasurementResult:
+        return MeasurementResult(1000.0 + random.gauss(0, 50.0), "Hz")
 
-    def measure_duty_cycle(self) -> float:
-        return 50.0 + random.gauss(0, 5.0)
+    def measure_duty_cycle(self) -> MeasurementResult:
+        return MeasurementResult(50.0 + random.gauss(0, 5.0), "%")
 
-    def measure_v_peak_to_peak(self) -> float:
-        return 2.0 + random.gauss(0, 0.1)
+    def measure_v_peak_to_peak(self) -> MeasurementResult:
+        return MeasurementResult(2.0 + random.gauss(0, 0.1), "Vpp")
 
+@register_driver("SA")
 class SimulatedSpectrumAnalyzer(SimulatedBaseDriver, SpectrumAnalyzer):
     def connect(self):
         print("[SIM-SA] Connected")
@@ -143,21 +177,23 @@ class SimulatedSpectrumAnalyzer(SimulatedBaseDriver, SpectrumAnalyzer):
 
     def peak_search(self):
         print("[SIM-SA] Searching for peak...")
-        time.sleep(0.2)
+        self._delay() # Use configurable latency
 
-    def get_marker_amplitude(self) -> float:
+    def get_marker_amplitude(self) -> MeasurementResult:
+        self._delay()
         # Simulate a signal around -20 dBm
-        return -20.0 + random.gauss(0, 0.5)
+        return MeasurementResult(-20.0 + random.gauss(0, 0.5), "dBm")
 
-    def measure_frequency(self) -> float:
-        return 1000000000.0 + random.gauss(0, 10000000.0)
+    def measure_frequency(self) -> MeasurementResult:
+        return MeasurementResult(1000000000.0 + random.gauss(0, 10000000.0), "Hz")
 
-    def measure_duty_cycle(self) -> float:
-        return 50.0 + random.gauss(0, 5.0)
+    def measure_duty_cycle(self) -> MeasurementResult:
+        return MeasurementResult(50.0 + random.gauss(0, 5.0), "%")
 
-    def measure_v_peak_to_peak(self) -> float:
-        return 1.0 + random.gauss(0, 0.05)
+    def measure_v_peak_to_peak(self) -> MeasurementResult:
+        return MeasurementResult(1.0 + random.gauss(0, 0.05), "Vpp")
 
+@register_driver("NA")
 class SimulatedNetworkAnalyzer(SimulatedBaseDriver, NetworkAnalyzer):
     def __init__(self, resource, latency=0.01):
         super().__init__(resource, latency)
@@ -188,17 +224,21 @@ class SimulatedNetworkAnalyzer(SimulatedBaseDriver, NetworkAnalyzer):
         print(f"[SIM-VNA] Points set to {num_points}")
         self.points = num_points
 
-    def get_trace_data(self, measurement_name: str) -> list[float]:
+    def get_trace_data(self, measurement_name: str) -> MeasurementResult:
         print(f"[SIM-VNA] Getting trace for {measurement_name}")
         data = []
         for i in range(self.points):
              val = -20 + 10 * math.sin(i / self.points * 3.14) + random.gauss(0, 0.5)
              data.append(val)
-        return data
+        return MeasurementResult(data, "dB")
 
-    def measure_v_peak_to_peak(self) -> float:
-        return 0.0
+    def measure_v_peak_to_peak(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "Vpp")
 
+    async def async_get_trace_data(self, measurement_name: str) -> MeasurementResult:
+        return await asyncio.to_thread(self.get_trace_data, measurement_name)
+
+@register_driver("SCOPE")
 class SimulatedOscilloscope(SimulatedBaseDriver, Oscilloscope):
     def connect(self):
         print("[SIM-SCOPE] Connected")
@@ -220,21 +260,21 @@ class SimulatedOscilloscope(SimulatedBaseDriver, Oscilloscope):
     def single(self):
         print("[SIM-SCOPE] Single Acquisition Triggered")
 
-    def get_waveform(self, channel: int) -> list[float]:
+    def get_waveform(self, channel: int) -> MeasurementResult:
         print(f"[SIM-SCOPE] Getting waveform from CH{channel}")
         # Simulate a 1kHz sine wave sampled at 100kHz (1000 points)
         points = 1000
         data = [math.sin(2 * math.pi * 1000 * (i / 100000)) + random.gauss(0, 0.05) for i in range(points)]
-        return data
+        return MeasurementResult(data, "V")
 
-    def measure_frequency(self) -> float:
-        return 1000.0 + random.gauss(0, 50.0)
+    def measure_frequency(self) -> MeasurementResult:
+        return MeasurementResult(1000.0 + random.gauss(0, 50.0), "Hz")
 
-    def measure_duty_cycle(self) -> float:
-        return 50.0 + random.gauss(0, 5.0)
+    def measure_duty_cycle(self) -> MeasurementResult:
+        return MeasurementResult(50.0 + random.gauss(0, 5.0), "%")
 
-    def measure_v_peak_to_peak(self) -> float:
-        return 2.0 + random.gauss(0, 0.1)
+    def measure_v_peak_to_peak(self) -> MeasurementResult:
+        return MeasurementResult(2.0 + random.gauss(0, 0.1), "Vpp")
 
 class SimulatedDriver(SimulatedMultimeter):
     pass
