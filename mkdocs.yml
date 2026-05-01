@@ -34,9 +34,7 @@ plugins:
   - search
   - mkdocstrings:
       handlers:
-        python:
-          import_source_base: src
-          paths: [src]
+        python: {}
 
 nav:
   - Home: index.md
