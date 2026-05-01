@@ -79,6 +79,10 @@ nav:
           - Golden Master Infrastructure: logs/2026-04-30/golden_master.md
           - MkDocs Migration: logs/2026-04-30/mkdocs_migration.md
           - Typed Results: logs/2026-04-30/typed_results.md
+      - 2026-04-06:
+          - Packaging Modernization: logs/2026-04-06/packaging_modernization.md
+      - 2026-03-23:
+          - DataBroadcaster Launch: logs/2026-03-23/databroadcaster_launch.md
   - Contributing: contributing.md
 
 markdown_extensions:
