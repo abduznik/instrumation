@@ -1,40 +1,23 @@
 from abc import ABC, abstractmethod
+from typing import List, Optional, Union
 import asyncio
 from ..results import MeasurementResult
-from ..exceptions import InstrumentError, InstrumentTimeout, ConnectionLost
+from ..exceptions import InstrumentError, InstrumentTimeout, ConnectionLost, OverloadError, ConfigurationError
 
 class InstrumentDriver(ABC):
-    """Abstract Base Class for Generic Instruments.
-
-    Attributes:
-        resource: The underlying resource object or connection string.
-        connected (bool): Connection status of the instrument.
-    """
-    def __init__(self, resource):
-        """Initializes the InstrumentDriver.
-
-        Args:
-            resource: The resource to connect to.
-        """
+    """Abstract Base Class for all instrument drivers."""
+    def __init__(self, resource: str):
         self.resource = resource
         self.connected = False
 
-    def __enter__(self):
-        """Connects to the instrument when entering the context."""
-        self.connect()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """Disconnects from the instrument when exiting the context."""
-        self.disconnect()
+    @property
+    def resource_address(self) -> str:
+        """Alias for self.resource for backward compatibility."""
+        return self.resource
 
     @abstractmethod
     def connect(self):
-        """Establishes connection to the instrument.
-        
-        Raises:
-            ConnectionLost: If the connection fails.
-        """
+        """Establishes a connection to the instrument."""
         pass
 
     @abstractmethod
@@ -42,209 +25,147 @@ class InstrumentDriver(ABC):
         """Closes the connection to the instrument."""
         pass
 
+    def close(self):
+        """Alias for disconnect()."""
+        self.disconnect()
+
+    def write(self, command: str):
+        """Sends a SCPI command to the instrument."""
+        raise NotImplementedError(f"write() not implemented in {self.__class__.__name__}")
+
+    def query(self, command: str) -> str:
+        """Sends a SCPI command and returns the response."""
+        raise NotImplementedError(f"query() not implemented in {self.__class__.__name__}")
+
     @abstractmethod
     def get_id(self) -> str:
-        """Returns the identification string of the instrument.
-
-        Returns:
-            str: The identification string.
-
-        Raises:
-            InstrumentError: If communication fails.
-        """
+        """Returns the identification string of the instrument."""
         pass
 
+    # Basic measurements available on most instruments
     @abstractmethod
     def measure_frequency(self) -> MeasurementResult:
-        """Measures the frequency of the input signal.
-
-        Returns:
-            MeasurementResult: The measured frequency.
-        """
+        """Measures frequency."""
         pass
 
     @abstractmethod
     def measure_duty_cycle(self) -> MeasurementResult:
-        """Measures the duty cycle of the input signal as a percentage.
-
-        Returns:
-            MeasurementResult: The duty cycle.
-        """
+        """Measures duty cycle."""
         pass
 
     @abstractmethod
     def measure_v_peak_to_peak(self) -> MeasurementResult:
-        """Measures the peak-to-peak voltage of the input signal.
-
-        Returns:
-            MeasurementResult: The peak-to-peak voltage.
-        """
+        """Measures peak-to-peak voltage."""
         pass
 
-    # --- Async Support ---
+    def __enter__(self):
+        self.connect()
+        return self
 
-    async def async_measure_frequency(self) -> MeasurementResult:
-        """Asynchronously measures the frequency."""
-        return await asyncio.to_thread(self.measure_frequency)
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.disconnect()
 
-    async def async_measure_duty_cycle(self) -> MeasurementResult:
-        """Asynchronously measures the duty cycle."""
-        return await asyncio.to_thread(self.measure_duty_cycle)
-
-    async def async_measure_v_peak_to_peak(self) -> MeasurementResult:
-        """Asynchronously measures the peak-to-peak voltage."""
-        return await asyncio.to_thread(self.measure_v_peak_to_peak)
+    def __getattr__(self, name: str):
+        """Dynamic async wrapper for any method starting with 'async_'."""
+        if name.startswith("async_"):
+            real_method_name = name[6:]
+            if hasattr(self, real_method_name):
+                method = getattr(self, real_method_name)
+                if callable(method):
+                    return lambda *args, **kwargs: asyncio.to_thread(method, *args, **kwargs)
+        
+        raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
 
 class Multimeter(InstrumentDriver):
-    """Abstract Base Class for Digital Multimeters."""
+    """Interface for Digital Multimeters (DMM)."""
     @abstractmethod
     def measure_voltage(self) -> MeasurementResult:
-        """Measures the DC voltage.
-
-        Returns:
-            MeasurementResult: The measured voltage.
-        """
+        """Measures DC Voltage."""
         pass
-    
+
     @abstractmethod
     def measure_resistance(self) -> MeasurementResult:
-        """Measures the resistance.
-
-        Returns:
-            MeasurementResult: The measured resistance.
-        """
+        """Measures Resistance."""
         pass
-
-    async def async_measure_voltage(self) -> MeasurementResult:
-        """Asynchronously measures the DC voltage."""
-        return await asyncio.to_thread(self.measure_voltage)
-
-    async def async_measure_resistance(self) -> MeasurementResult:
-        """Asynchronously measures the resistance."""
-        return await asyncio.to_thread(self.measure_resistance)
 
 class PowerSupply(InstrumentDriver):
-    """Abstract Base Class for DC Power Supplies."""
+    """Interface for Programmable Power Supplies (PSU)."""
     @abstractmethod
     def set_voltage(self, voltage: float):
-        """Sets the output voltage.
-
-        Args:
-            voltage (float): The voltage level to set in Volts.
-        """
+        """Sets the output voltage level."""
         pass
-    
+
+    @abstractmethod
+    def get_voltage(self) -> float:
+        """Reads the currently set output voltage."""
+        pass
+
+    @abstractmethod
+    def set_current_limit(self, current: float):
+        """Sets the output current limit."""
+        pass
+
     @abstractmethod
     def get_current(self) -> MeasurementResult:
-        """Reads the current output current.
-
-        Returns:
-            MeasurementResult: The measured current.
-        """
+        """Measures the actual output current."""
         pass
 
-    async def async_get_current(self) -> MeasurementResult:
-        """Asynchronously reads the current output current."""
-        return await asyncio.to_thread(self.get_current)
+    @abstractmethod
+    def set_output(self, state: bool):
+        """Enables or disables the output."""
+        pass
+
+    @abstractmethod
+    def get_output(self) -> bool:
+        """Checks if the output is enabled."""
+        pass
 
 class SpectrumAnalyzer(InstrumentDriver):
-    """Abstract Base Class for Spectrum Analyzers."""
+    """Interface for Spectrum Analyzers (SA)."""
     @abstractmethod
     def peak_search(self):
-        """Moves marker to the highest peak."""
+        """Moves a marker to the highest peak."""
         pass
 
     @abstractmethod
     def get_marker_amplitude(self) -> MeasurementResult:
-        """Returns the amplitude at the current marker.
-
-        Returns:
-            MeasurementResult: The amplitude value.
-        """
+        """Returns the amplitude at the current marker."""
         pass
 
-    async def async_get_marker_amplitude(self) -> MeasurementResult:
-        """Asynchronously returns the amplitude at the current marker."""
-        return await asyncio.to_thread(self.get_marker_amplitude)
-
-    async def async_get_peak_value(self) -> MeasurementResult:
-        """Asynchronously performs peak search and returns amplitude."""
-        # Note: We can't use to_thread for the whole thing easily if we want to yield
-        # but for simple wrapping it works.
-        return await asyncio.to_thread(self.get_peak_value)
-
     def get_peak_value(self) -> MeasurementResult:
-        """Helper: Performs peak search and returns amplitude.
-
-        Returns:
-            MeasurementResult: The peak amplitude value.
-        """
+        """Combined Peak Search + Amplitude measurement."""
         self.peak_search()
         return self.get_marker_amplitude()
 
 class NetworkAnalyzer(InstrumentDriver):
-    """Abstract Base Class for Vector Network Analyzers."""
+    """Interface for Vector Network Analyzers (VNA)."""
     @abstractmethod
     def set_start_frequency(self, freq_hz: float):
-        """Sets the start frequency for the sweep.
-
-        Args:
-            freq_hz (float): The start frequency in Hz.
-        """
+        """Sets the sweep start frequency."""
         pass
 
     @abstractmethod
     def set_stop_frequency(self, freq_hz: float):
-        """Sets the stop frequency for the sweep.
-
-        Args:
-            freq_hz (float): The stop frequency in Hz.
-        """
+        """Sets the sweep stop frequency."""
         pass
 
     @abstractmethod
     def set_points(self, num_points: int):
-        """Sets the number of points for the sweep.
-
-        Args:
-            num_points (int): The number of measurement points.
-        """
+        """Sets the number of data points."""
         pass
 
     @abstractmethod
     def get_trace_data(self, measurement_name: str) -> MeasurementResult:
-        """Returns the formatted data trace (e.g., Magnitude in dB).
-
-        Args:
-            measurement_name (str): The name of the measurement/trace to retrieve (e.g., 'S11', 'S21').
-
-        Returns:
-            MeasurementResult: The trace data points.
-        """
+        """Acquires formatted trace data."""
         pass
 
     @abstractmethod
     def get_complex_trace(self, measurement_name: str) -> MeasurementResult:
-        """Returns the complex (I/Q) data trace.
-
-        Args:
-            measurement_name (str): The name of the measurement/trace.
-
-        Returns:
-            MeasurementResult: The trace as a list of complex numbers.
-        """
+        """Acquires complex (I/Q) trace data."""
         pass
 
-    async def async_get_complex_trace(self, measurement_name: str) -> MeasurementResult:
-        """Asynchronously returns the complex (I/Q) data trace."""
-        return await asyncio.to_thread(self.get_complex_trace, measurement_name)
-
-    async def async_get_trace_data(self, measurement_name: str) -> MeasurementResult:
-        """Asynchronously returns the formatted data trace."""
-        return await asyncio.to_thread(self.get_trace_data, measurement_name)
-
 class Oscilloscope(InstrumentDriver):
-    """Abstract Base Class for Oscilloscopes."""
+    """Interface for Digital Storage Oscilloscopes (DSO)."""
     @abstractmethod
     def run(self):
         """Starts acquisition."""
@@ -257,68 +178,34 @@ class Oscilloscope(InstrumentDriver):
 
     @abstractmethod
     def single(self):
-        """Sets the oscilloscope to single acquisition mode."""
+        """Triggers a single acquisition."""
         pass
 
     @abstractmethod
     def get_waveform(self, channel: int) -> MeasurementResult:
-        """Returns the waveform data for the specified channel.
-
-        Args:
-            channel (int): The channel number to read from.
-
-        Returns:
-            MeasurementResult: The waveform data points (as a list).
-        """
+        """Acquires the time-domain waveform."""
         pass
-
-    async def async_get_waveform(self, channel: int) -> MeasurementResult:
-        """Asynchronously returns the waveform data for the specified channel."""
-        return await asyncio.to_thread(self.get_waveform, channel)
 
 class MixedSignalOscilloscope(Oscilloscope):
-    """Abstract Base Class for Mixed Signal Oscilloscopes (MSO)."""
+    """Interface for Oscilloscopes with digital logic channels."""
     @abstractmethod
     def get_digital_waveform(self, pod: int) -> MeasurementResult:
-        """Returns the digital waveform data for the specified pod.
-
-        Args:
-            pod (int): The digital pod index.
-
-        Returns:
-            MeasurementResult: The digital data points.
-        """
+        """Acquires digital logic data."""
         pass
 
-    async def async_get_digital_waveform(self, pod: int) -> MeasurementResult:
-        """Asynchronously returns the digital waveform data."""
-        return await asyncio.to_thread(self.get_digital_waveform, pod)
-
 class SignalGenerator(InstrumentDriver):
-    """Abstract Base Class for Signal Generators."""
+    """Interface for RF Signal Generators (SG)."""
     @abstractmethod
     def set_frequency(self, hz: float):
-        """Sets the output frequency.
-
-        Args:
-            hz (float): The frequency level to set in Hz.
-        """
+        """Sets the output carrier frequency."""
         pass
 
     @abstractmethod
     def set_amplitude(self, dbm: float):
-        """Sets the output amplitude.
-
-        Args:
-            dbm (float): The amplitude level to set in dBm.
-        """
+        """Sets the output amplitude level."""
         pass
 
     @abstractmethod
     def set_output(self, state: bool):
-        """Enables or disables the signal output.
-
-        Args:
-            state (bool): True to enable, False to disable.
-        """
+        """Enables or disables the RF output."""
         pass
