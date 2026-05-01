@@ -1,3 +1,4 @@
+import os
 import matplotlib.pyplot as plt
 from instrumation.factory import get_instrument
 
@@ -7,16 +8,17 @@ def generate_report():
     Matches docs/examples/recording_to_plot.md
     """
     # Use the replay protocol - no hardware needed!
-    # To run this, you first need a recording file.
-    # instrumation record "ADDRESS" DMM lab_data.json
-    address = "replay://lab_data.json"
+    # Look for the data file in the same directory as this script
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    data_file = os.path.join(current_dir, "lab_data.json")
+    address = f"replay://{data_file}"
     
     try:
         with get_instrument(address, "DMM") as dmm:
             results = []
             
             # This will pull the exact values you recorded
-            print(f"Replaying data from: {address}")
+            print(f"Replaying data from: {data_file}")
             for _ in range(10):
                 res = dmm.measure_voltage()
                 results.append(res.value)
@@ -29,7 +31,7 @@ def generate_report():
             print("Report generated successfully from recorded data.")
             
     except FileNotFoundError:
-        print("Error: lab_data.json not found. Run the recording command first.")
+        print(f"Error: {data_file} not found. Run the recording command first.")
     except Exception as e:
         print(f"An error occurred: {e}")
 

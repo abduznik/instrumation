@@ -23,6 +23,12 @@ class UUTHandler:
         self.inst = VisaDriver(visa_address)
         print(f"Connected to UUT System on {serial_port} & {visa_address}")
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
     def mes_voltage(self, port_number):
         """User command: Measures voltage on a specific UUT port.
 
@@ -48,6 +54,10 @@ class UUTHandler:
             return float(val_str)
         except ValueError:
             return 0.0
+
+    def send_command(self, cmd: bytes):
+        """Sends a raw serial command to the UUT."""
+        self.box.send_command(cmd)
 
     def close(self):
         """Closes connections to both the box and the instrument."""
