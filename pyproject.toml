@@ -24,6 +24,9 @@ dependencies = [
     "toml",
 ]
 
+[project.scripts]
+instrumation = "instrumation.cli:main"
+
 [project.urls]
 "Homepage" = "https://github.com/abduznik/instrumation"
 "Repository" = "https://github.com/abduznik/instrumation"
