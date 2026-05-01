@@ -1,5 +1,6 @@
 import pyvisa
 from .base import InstrumentDriver, Multimeter
+from ..results import MeasurementResult
 
 class RealDriver(InstrumentDriver):
     """
@@ -31,25 +32,25 @@ class RealDriver(InstrumentDriver):
         return "Not Connected"
 
     # Support legacy measure_voltage for backward compatibility
-    def measure_voltage(self, channel=1) -> float:
+    def measure_voltage(self, channel=1) -> MeasurementResult:
         if self.inst:
-             return float(self.inst.query(f"MEAS:VOLT:DC? (@{channel})"))
-        return 0.0
+             return MeasurementResult(float(self.inst.query(f"MEAS:VOLT:DC? (@{channel})")), "V")
+        return MeasurementResult(0.0, "V")
 
-    def measure_frequency(self) -> float:
+    def measure_frequency(self) -> MeasurementResult:
         if self.inst:
             # SCPI command for frequency measurement
-            return float(self.inst.query("MEAS:FREQ?"))
-        return 0.0
+            return MeasurementResult(float(self.inst.query("MEAS:FREQ?")), "Hz")
+        return MeasurementResult(0.0, "Hz")
 
-    def measure_duty_cycle(self) -> float:
+    def measure_duty_cycle(self) -> MeasurementResult:
         if self.inst:
             # SCPI command for duty cycle measurement
-            return float(self.inst.query("MEAS:DUTY?"))
-        return 0.0
+            return MeasurementResult(float(self.inst.query("MEAS:DUTY?")), "%")
+        return MeasurementResult(0.0, "%")
 
-    def measure_v_peak_to_peak(self) -> float:
+    def measure_v_peak_to_peak(self) -> MeasurementResult:
         if self.inst:
             # SCPI command for peak-to-peak voltage measurement
-            return float(self.inst.query("MEAS:VPP?"))
-        return 0.0
+            return MeasurementResult(float(self.inst.query("MEAS:VPP?")), "Vpp")
+        return MeasurementResult(0.0, "Vpp")

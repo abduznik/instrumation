@@ -1,5 +1,8 @@
 from .base import SpectrumAnalyzer
+from .registry import register_driver
+from ..results import MeasurementResult
 
+@register_driver("SA")
 class RigolDSA(SpectrumAnalyzer):
     """Driver for Rigol DSA Series Spectrum Analyzers.
 
@@ -10,12 +13,12 @@ class RigolDSA(SpectrumAnalyzer):
         # Rigol uses a slightly different syntax sometimes
         self.inst.write(":CALC:MARK:MAX") 
 
-    def get_marker_amplitude(self) -> float:
+    def get_marker_amplitude(self) -> MeasurementResult:
         """Queries the amplitude of the current marker.
 
         Returns:
-            float: The amplitude value in dBm.
+            MeasurementResult: The amplitude value in dBm.
         """
         # Rigol reading command
         val = self.inst.query(":CALC:MARK:Y?") 
-        return float(val)
+        return MeasurementResult(float(val), "dBm")

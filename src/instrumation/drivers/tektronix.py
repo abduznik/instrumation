@@ -1,5 +1,8 @@
 from .base import Oscilloscope
+from .registry import register_driver
+from ..results import MeasurementResult
 
+@register_driver("SCOPE")
 class TektronixTDS(Oscilloscope):
     def connect(self):
         # Assuming resource is a pyvisa Resource object
@@ -35,10 +38,10 @@ class TektronixTDS(Oscilloscope):
             self.resource.write(":ACQUIRE:STOPAFTER SEQUENCE")
             self.resource.write(":ACQUIRE:STATE ON")
 
-    def get_waveform(self, channel: int) -> list[float]:
+    def get_waveform(self, channel: int) -> MeasurementResult:
         """Returns the waveform data for the specified channel."""
         if not self.resource:
-            return []
+            return MeasurementResult([], "V")
 
         # Set source
         self.resource.write(f":DATA:SOURCE CH{channel}")
@@ -55,22 +58,23 @@ class TektronixTDS(Oscilloscope):
         
         try:
             # Parse CSV string to list of floats
-            return [float(x) for x in raw_data.split(',')]
+            data = [float(x) for x in raw_data.split(',')]
+            return MeasurementResult(data, "V")
         except ValueError:
             print(f"Error parsing waveform data: {raw_data[:20]}...")
-            return []
+            return MeasurementResult([], "V")
 
     # Implement other abstract methods from InstrumentDriver
-    def measure_frequency(self) -> float:
+    def measure_frequency(self) -> MeasurementResult:
         # Placeholder or use generic MEAS command
         if self.resource:
-             return float(self.resource.query("MEASU:IMM:VAL?"))
-        return 0.0
+             return MeasurementResult(float(self.resource.query("MEASU:IMM:VAL?")), "Hz")
+        return MeasurementResult(0.0, "Hz")
 
-    def measure_duty_cycle(self) -> float:
+    def measure_duty_cycle(self) -> MeasurementResult:
          # Placeholder
-         return 0.0
+         return MeasurementResult(0.0, "%")
 
-    def measure_v_peak_to_peak(self) -> float:
+    def measure_v_peak_to_peak(self) -> MeasurementResult:
          # Placeholder
-         return 0.0
+         return MeasurementResult(0.0, "Vpp")

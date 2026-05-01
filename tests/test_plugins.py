@@ -15,7 +15,7 @@ from instrumation.drivers.base import Multimeter
 from instrumation.drivers.registry import register_driver
 from instrumation.results import MeasurementResult
 
-@register_driver("DMM")
+@register_driver("PLUGIN_DMM")
 class MyPluginDMM(Multimeter):
     def __init__(self, resource):
         super().__init__(resource)
@@ -37,7 +37,7 @@ class MyPluginDMM(Multimeter):
     # In real mode (not SIM), our factory should find this driver
     os.environ["INSTRUMATION_MODE"] = "REAL"
     try:
-        instr = get_instrument("DUMMY", "DMM")
+        instr = get_instrument("DUMMY", "PLUGIN_DMM")
         assert instr.__class__.__name__ == "MyPluginDMM"
         assert instr.get_id() == "MY_PLUGIN_DMM"
         assert instr.measure_voltage().value == 123.45
@@ -56,11 +56,13 @@ from instrumation.drivers.simulated import SimulatedBaseDriver
 from instrumation.drivers.base import Multimeter
 from instrumation.drivers.registry import register_driver
 
-@register_driver("DMM")
+@register_driver("SIM_PLUGIN_DMM")
 class SimulatedPluginDMM(SimulatedBaseDriver, Multimeter):
     def get_id(self): return "SIM_PLUGIN_DMM"
     def connect(self): self.connected = True
     def disconnect(self): self.connected = False
+    def measure_voltage(self): return MeasurementResult(0, "V")
+    def measure_resistance(self): return MeasurementResult(0, "Ohm")
 """
     plugin_file = plugin_dir / "my_sim_plugin.py"
     plugin_file.write_text(plugin_content)
@@ -68,12 +70,8 @@ class SimulatedPluginDMM(SimulatedBaseDriver, Multimeter):
     load_plugins(str(plugin_dir))
     
     os.environ["INSTRUMATION_MODE"] = "SIM"
-    instr = get_instrument("DUMMY", "DMM")
-    # Note: Depending on registration order, it might return the standard one or the plugin one.
-    # But since we added the plugin last, and get_instrument returns the first one it finds,
-    # it might still return the standard one unless we specifically look for it.
-    # Actually, registry adds to a list.
+    instr = get_instrument("DUMMY", "SIM_PLUGIN_DMM")
     
     from instrumation.drivers.registry import DriverRegistry
-    drivers = DriverRegistry.get_drivers_by_type("DMM")
+    drivers = DriverRegistry.get_drivers_by_type("SIM_PLUGIN_DMM")
     assert any(d.__name__ == "SimulatedPluginDMM" for d in drivers)
