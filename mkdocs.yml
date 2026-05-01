@@ -46,6 +46,7 @@ nav:
       - Simulation (Digital Twins): simulation.md
       - Asynchronous Measurements: async.md
       - Golden Master (Record/Replay): golden_master.md
+      - Command Line Interface: cli.md
   - API Reference: api.md
   - Contributing: contributing.md
 
