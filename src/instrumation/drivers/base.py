@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import asyncio
 from ..results import MeasurementResult
+from ..exceptions import InstrumentError, InstrumentTimeout, ConnectionLost
 
 class InstrumentDriver(ABC):
     """Abstract Base Class for Generic Instruments.
@@ -29,7 +30,11 @@ class InstrumentDriver(ABC):
 
     @abstractmethod
     def connect(self):
-        """Establishes connection to the instrument."""
+        """Establishes connection to the instrument.
+        
+        Raises:
+            ConnectionLost: If the connection fails.
+        """
         pass
 
     @abstractmethod
@@ -43,6 +48,9 @@ class InstrumentDriver(ABC):
 
         Returns:
             str: The identification string.
+
+        Raises:
+            InstrumentError: If communication fails.
         """
         pass
 
@@ -205,15 +213,31 @@ class NetworkAnalyzer(InstrumentDriver):
 
     @abstractmethod
     def get_trace_data(self, measurement_name: str) -> MeasurementResult:
-        """Returns the formatted data trace.
+        """Returns the formatted data trace (e.g., Magnitude in dB).
 
         Args:
-            measurement_name (str): The name of the measurement/trace to retrieve.
+            measurement_name (str): The name of the measurement/trace to retrieve (e.g., 'S11', 'S21').
 
         Returns:
-            MeasurementResult: The trace data points (as a list).
+            MeasurementResult: The trace data points.
         """
         pass
+
+    @abstractmethod
+    def get_complex_trace(self, measurement_name: str) -> MeasurementResult:
+        """Returns the complex (I/Q) data trace.
+
+        Args:
+            measurement_name (str): The name of the measurement/trace.
+
+        Returns:
+            MeasurementResult: The trace as a list of complex numbers.
+        """
+        pass
+
+    async def async_get_complex_trace(self, measurement_name: str) -> MeasurementResult:
+        """Asynchronously returns the complex (I/Q) data trace."""
+        return await asyncio.to_thread(self.get_complex_trace, measurement_name)
 
     async def async_get_trace_data(self, measurement_name: str) -> MeasurementResult:
         """Asynchronously returns the formatted data trace."""
@@ -251,6 +275,24 @@ class Oscilloscope(InstrumentDriver):
     async def async_get_waveform(self, channel: int) -> MeasurementResult:
         """Asynchronously returns the waveform data for the specified channel."""
         return await asyncio.to_thread(self.get_waveform, channel)
+
+class MixedSignalOscilloscope(Oscilloscope):
+    """Abstract Base Class for Mixed Signal Oscilloscopes (MSO)."""
+    @abstractmethod
+    def get_digital_waveform(self, pod: int) -> MeasurementResult:
+        """Returns the digital waveform data for the specified pod.
+
+        Args:
+            pod (int): The digital pod index.
+
+        Returns:
+            MeasurementResult: The digital data points.
+        """
+        pass
+
+    async def async_get_digital_waveform(self, pod: int) -> MeasurementResult:
+        """Asynchronously returns the digital waveform data."""
+        return await asyncio.to_thread(self.get_digital_waveform, pod)
 
 class SignalGenerator(InstrumentDriver):
     """Abstract Base Class for Signal Generators."""

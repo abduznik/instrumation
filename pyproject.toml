@@ -22,6 +22,8 @@ dependencies = [
     "pyvisa",
     "pyserial",
     "toml",
+    "numpy",
+    "websockets",
 ]
 
 [project.optional-dependencies]

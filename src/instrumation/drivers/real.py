@@ -1,6 +1,7 @@
 import pyvisa
 from .base import InstrumentDriver, Multimeter
 from ..results import MeasurementResult
+from ..exceptions import ConnectionLost, InstrumentTimeout, InstrumentError
 
 class RealDriver(InstrumentDriver):
     """
@@ -18,7 +19,7 @@ class RealDriver(InstrumentDriver):
             self.connected = True
             print(f"Connected to {self.resource}")
         except Exception as e:
-            raise ConnectionError(f"Failed to connect to {self.resource}: {e}")
+            raise ConnectionLost(f"Failed to connect to {self.resource}: {e}")
 
     def disconnect(self):
         if self.inst:
@@ -26,31 +27,53 @@ class RealDriver(InstrumentDriver):
             self.rm.close()
             self.connected = False
 
+    def _handle_visa_error(self, e: pyvisa.VisaIOError):
+        """Maps pyvisa errors to unified Instrumation exceptions."""
+        from pyvisa import constants
+        if e.error_code == constants.StatusCode.error_timeout:
+            raise InstrumentTimeout(f"Instrument timeout: {e}")
+        elif e.error_code in [constants.StatusCode.error_connection_lost, constants.StatusCode.error_inv_object]:
+            raise ConnectionLost(f"Connection lost: {e}")
+        else:
+            raise InstrumentError(f"Instrument communication error: {e}")
+
     def get_id(self) -> str:
-        if self.inst:
+        if not self.inst:
+             raise ConnectionLost("Not connected to instrument.")
+        try:
             return self.inst.query("*IDN?").strip()
-        return "Not Connected"
+        except pyvisa.VisaIOError as e:
+            self._handle_visa_error(e)
 
     # Support legacy measure_voltage for backward compatibility
     def measure_voltage(self, channel=1) -> MeasurementResult:
-        if self.inst:
+        if not self.inst:
+             raise ConnectionLost("Not connected to instrument.")
+        try:
              return MeasurementResult(float(self.inst.query(f"MEAS:VOLT:DC? (@{channel})")), "V")
-        return MeasurementResult(0.0, "V")
+        except pyvisa.VisaIOError as e:
+            self._handle_visa_error(e)
 
     def measure_frequency(self) -> MeasurementResult:
-        if self.inst:
-            # SCPI command for frequency measurement
+        if not self.inst:
+             raise ConnectionLost("Not connected to instrument.")
+        try:
             return MeasurementResult(float(self.inst.query("MEAS:FREQ?")), "Hz")
-        return MeasurementResult(0.0, "Hz")
+        except pyvisa.VisaIOError as e:
+            self._handle_visa_error(e)
 
     def measure_duty_cycle(self) -> MeasurementResult:
-        if self.inst:
-            # SCPI command for duty cycle measurement
+        if not self.inst:
+             raise ConnectionLost("Not connected to instrument.")
+        try:
             return MeasurementResult(float(self.inst.query("MEAS:DUTY?")), "%")
-        return MeasurementResult(0.0, "%")
+        except pyvisa.VisaIOError as e:
+            self._handle_visa_error(e)
 
     def measure_v_peak_to_peak(self) -> MeasurementResult:
-        if self.inst:
-            # SCPI command for peak-to-peak voltage measurement
+        if not self.inst:
+             raise ConnectionLost("Not connected to instrument.")
+        try:
             return MeasurementResult(float(self.inst.query("MEAS:VPP?")), "Vpp")
-        return MeasurementResult(0.0, "Vpp")
+        except pyvisa.VisaIOError as e:
+            self._handle_visa_error(e)
