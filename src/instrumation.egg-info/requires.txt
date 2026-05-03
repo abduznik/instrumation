@@ -1,6 +1,8 @@
 pyvisa
 pyserial
 toml
+numpy
+websockets
 
 [docs]
 mkdocs-material
