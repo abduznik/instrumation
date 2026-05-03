@@ -166,3 +166,69 @@ class KeysightSG(RealDriver, SignalGenerator):
     def measure_frequency(self) -> MeasurementResult: return MeasurementResult(0.0, "Hz")
     def measure_duty_cycle(self) -> MeasurementResult: return MeasurementResult(0.0, "%")
     def measure_v_peak_to_peak(self) -> MeasurementResult: return MeasurementResult(0.0, "V")
+@register_driver("COMBO_VNA_SA")
+class KeysightFieldFox(RealDriver, SpectrumAnalyzer, NetworkAnalyzer):
+    """
+    Driver for Keysight FieldFox N99xx Series.
+    Multi-mode instrument - SA and NA modes share this driver.
+    Uses automatic mode-switching via :INST:SEL.
+    """
+
+    MODES = {"SA": "SA", "VNA": "NA", "CAT": "CAT", "PM": "POW"}
+
+    def _set_mode(self, mode_key: str):
+        target = self.MODES.get(mode_key.upper(), mode_key)
+        current = self.query(":INST:SEL?").strip().strip('"')
+        if current != target:
+            self.write(f":INST:SEL {target}")
+            self.wait_ready()
+
+    def preset(self, automation_optimized: bool = True):
+        self.write("*RST")
+        self.wait_ready()
+
+    # SA Interface
+    def set_center_freq(self, hz: float):
+        self._set_mode("SA")
+        self.write(f":SENS:FREQ:CENT {hz}")
+
+    def get_center_freq(self) -> float:
+        self._set_mode("SA")
+        return float(self.query(":SENS:FREQ:CENT?"))
+
+    def set_span(self, hz: float):
+        self._set_mode("SA")
+        self.write(f":SENS:FREQ:SPAN {hz}")
+
+    def get_span(self) -> float:
+        self._set_mode("SA")
+        return float(self.query(":SENS:FREQ:SPAN?"))
+
+    def get_trace_data(self, measurement_name: str = "TRACE1") -> MeasurementResult:
+        # Check current mode to decide which tree to use
+        current_mode = self.query(":INST:SEL?").strip().strip('"')
+        
+        if current_mode == "SA":
+            self.write(":FORM:DATA REAL,32")
+            data = self.query_binary_values(":TRAC? TRACE1", datatype='f', is_big_endian=False)
+            return MeasurementResult(list(data), "dBm")
+        else:
+            # PNA/VNA mode fetch
+            self.write("FORM:DATA REAL,32")
+            data = self.query_binary_values("CALC:DATA? FDATA", datatype='f', is_big_endian=False)
+            return MeasurementResult(list(data), "dB")
+
+    # VNA Interface
+    def set_start_frequency(self, freq_hz: float):
+        self._set_mode("VNA")
+        self.write(f":SENS:FREQ:STAR {freq_hz}")
+
+    def get_complex_trace(self, measurement_name: str = "S11") -> MeasurementResult:
+        self._set_mode("VNA")
+        self.write(":FORM:DATA REAL,32")
+        raw_data = self.query_binary_values("CALC:DATA? SDATA", datatype='f', is_big_endian=False)
+        data = [complex(raw_data[i], raw_data[i+1]) for i in range(0, len(raw_data), 2)]
+        return MeasurementResult(data, "IQ")
+
+    def shutdown_safety(self):
+        self.sync_config()

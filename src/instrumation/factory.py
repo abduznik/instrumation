@@ -96,10 +96,29 @@ def get_instrument(resource_address: str, driver_type: str):
         raise ValueError(f"No simulated driver found for type: {driver_type}")
     else:
         # Real Hardware Logic
-        # For now, we still have some hardcoded logic for specific brands if needed,
-        # but the registry should handle most of it.
-        # If there are multiple drivers for a type, we might need a way to select.
-        # For now, we'll return the first 'real' (non-simulated) driver.
+        # 1. First, establish a basic connection to identify the instrument
+        try:
+            base_dev = RealDriver(resource_address)
+            idn = base_dev.get_id().upper()
+            base_dev.close() # Close temp connection
+        except Exception as e:
+            logger.warning(f"Could not query *IDN? from {resource_address}: {e}")
+            idn = ""
+
+        # 2. Smart Routing based on IDN
+        if "ANRITSU" in idn:
+            if "MS203" in idn: # MS2035B/MS2034B
+                from .drivers.anritsu import AnritsuMS2035B
+                return AnritsuMS2035B(resource_address)
+            if "MS465" in idn: # ShockLine
+                from .drivers.anritsu import AnritsuShockLineVNA
+                return AnritsuShockLineVNA(resource_address)
+        
+        if "FIELD FOX" in idn or "N99" in idn: # N99xx Series
+            from .drivers.keysight import KeysightFieldFox
+            return KeysightFieldFox(resource_address)
+
+        # 3. Fallback to registry-based selection
         for drv_cls in drivers:
             if "Simulated" not in drv_cls.__name__:
                 return drv_cls(resource_address)

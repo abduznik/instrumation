@@ -4,6 +4,7 @@ A quick look at how we've been building and breaking things. These logs track th
 
 ## 2026-05-03
 - [v0.2.0 Release & RF Validation](2026-05-03/rf_validation_v020.md) - Validating against Keysight X-Series and standardizing SA drivers.
+- [Multi-Mode Architecture](2026-05-03/multi_mode_architecture.md) - Supporting specialized VNAs and combo instruments (FieldFox/VNA Master).
 
 ## 2026-05-01
 - [Turbo-charging Traces: Binary Optimization](2026-05-01/binary_optimization.md) - ASCII is slow, binary is king.
