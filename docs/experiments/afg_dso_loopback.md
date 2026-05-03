@@ -53,6 +53,25 @@ afg.set_output(True)
 
 dso.auto_scale()
 trace = dso.get_waveform(1)
+
+# 4. Data Analysis & Visualization
+import numpy as np
+import matplotlib.pyplot as plt
+
+y_data = np.array(trace.value)
+x_data = np.linspace(0, 1, len(y_data)) 
+
+plt.figure(figsize=(12, 6))
+plt.plot(x_data, y_data, color='#007AFF', label='CH1 (AFG Output)')
+plt.title("AFG to DSOX Loopback Validation")
+plt.xlabel("Normalized Time")
+plt.ylabel("Amplitude (Volts)")
+plt.grid(True, linestyle='--', alpha=0.7)
+plt.savefig("../assets/afg_dso_loopback.png")
+plt.show()
+
+# 5. Cleanup
+afg.set_output(False)
 ```
 
 ## Results
