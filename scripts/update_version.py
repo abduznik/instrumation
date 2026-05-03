@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
     new_version = sys.argv[1]
     
-    files = ['pyproject.toml', 'setup.py']
+    files = ['pyproject.toml']
     
     for f in files:
         update_file(f, new_version)
