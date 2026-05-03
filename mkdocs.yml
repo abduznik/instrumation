@@ -66,6 +66,7 @@ nav:
   - Experiments:
       - PXA N9030A Validation: experiments/pxa_validation.md
       - MXG N5183B Validation: experiments/mxg_validation.md
+      - AFG-DSOX Loopback: experiments/afg_dso_loopback.md
   - API Reference: api_ref/index.md
   - Development Logs:
       - Overview: logs/index.md

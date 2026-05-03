@@ -37,5 +37,21 @@ class TestTDKLambdaZPlus(unittest.TestCase):
         self.driver.set_output(True)
         self.mock_inst.write.assert_called_with(":OUTP ON")
 
+    def test_ovp(self):
+        self.driver.set_ovp(40.0)
+        self.mock_inst.write.assert_called_with(":VOLT:PROT 40.0")
+
+    def test_measure_actual(self):
+        # Override the setup side_effect for this test
+        self.mock_inst.query.side_effect = None
+        self.mock_inst.query.return_value = "12.495"
+        res = self.driver.measure_voltage_actual()
+        self.assertEqual(res.value, 12.495)
+        self.assertEqual(res.unit, "V")
+
+    def test_clear_protection(self):
+        self.driver.clear_protection()
+        self.mock_inst.write.assert_called_with(":OUTP:PROT:CLE")
+
 if __name__ == "__main__":
     unittest.main()

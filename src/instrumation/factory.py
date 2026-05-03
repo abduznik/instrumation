@@ -1,184 +1,172 @@
-from .config import is_sim_mode
-from .drivers.simulated import SimulatedMultimeter, SimulatedPowerSupply, SimulatedSpectrumAnalyzer, SimulatedNetworkAnalyzer, SimulatedOscilloscope, SimulatedDriver
-# Import real drivers (assuming we have wrappers or generic SCPI ones)
-# For now, we reuse the generic RealDriver structure or import specific ones
-from .drivers.real import RealDriver 
-from .drivers.keysight import KeysightPNA, KeysightMXA
-from .drivers.tdk import TDKLambdaZPlus
-from .drivers.siglent import SiglentSDS
-from .drivers.rs import RohdeSchwarzSG, RohdeSchwarzSA
-from .drivers.anritsu import AnritsuSA, AnritsuVNA
-from .drivers.registry import DriverRegistry
-from .drivers.replay import ReplayDriver
-import importlib.util
-import sys
-import os
+import pyvisa
 import logging
-from .scanner import scan
+import os
+from .drivers.real import RealDriver
+from .drivers.replay import ReplayDriver
+from .drivers.simulated import SimulatedDriver
+from .drivers.registry import DriverRegistry
+from .drivers.base import Oscilloscope, SpectrumAnalyzer, SignalGenerator, FunctionGenerator, PowerSupply, Multimeter
 
 logger = logging.getLogger(__name__)
 
-def get_driver(resource_address: str):
-    """Legacy factory for generic driver (defaults to DMM behavior).
-    
-    .. deprecated:: 0.1.7
-       Use :func:`get_instrument` instead.
-    """
-    import warnings
-    warnings.warn("get_driver is deprecated, use get_instrument(address, 'DMM') instead", DeprecationWarning, stacklevel=2)
-    return get_instrument(resource_address, "DMM")
+def is_sim_mode() -> bool:
+    return os.environ.get("INSTRUMATION_MODE", "REAL").upper() == "SIM"
 
-def get_instrument(resource_address: str, driver_type: str):
-    """Factory to get specific instrument types.
+def _discover_lan_resources() -> list:
+    """Scans the local ARP table for potential LAN instruments."""
+    resources = []
+    try:
+        import subprocess
+        import re
+        output = subprocess.check_output(["arp", "-a"]).decode()
+        ips = re.findall(r"\((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\)", output)
+        for ip in ips:
+            if ip.startswith("169.254") or ip.startswith("192.168"):
+                resources.append(f"TCPIP::{ip}::INSTR")
+    except Exception:
+        pass
+    return resources
 
-    Args:
-        resource_address (str): VISA address or dummy string.
-        driver_type (str): The type of driver to create ("DMM", "PSU", "SA", "NA", "SCOPE").
-
-    Returns:
-        InstrumentDriver: An instance of the requested instrument driver.
-
-    Raises:
-        ValueError: If the driver_type is not recognized or no driver is found.
-    """
-    # 1. Ensure plugins are loaded
-    # (Optional: we could call this once at module level or on demand)
-    
-    # Normalize aliases
-    if driver_type.upper() == "VNA":
-        driver_type = "NA"
-    
-    drivers = DriverRegistry.get_drivers_by_type(driver_type)
-    
-    # 2. Handle AUTO address
+def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
+    # 1. Handle AUTO discovery
     if resource_address == "AUTO":
-        logger.info(f"AUTO address specified for {driver_type}. Scanning...")
-        devices = scan()
-        visa_devices = [d['id'] for d in devices if d['type'] == 'visa']
+        ni_lib = "/Library/Frameworks/VISA.framework/VISA"
+        rm_args = ni_lib if os.path.exists(ni_lib) else None
+        rm = pyvisa.ResourceManager(rm_args)
         
-        if not visa_devices:
-            raise ValueError(f"AUTO address specified but no VISA instruments found for type: {driver_type}")
+        visa_resources = list(rm.list_resources())
+        candidate_resources = visa_resources + _discover_lan_resources()
         
-        # Sort candidates: Prioritize TCPIP and USB over ASRL/GPIB
-        def resource_priority(res: str) -> int:
-            if res.startswith("TCPIP"): return 0
-            if res.startswith("USB"): return 1
-            if res.startswith("GPIB"): return 2
-            return 3 # ASRL etc.
+        logger.info(f"AUTO-Discovery checking candidates: {candidate_resources}")
+        
+        for res in candidate_resources:
+            try:
+                if res.startswith("ASRL") and len(candidate_resources) > 1:
+                    continue
+                
+                dev = get_instrument(res, driver_type)
+                
+                type_map = {
+                    "SCOPE": Oscilloscope,
+                    "SA": SpectrumAnalyzer,
+                    "SG": (SignalGenerator, FunctionGenerator),
+                    "PSU": PowerSupply,
+                    "DMM": Multimeter
+                }
+                
+                if driver_type == "GENERIC":
+                    return dev
+                
+                expected_base = type_map.get(driver_type)
+                if expected_base and isinstance(dev, expected_base):
+                    return dev
+                    
+                dev.disconnect()
+            except Exception:
+                continue
+        
+        raise ValueError(f"AUTO-Discovery could not find a suitable {driver_type} instrument.")
 
-        visa_devices.sort(key=resource_priority)
-        
-        # Filter out system serial ports (ASRL) if we have better candidates
-        real_instruments = [d for d in visa_devices if not d.startswith("ASRL")]
-        if real_instruments:
-            resource_address = real_instruments[0]
-        else:
-            resource_address = visa_devices[0]
-            
-        logger.info(f"AUTO: Resolved to {resource_address}")
-        print(f"AUTO: Resolved to {resource_address}")
-
-    # 3. Check for replay mode (address starts with 'replay://')
+    # 2. Check for replay mode
     if resource_address.startswith("replay://"):
         master_file = resource_address.replace("replay://", "")
         return ReplayDriver("REPLAY_DEVICE", master_file)
 
+    # 3. Simulation Logic
     if is_sim_mode():
-        # Find a simulated driver for this type
+        drivers = DriverRegistry.get_drivers_by_type(driver_type)
         for drv_cls in drivers:
             if "Simulated" in drv_cls.__name__:
                 return drv_cls(resource_address)
-        
-        # Fallback to SimulatedDriver alias if it exists and matches
         if driver_type == "DMM":
-             return SimulatedDriver(resource_address)
-             
+            return SimulatedDriver(resource_address)
         raise ValueError(f"No simulated driver found for type: {driver_type}")
-    else:
-        # Real Hardware Logic
-        # 1. First, establish a basic connection to identify the instrument
-        try:
-            base_dev = RealDriver(resource_address)
-            idn = base_dev.get_id().upper()
-            base_dev.close() # Close temp connection
-        except Exception as e:
-            logger.warning(f"Could not query *IDN? from {resource_address}: {e}")
+
+    # 4. Real Hardware Logic
+    ni_lib = "/Library/Frameworks/VISA.framework/VISA"
+    rm_args = ni_lib if os.path.exists(ni_lib) else None
+    
+    idn = ""
+    try:
+        if "SIM" in resource_address or "MOCK" in resource_address:
             idn = ""
+        else:
+            base_dev = RealDriver(resource_address)
+            if rm_args:
+                base_dev.rm = pyvisa.ResourceManager(rm_args)
+            base_dev.connect()
+            idn = base_dev.get_id().upper()
+            base_dev.disconnect()
+    except Exception as e:
+        logger.warning(f"Identification failed for {resource_address}: {e}")
+        idn = ""
 
-        # 2. Smart Routing based on IDN
-        if "ANRITSU" in idn:
-            if "MS203" in idn: # MS2035B/MS2034B
-                from .drivers.anritsu import AnritsuMS2035B
-                return AnritsuMS2035B(resource_address)
-            if "MS465" in idn: # ShockLine
-                from .drivers.anritsu import AnritsuShockLineVNA
-                return AnritsuShockLineVNA(resource_address)
-        
-        if "FIELD FOX" in idn or "N99" in idn: # N99xx Series
+    # Smart Routing based on IDN
+    final_drv = None
+    if "TEKTRONIX" in idn:
+        if "AFG" in idn:
+            from .drivers.tektronix import TektronixAFG
+            final_drv = TektronixAFG(resource_address)
+        else:
+            from .drivers.tektronix import TektronixTDS
+            final_drv = TektronixTDS(resource_address)
+    elif "KEYSIGHT" in idn or "AGILENT" in idn:
+        if any(m in idn for m in ["DSO-X", "MSO-X", "DSOX", "MSOX"]):
+            from .drivers.keysight import KeysightInfiniiVision
+            final_drv = KeysightInfiniiVision(resource_address)
+        elif any(m in idn for m in ["N9030", "N9020", "N9010", "PXA", "MXA", "EXA"]):
+            from .drivers.keysight import KeysightPXA
+            final_drv = KeysightPXA(resource_address)
+        elif any(m in idn for m in ["E8257", "N5181", "N5182", "N5183", "PSG", "MXG", "EXG"]):
+            from .drivers.keysight import KeysightSG
+            final_drv = KeysightSG(resource_address)
+        elif "N99" in idn or "FIELD FOX" in idn:
             from .drivers.keysight import KeysightFieldFox
-            return KeysightFieldFox(resource_address)
+            final_drv = KeysightFieldFox(resource_address)
+    elif "SIGLENT" in idn:
+        from .drivers.siglent import SiglentSDS
+        final_drv = SiglentSDS(resource_address)
+    elif "TDK-LAMBDA" in idn or "Z+" in idn:
+        from .drivers.tdk_lambda import TDKLambdaZPlus
+        final_drv = TDKLambdaZPlus(resource_address)
 
-        if "ROHDE" in idn or "R&S" in idn:
-            if any(m in idn for m in ["FSW", "FSV", "FSP", "FSG", "FSL"]):
-                from .drivers.rs import RohdeSchwarzSA
-                return RohdeSchwarzSA(resource_address)
-            if any(m in idn for m in ["SMA", "SMB", "SMM", "SMC"]):
-                from .drivers.rs import RohdeSchwarzSG
-                return RohdeSchwarzSG(resource_address)
-
-        # 3. Fallback to registry-based selection
+    if not final_drv:
+        drivers = DriverRegistry.get_drivers_by_type(driver_type)
         for drv_cls in drivers:
             if "Simulated" not in drv_cls.__name__:
-                return drv_cls(resource_address)
-        
-        # Legacy fallback for DMM
-        if driver_type == "DMM":
-            print(f"[Real] Warning: returning generic driver for {driver_type}")
-            return RealDriver(resource_address)
-            
-        raise ValueError(f"No real driver found for type: {driver_type}")
+                final_drv = drv_cls(resource_address)
+                break
+    if not final_drv:
+        final_drv = RealDriver(resource_address)
 
-def load_plugins(plugin_dir: str = "plugins"):
-    """Loads all drivers from the specified plugins directory.
+    if rm_args:
+        final_drv.rm = pyvisa.ResourceManager(rm_args)
+    final_drv.connect()
+    return final_drv
+
+def get_instrument_from_config(config: dict) -> any:
+    resource_address = config.get("address")
+    driver_type = config.get("type") # Mandatory for test compatibility
+    if not resource_address:
+        raise ValueError("Missing required configuration key: 'address'")
+    if not driver_type:
+        raise ValueError("Missing required configuration key: 'type'")
+    return get_instrument(resource_address, driver_type)
+
+def load_plugins(plugin_path: str = None):
+    """Dynamically loads all available instrument drivers."""
+    import importlib
+    import pkgutil
+    import sys
     
-    Args:
-        plugin_dir (str): Path to the directory containing plugin .py files.
-    """
-    if not os.path.exists(plugin_dir):
-        return
-
-    for filename in os.listdir(plugin_dir):
-        if filename.endswith(".py") and filename != "__init__.py":
-            module_name = filename[:-3]
-            file_path = os.path.join(plugin_dir, filename)
+    # 1. Load built-in drivers
+    import instrumation.drivers as drivers_pkg
+    for _, name, _ in pkgutil.iter_modules(drivers_pkg.__path__):
+        importlib.import_module(f"instrumation.drivers.{name}")
             
-            try:
-                spec = importlib.util.spec_from_file_location(module_name, file_path)
-                if spec and spec.loader:
-                    module = importlib.util.module_from_spec(spec)
-                    sys.modules[module_name] = module
-                    spec.loader.exec_module(module)
-                    logger.info(f"Loaded plugin: {module_name}")
-            except Exception as e:
-                logger.error(f"Failed to load plugin {module_name} from {file_path}: {e}")
-
-def get_instrument_from_config(config: dict):
-    """Creates an instrument driver from a configuration dictionary.
-
-    The configuration dictionary must contain 'address' and 'type' keys.
-
-    Args:
-        config (dict): Configuration dictionary containing 'address' and 'type'.
-
-    Returns:
-        InstrumentDriver: An instance of the requested instrument driver.
-
-    Raises:
-        ValueError: If 'address' or 'type' keys are missing, or if the driver type is unrecognized.
-    """
-    required_keys = ["address", "type"]
-    for key in required_keys:
-        if key not in config:
-            raise ValueError(f"Missing required configuration key: '{key}'")
-
-    return get_instrument(config["address"], config["type"])
+    # 2. Load from external path if provided
+    if plugin_path:
+        if plugin_path not in sys.path:
+            sys.path.insert(0, plugin_path)
+        for _, name, _ in pkgutil.iter_modules([plugin_path]):
+            importlib.import_module(name)

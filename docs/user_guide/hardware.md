@@ -14,14 +14,17 @@ Addresses typically follow the VISA standard:
 - **TCP/IP**: `TCPIP0::192.168.1.10::inst0::INSTR`
 - **GPIB**: `GPIB0::7::INSTR`
 
-## Intelligent Auto-Discovery
+Starting with **v0.2.0**, the HAL includes an intelligent priority engine for `"AUTO"` resolution. It automatically scans your system using a multi-layer approach:
 
-Starting with **v0.2.0**, the HAL includes an intelligent priority engine for `"AUTO"` resolution. It automatically scans your system and prioritizes high-speed interfaces:
+1. **Standard VISA Scan**: Finds all USB-TMC and ASRL devices.
+2. **Smart LAN Probe (New)**: Performs a non-destructive ARP scan of the local subnet (`169.254.x.x` and `192.168.x.x`) to find instruments that don't broadcast their presence.
+3. **Type-Aware Routing**: Probes each candidate with `*IDN?` and only selects the one matching your requested category (e.g., `SCOPE`, `SG`).
 
-1. **TCPIP (HiSLIP/VXI-11)** - Prioritized for modern LXI hardware.
-2. **USB** - Plug-and-play instruments.
-3. **GPIB** - Legacy hardware.
-4. **ASRL** - Serial/System ports (Filtered by default to avoid debug console conflicts).
+### Critical Device Setup
+For certain instruments, you must enable specific I/O modes on the front panel for they to be discoverable:
+
+- **Keysight DSOX/MSOX**: Ensure **USB Compatibility Mode** (or **USB-TMC**) is enabled in the `[Utility] -> I/O -> USB` menu. Without this, the instrument may appear as a "Printer" and will be invisible to the HAL.
+- **Tektronix AFG**: Ensure the **VXI-11** server is active in the network configuration for LAN discovery.
 
 ### Usage Recommendation
 Always try `"AUTO"` first to keep your scripts portable:

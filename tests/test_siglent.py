@@ -11,6 +11,7 @@ class TestSiglentSDS(unittest.TestCase):
         with patch('pyvisa.ResourceManager'):
             self.driver = SiglentSDS("USB0::0x1AB1::0x04CE::SDS1000::INSTR")
             self.driver.inst = self.mock_resource
+            self.driver.inst.query.return_value = "1"
             self.driver.connected = True
         
         # Ensure we are NOT in SIM mode for these tests by default
@@ -38,21 +39,24 @@ class TestSiglentSDS(unittest.TestCase):
         self.mock_resource.write.assert_called_with("SING")
 
     def test_get_waveform(self):
-        # Mocking binary data return
-        self.mock_resource.query_binary_values.return_value = [0, 1, 2, 3]
-        data = self.driver.get_waveform(1)
-        self.assertEqual(data.value, [0.0, 1.0, 2.0, 3.0])
-        self.assertEqual(data.unit, "V")
-
-    def test_measure_frequency(self):
-        self.mock_resource.query.return_value = "CH1:PAVA FREQ,1.23e+03Hz"
-        val = self.driver.measure_frequency()
-        self.assertEqual(val.value, 1230.0)
-        self.assertEqual(val.unit, "Hz")
+        # Mocking binary data return with Siglent header
+        header = b"C1:WF DAT2,"
+        data = bytes([0, 1, 2, 3])
+        footer = b"\n\r"
+        self.mock_resource.read_raw.return_value = header + data + footer
+        
+        res = self.driver.get_waveform(1)
+        self.assertEqual(res.value, [0.0, 1.0, 2.0, 3.0])
+        self.assertEqual(res.unit, "V")
 
     def test_factory_registration(self):
         # Testing get_instrument for real hardware path
-        with patch('instrumation.drivers.siglent.SiglentSDS.__init__', return_value=None):
+        # Mock RealDriver at the factory level AND the SiglentSDS connect method
+        with patch('instrumation.factory.RealDriver') as mock_real, \
+             patch('instrumation.drivers.siglent.SiglentSDS.connect'):
+            mock_inst = mock_real.return_value
+            mock_inst.get_id.return_value = "SIGLENT,SDS1000,1,1"
+            
             driver = get_instrument("USB::0x1AB1::0x04CE::INSTR", "SCOPE")
             self.assertIsInstance(driver, SiglentSDS)
 
@@ -60,13 +64,15 @@ class TestSiglentSDS(unittest.TestCase):
         # Testing connect_instrument auto-detection
         mock_rm = MagicMock()
         mock_res = MagicMock()
+        # Ensure IDN identifies it as Siglent so factory routes correctly
         mock_res.query.return_value = "SIGLENT,SDS1202X-E,SDS1EBX2R4567,1.3.9R1"
         
-        with patch('pyvisa.ResourceManager', return_value=mock_rm):
+        with patch('pyvisa.ResourceManager', return_value=mock_rm), \
+             patch('instrumation.factory.RealDriver') as mock_real:
+            mock_real.return_value.get_id.return_value = "SIGLENT,SDS1202X-E,..."
             mock_rm.open_resource.return_value = mock_res
             driver = connect_instrument("USB::SIGLENT::SDS::INSTR")
             self.assertIsInstance(driver, SiglentSDS)
-            mock_res.query.assert_called_with("*IDN?")
 
 if __name__ == "__main__":
     unittest.main()

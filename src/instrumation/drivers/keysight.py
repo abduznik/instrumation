@@ -1,4 +1,4 @@
-from .base import SpectrumAnalyzer, NetworkAnalyzer, SignalGenerator
+from .base import SpectrumAnalyzer, NetworkAnalyzer, SignalGenerator, Oscilloscope
 from .registry import register_driver
 from .real import RealDriver
 from ..results import MeasurementResult
@@ -250,6 +250,67 @@ class KeysightFieldFox(RealDriver, SpectrumAnalyzer, NetworkAnalyzer):
         raw_data = self.query_binary_values("CALC:DATA? SDATA", datatype='f', is_big_endian=False)
         data = [complex(raw_data[i], raw_data[i+1]) for i in range(0, len(raw_data), 2)]
         return MeasurementResult(data, "IQ")
+
+    def shutdown_safety(self):
+        self.sync_config()
+
+@register_driver("SCOPE")
+class KeysightInfiniiVision(RealDriver, Oscilloscope):
+    """Driver for Keysight InfiniiVision Series Oscilloscopes (DSOX/MSOX)."""
+
+    def preset(self, automation_optimized: bool = True):
+        self.write("*RST")
+        self.wait_ready()
+
+    def run(self): self.write(":RUN")
+    def stop(self): self.write(":STOP")
+    def single(self): self.write(":SINGLE")
+
+    def get_waveform(self, channel: int) -> MeasurementResult:
+        self.write(f":WAVeform:SOURce CHANnel{channel}")
+        self.write(":WAVeform:FORMat WORD")
+        self.write(":WAVeform:BYTEorder LSBFirst")
+        self.write(":WAVeform:UNSigned OFF")
+
+        # Query scaling
+        preamble = self.query(":WAVeform:PREamble?").split(",")
+        # Preamble structure: format, type, points, count, xinc, xor, xref, yinc, yor, yref
+        y_inc = float(preamble[7])
+        y_origin = float(preamble[8])
+        y_ref = float(preamble[9])
+
+        # Fetch binary data
+        raw_data = self.query_binary_values(":WAVeform:DATA?", datatype='h', is_big_endian=False)
+        
+        # Voltage = ((raw - yref) * yinc) + yorigin
+        data = [((val - y_ref) * y_inc) + y_origin for val in raw_data]
+        return MeasurementResult(data, "V")
+
+    def auto_scale(self):
+        self.write(":AUToscale")
+        self.wait_ready()
+
+    def set_trigger(self, source: str, level: float, slope: str):
+        self.write(f":TRIGger:MODE EDGE")
+        self.write(f":TRIGger:EDGE:SOURce {source.upper()}")
+        self.write(f":TRIGger:EDGE:LEVel {level}")
+        self.write(f":TRIGger:EDGE:SLOPe {slope.upper()}")
+
+    def get_screenshot(self) -> bytes:
+        self.write(":DISPlay:DATA? PNG, COLor")
+        return self.inst.read_raw()
+
+    def measure_frequency(self, channel: int = 1) -> MeasurementResult:
+        val = self.query(f":MEASure:FREQuency? CHANnel{channel}")
+        return MeasurementResult(float(val), "Hz")
+
+    def measure_duty_cycle(self, channel: int = 1) -> MeasurementResult:
+        val = self.query(f":MEASure:DUTYcycle? CHANnel{channel}")
+        return MeasurementResult(float(val), "%")
+
+    def measure_v_peak_to_peak(self, channel: int = 1) -> MeasurementResult:
+        val = self.query(f":MEASure:VPP? CHANnel{channel}")
+        return MeasurementResult(float(val), "V")
 
     def shutdown_safety(self):
         self.sync_config()

@@ -246,3 +246,12 @@ class SignalGenerator(InstrumentDriver):
     def configure_list_sweep(self, freq_list: List[float], power_list: List[float]): pass
     @abstractmethod
     def set_reference_clock(self, source: str): pass
+
+class FunctionGenerator(SignalGenerator):
+    """Specific for AFGs which use Volts/Waveforms instead of just dBm."""
+    @abstractmethod
+    def set_voltage(self, vpp: float): pass
+    @abstractmethod
+    def set_offset(self, volts: float): pass
+    @abstractmethod
+    def set_waveform(self, shape: str): pass # SIN, SQU, PULS, RAMP, NOIS, DC

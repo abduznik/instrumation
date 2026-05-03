@@ -7,15 +7,15 @@ class TestTektronixTDS(unittest.TestCase):
         self.mock_inst = MagicMock()
         # Handle multiple calls to query
         def mock_query(cmd):
-            if "SYST:ERR?" in cmd:
-                return '+0,"No error"'
-            if "*IDN?" in cmd:
-                return "TEKTRONIX,TDS123,123,1.0"
-            if ":CURVE?" in cmd:
-                return "1,2,3,4"
+            if "SYST:ERR?" in cmd: return '+0,"No error"'
+            if "*IDN?" in cmd: return "TEKTRONIX,TDS123,123,1.0"
+            if "WFMPRE:YMULT?" in cmd: return "0.01"
+            if "WFMPRE:YOFF?" in cmd: return "0"
+            if "WFMPRE:YZERO?" in cmd: return "0"
             return ""
             
         self.mock_inst.query.side_effect = mock_query
+        self.mock_inst.query_binary_values.return_value = [100, 200, 300, 400]
         
         class TestableTektronixTDS(TektronixTDS):
             def __init__(self, inst):

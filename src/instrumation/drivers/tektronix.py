@@ -1,4 +1,4 @@
-from .base import Oscilloscope
+from .base import Oscilloscope, FunctionGenerator
 from .registry import register_driver
 from .real import RealDriver
 from ..results import MeasurementResult
@@ -68,4 +68,67 @@ class TektronixTDS(RealDriver, Oscilloscope):
 
     def shutdown_safety(self):
         self.stop()
+        self.sync_config()
+
+@register_driver("SG")
+class TektronixAFG(RealDriver, FunctionGenerator):
+    """Driver for Tektronix AFG3000 Series Arbitrary Function Generators."""
+
+    def __init__(self, resource: str, channel: int = 1):
+        super().__init__(resource)
+        self.channel = channel
+        self.ch_prefix = f"SOURce{channel}"
+
+    def preset(self, automation_optimized: bool = True):
+        self.write("*RST")
+        self.wait_ready()
+
+    def set_frequency(self, hz: float):
+        self.write(f"{self.ch_prefix}:FREQuency:FIXed {hz}")
+
+    def set_amplitude(self, dbm: float):
+        """AFGs typically use Voltage. Converting dBm to Vpp (approx 50 Ohm)."""
+        vpp = 2 * (10 ** ((dbm - 10) / 20))
+        self.set_voltage(vpp)
+
+    def set_voltage(self, vpp: float):
+        self.write(f"{self.ch_prefix}:VOLTage:AMPLitude {vpp}")
+
+    def set_offset(self, volts: float):
+        self.write(f"{self.ch_prefix}:VOLTage:LEVel:IMMediate:OFFSet {volts}")
+
+    def set_waveform(self, shape: str):
+        # SINusoid, SQUare, PULSe, RAMP, PRNoise, DC
+        full_names = {
+            "SIN": "SINUSOID",
+            "SQU": "SQUARE",
+            "PULS": "PULSE",
+            "RAMP": "RAMP",
+            "PRN": "PRNOISE",
+            "DC": "DC"
+        }
+        name = full_names.get(shape.upper(), shape.upper())
+        self.write(f"{self.ch_prefix}:FUNCtion:SHAPe {name}")
+
+    def set_output(self, state: bool):
+        self.write(f"OUTPut{self.channel}:STATe {'ON' if state else 'OFF'}")
+
+    def set_mod_state(self, mod_type: str, state: bool):
+        # Basic AM/FM/PM/FSK/PWM
+        self.write(f"{self.ch_prefix}:{mod_type.upper()}:STATe {'ON' if state else 'OFF'}")
+
+    def start_sweep(self, start: float, stop: float, points: int, dwell: float):
+        self.write(f"{self.ch_prefix}:SWEep:STARt {start}")
+        self.write(f"{self.ch_prefix}:SWEep:STOP {stop}")
+        self.write(f"{self.ch_prefix}:SWEep:TIME {dwell * points}")
+        self.write(f"{self.ch_prefix}:SWEep:STATe ON")
+
+    def configure_list_sweep(self, freq_list: List[float], power_list: List[float]):
+        self._unsupported_feature("List Sweep (Use ARB mode instead)")
+
+    def set_reference_clock(self, source: str):
+        self.write(f"SOURce:ROSCillator:SOURce {source.upper()}")
+
+    def shutdown_safety(self):
+        self.set_output(False)
         self.sync_config()
