@@ -7,10 +7,14 @@ class TestTDKLambdaZPlus(unittest.TestCase):
     def setUp(self, mock_get_rm):
         self.mock_inst = MagicMock()
         def mock_query(cmd):
-            if "SYST:ERR?" in cmd: return '+0,"No error"'
-            if ":VOLT?" in cmd: return "12.5"
-            if ":MEAS:CURR?" in cmd: return "1.234"
-            if "*IDN?" in cmd: return "TDK,Z+,1,1"
+            if "SYST:ERR?" in cmd:
+                return '+0,"No error"'
+            if ":VOLT?" in cmd:
+                return "12.5"
+            if ":MEAS:CURR?" in cmd:
+                return "1.234"
+            if "*IDN?" in cmd:
+                return "TDK,Z+,1,1"
             return "0"
         self.mock_inst.query.side_effect = mock_query
     

@@ -34,9 +34,12 @@ class TestKeithley2000(unittest.TestCase):
 
     def test_measure_resistance(self):
         def mock_query_res(cmd):
-            if "SYST:ERR?" in cmd: return '+0,"No error"'
-            if ":READ?" in cmd: return "100.5"
+            if "SYST:ERR?" in cmd:
+                return '+0,"No error"'
+            if ":READ?" in cmd:
+                return "100.5"
             return ""
+
         self.mock_inst.query.side_effect = mock_query_res
         val = self.driver.measure_resistance()
         self.assertEqual(val.value, 100.5)
@@ -44,8 +47,10 @@ class TestKeithley2000(unittest.TestCase):
 
     def test_measure_current(self):
         def mock_query_curr(cmd):
-            if "SYST:ERR?" in cmd: return '+0,"No error"'
-            if ":READ?" in cmd: return "0.01"
+            if "SYST:ERR?" in cmd:
+                return '+0,"No error"'
+            if ":READ?" in cmd:
+                return "0.01"
             return ""
         self.mock_inst.query.side_effect = mock_query_curr
         val = self.driver.measure_current()

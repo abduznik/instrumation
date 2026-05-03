@@ -1,4 +1,3 @@
-import pytest
 import os
 from instrumation.factory import get_instrument
 from instrumation.results import MeasurementResult

@@ -1,7 +1,6 @@
 import unittest
 from unittest.mock import MagicMock
 from instrumation.drivers.rigol import RigolDSA
-from instrumation.results import MeasurementResult
 
 class TestRigolDSA(unittest.TestCase):
     def test_peak_search(self):

@@ -1,5 +1,4 @@
 import unittest
-import logging
 from unittest.mock import MagicMock, patch
 from instrumation.station import Station
 

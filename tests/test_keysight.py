@@ -4,7 +4,7 @@ from instrumation.drivers.keysight import KeysightInfiniiVision
 
 @pytest.fixture
 def mock_scope():
-    with patch('pyvisa.ResourceManager') as mock_rm:
+    with patch('pyvisa.ResourceManager'):
         driver = KeysightInfiniiVision("TCPIP::1.2.3.4::INSTR")
         driver.inst = MagicMock()
         # Ensure *OPC? returns 1 to avoid wait_ready timeouts

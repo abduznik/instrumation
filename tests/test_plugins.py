@@ -1,8 +1,5 @@
-import pytest
 import os
-import shutil
 from instrumation.factory import get_instrument, load_plugins
-from instrumation.drivers.base import Multimeter
 
 def test_plugin_loading(tmp_path):
     """Test that a driver can be loaded from a plugin directory."""
@@ -66,7 +63,7 @@ class SimulatedPluginDMM(SimulatedBaseDriver, Multimeter):
     load_plugins(str(plugin_dir))
     
     os.environ["INSTRUMATION_MODE"] = "SIM"
-    instr = get_instrument("DUMMY", "SIM_PLUGIN_DMM")
+    get_instrument("DUMMY", "SIM_PLUGIN_DMM")
     
     from instrumation.drivers.registry import DriverRegistry
     drivers = DriverRegistry.get_drivers_by_type("SIM_PLUGIN_DMM")

@@ -4,7 +4,7 @@ from instrumation.drivers.tektronix import TektronixAFG
 
 @pytest.fixture
 def mock_afg():
-    with patch('pyvisa.ResourceManager') as mock_rm:
+    with patch('pyvisa.ResourceManager'):
         driver = TektronixAFG("TCPIP::1.2.3.4::INSTR")
         driver.inst = MagicMock()
         yield driver

@@ -40,7 +40,13 @@ def _discover_lan_resources() -> list:
     return resources
 
 def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
-    # 0. Handle Simulation Mode First (The Digital Twin Path)
+    # 0. Check for replay mode (Highest Priority)
+    if resource_address.startswith("replay://"):
+        file_path = resource_address.replace("replay://", "")
+        from .drivers.replay import ReplayDriver
+        return ReplayDriver(resource_address, master_file=file_path)
+
+    # 1. Handle Simulation Mode (The Digital Twin Path)
     if is_sim_mode():
         from .drivers.simulated import SimulatedMultimeter
         drivers = DriverRegistry.get_drivers_by_type(driver_type)
@@ -51,12 +57,17 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
                 drv = drv_cls(addr)
                 drv.connect()
                 return drv
-        # Fallback to a generic simulated driver if needed
+        
+        # If explicitly requested a type and not found, raise error (don't fallback to DMM silently)
+        if driver_type != "GENERIC":
+            raise ValueError(f"No simulated driver found for type: {driver_type}")
+
+        # Fallback for GENERIC only
         drv = SimulatedMultimeter(resource_address if resource_address != "AUTO" else "USB0::SIM::INSTR")
         drv.connect()
         return drv
 
-    # 1. Handle AUTO discovery
+    # 2. Handle AUTO discovery
     if resource_address == "AUTO":
         import json
         from concurrent.futures import ThreadPoolExecutor, as_completed

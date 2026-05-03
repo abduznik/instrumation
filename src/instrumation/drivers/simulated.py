@@ -1,7 +1,7 @@
 import random
 import time
 import math
-from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, SignalGenerator, FunctionGenerator
+from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, FunctionGenerator
 from .registry import register_driver
 from ..results import MeasurementResult
 
@@ -75,7 +75,9 @@ class SimulatedPowerSupply(SimulatedBaseDriver, PowerSupply):
         print(f"[SIM] Setting PSU Voltage: {voltage}")
     def get_voltage(self): return 0.0
     def set_current_limit(self, current): pass
-    def get_current(self) -> float: return 0.0
+    def get_current(self) -> MeasurementResult:
+        time.sleep(self.latency)
+        return MeasurementResult(0.0, "A")
     def get_current_limit(self) -> float: return 0.0
     def set_output(self, state): pass
     def get_output(self): return False
