@@ -40,6 +40,22 @@ def _discover_lan_resources() -> list:
     return resources
 
 def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
+    # 0. Handle Simulation Mode First (The Digital Twin Path)
+    if is_sim_mode():
+        from .drivers.simulated import SimulatedMultimeter
+        drivers = DriverRegistry.get_drivers_by_type(driver_type)
+        for drv_cls in drivers:
+            if "Simulated" in drv_cls.__name__:
+                # Use the requested address or a mock one
+                addr = resource_address if resource_address != "AUTO" else "USB0::SIM::INSTR"
+                drv = drv_cls(addr)
+                drv.connect()
+                return drv
+        # Fallback to a generic simulated driver if needed
+        drv = SimulatedMultimeter(resource_address if resource_address != "AUTO" else "USB0::SIM::INSTR")
+        drv.connect()
+        return drv
+
     # 1. Handle AUTO discovery
     if resource_address == "AUTO":
         import json
@@ -106,7 +122,7 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
                 if "ASRL" in res and any(p in res for p in ["1", "2", "3", "4"]):
                     return None
                 dev = get_instrument(res, driver_type)
-                type_map = {"SCOPE": Oscilloscope, "SA": SpectrumAnalyzer, "SG": (SignalGenerator, FunctionGenerator), "PSU": PowerSupply, "DMM": Multimeter}
+                type_map = {"SCOPE": Oscilloscope, "SA": SpectrumAnalyzer, "SG": (SignalGenerator, FunctionGenerator), "PSU": PowerSupply, "DMM": Multimeter, "VNA": NetworkAnalyzer, "NA": NetworkAnalyzer}
                 if driver_type == "GENERIC" or (type_map.get(driver_type) and isinstance(dev, type_map.get(driver_type))):
                     return dev
                 dev.disconnect()
@@ -133,52 +149,6 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
             return result
         
         raise ValueError(f"AUTO-Discovery could not find a suitable {driver_type} instrument.")
-
-    # 2. Check for Prologix Bridge (prologix:///dev/cu.usbserial-xxx:address)
-    if resource_address.startswith("prologix://"):
-        addr_part = resource_address.replace("prologix://", "")
-        if ":" in addr_part:
-            serial_port, gpib_addr = addr_part.rsplit(":", 1)
-            gpib_addr = int(gpib_addr)
-        else:
-            serial_port = addr_part
-            gpib_addr = 1
-            
-        from .drivers.prologix import PrologixDriver
-        # 1. Create the bridge
-        bridge = PrologixDriver(serial_port, gpib_addr)
-        bridge.connect()
-        
-        # 2. Use the bridge to get the IDN of the real instrument
-        idn = bridge.query("*IDN?").upper()
-        bridge.disconnect()
-        
-        # 3. Resolve the driver and inject bridge config
-        final_drv = get_instrument(serial_port, driver_type)
-        final_drv.bridge_config = {"type": "prologix", "gpib_address": gpib_addr}
-        
-        # We need to re-prime the bridge after the final driver connects
-        final_drv.write("++mode 1")
-        final_drv.write("++auto 0")
-        final_drv.write(f"++addr {gpib_addr}")
-        
-        return final_drv
-    
-    # 3. Check for replay mode
-    if resource_address.startswith("replay://"):
-        file_path = resource_address.replace("replay://", "")
-        from .drivers.replay import ReplayDriver
-        return ReplayDriver(resource_address, master_file=file_path)
-
-    if is_sim_mode():
-        from .drivers.simulated import SimulatedMultimeter
-        drivers = DriverRegistry.get_drivers_by_type(driver_type)
-        for drv_cls in drivers:
-            if "Simulated" in drv_cls.__name__:
-                return drv_cls(resource_address)
-        if driver_type == "DMM":
-            return SimulatedMultimeter(resource_address)
-        raise ValueError(f"No simulated driver found for type: {driver_type}")
 
     # 4. Real Hardware Logic
     idn = ""
@@ -222,7 +192,7 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
         else:
             from .drivers.tektronix import TektronixTDS
             final_drv = TektronixTDS(resource_address)
-    elif "KEYSIGHT" in idn or "AGILENT" in idn:
+    elif "KEYSIGHT" in idn or "AGILENT" in idn or "HEWLETT-PACKARD" in idn or "HP" in idn:
         if any(m in idn for m in ["DSO-X", "MSO-X", "DSOX", "MSOX"]):
             from .drivers.keysight import KeysightInfiniiVision
             final_drv = KeysightInfiniiVision(resource_address)
@@ -235,6 +205,9 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
         elif "N99" in idn or "FIELD FOX" in idn:
             from .drivers.keysight import KeysightFieldFox
             final_drv = KeysightFieldFox(resource_address)
+        elif "E83" in idn or "N52" in idn or "PNA" in idn:
+            from .drivers.keysight import KeysightPNA
+            final_drv = KeysightPNA(resource_address)
     elif "SIGLENT" in idn:
         from .drivers.siglent import SiglentSDS
         final_drv = SiglentSDS(resource_address)

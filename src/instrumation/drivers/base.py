@@ -213,9 +213,11 @@ class NetworkAnalyzer(InstrumentDriver):
     @abstractmethod
     def set_points(self, num_points: int): pass
     @abstractmethod
-    def get_trace_data(self, measurement_name: str) -> MeasurementResult: pass
+    def set_parameter(self, parameter: str): pass  # e.g., "S11", "S21"
     @abstractmethod
-    def get_complex_trace(self, measurement_name: str) -> MeasurementResult: pass
+    def get_trace_data(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult: pass
+    @abstractmethod
+    def get_complex_trace(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult: pass
 
 class Oscilloscope(InstrumentDriver):
     @abstractmethod

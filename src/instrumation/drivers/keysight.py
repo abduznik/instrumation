@@ -83,8 +83,9 @@ class KeysightPXA(KeysightMXA):
         super().set_center_freq(hz)
 
 @register_driver("NA")
+@register_driver("VNA")
 class KeysightPNA(RealDriver, NetworkAnalyzer):
-    """Driver for Keysight PNA Series."""
+    """Driver for Keysight PNA Series (including E836x, N52xx)."""
     def preset(self, automation_optimized: bool = True):
         self.write("*RST")
         self.wait_ready()
@@ -98,13 +99,22 @@ class KeysightPNA(RealDriver, NetworkAnalyzer):
     def set_points(self, num_points: int):
         self.safe_send(f"SENS:SWE:POIN {num_points}")
 
-    def get_trace_data(self, measurement_name: str) -> MeasurementResult:
+    def set_parameter(self, parameter: str):
+        """Sets the S-parameter for the active measurement (e.g., 'S11', 'S21')."""
+        # PNAs usually require selecting the measurement first. 
+        # For simplicity in simple scripts, we assume the default measurement name is 'CH1_S11_1' or similar
+        # but the most direct way is CALC:PAR:MOD
+        self.safe_send(f"CALC:PAR:MOD {parameter}")
+
+    def get_trace_data(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult:
+        """Fetches magnitude data (dB) for the specified measurement."""
         self.safe_send(f"CALC:PAR:SEL '{measurement_name}'")
         self.write("FORM:DATA REAL,32")
         data = self.query_binary_values("CALC:DATA? FDATA", datatype='f', is_big_endian=False)
         return MeasurementResult(list(data), "dB")
 
-    def get_complex_trace(self, measurement_name: str) -> MeasurementResult:
+    def get_complex_trace(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult:
+        """Fetches complex data (Real/Imag) for the specified measurement."""
         self.safe_send(f"CALC:PAR:SEL '{measurement_name}'")
         self.write("FORM:DATA REAL,32")
         raw_data = self.query_binary_values("CALC:DATA? SDATA", datatype='f', is_big_endian=False)

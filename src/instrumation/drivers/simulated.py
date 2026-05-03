@@ -75,13 +75,17 @@ class SimulatedPowerSupply(SimulatedBaseDriver, PowerSupply):
         print(f"[SIM] Setting PSU Voltage: {voltage}")
     def get_voltage(self): return 0.0
     def set_current_limit(self, current): pass
-    def get_current(self): 
-        time.sleep(self.latency)
-        return MeasurementResult(0.0, "A")
+    def get_current(self) -> float: return 0.0
+    def get_current_limit(self) -> float: return 0.0
     def set_output(self, state): pass
     def get_output(self): return False
     def set_ovp(self, voltage): pass
     def set_ocp(self, current): pass
+    def measure_voltage_actual(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "V")
+    def measure_current(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "A")
+    def clear_protection(self): pass
 
 @register_driver("SA")
 class SimulatedSpectrumAnalyzer(SimulatedBaseDriver, SpectrumAnalyzer):
@@ -101,12 +105,19 @@ class SimulatedSpectrumAnalyzer(SimulatedBaseDriver, SpectrumAnalyzer):
     def get_trace_data(self): return MeasurementResult([0.0]*1001, "dBm")
 
 @register_driver("NA")
+@register_driver("VNA")
 class SimulatedNetworkAnalyzer(SimulatedBaseDriver, NetworkAnalyzer):
     def set_start_frequency(self, freq_hz): pass
     def set_stop_frequency(self, freq_hz): pass
     def set_points(self, num_points): pass
-    def get_trace_data(self, measurement_name): return MeasurementResult([0.0]*201, "dB")
-    def get_complex_trace(self, measurement_name): return MeasurementResult([complex(0,0)]*201, "IQ")
+    def set_parameter(self, parameter: str):
+        print(f"[SIM] VNA Setting Parameter: {parameter}")
+    def get_trace_data(self, measurement_name: str = "CH1_S11_1"): 
+        return MeasurementResult([random.uniform(-40, -10) for _ in range(201)], "dB")
+    def get_complex_trace(self, measurement_name: str = "CH1_S11_1"): 
+        # Generate some random complex numbers with magnitude between 0.01 and 0.3
+        data = [complex(random.uniform(-0.3, 0.3), random.uniform(-0.3, 0.3)) for _ in range(201)]
+        return MeasurementResult(data, "IQ")
 
 @register_driver("SCOPE")
 class SimulatedOscilloscope(SimulatedBaseDriver, Oscilloscope):
