@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: instrumation
-Version: 0.2.0
+Version: 0.2.1
 Summary: A high-level Hardware Abstraction Layer (HAL) for RF test stations with Digital Twin support.
 Author-email: abduznik <abduznik@users.noreply.github.com>
 License: MIT
@@ -13,6 +13,7 @@ Classifier: Operating System :: OS Independent
 Classifier: Topic :: Scientific/Engineering :: Interface Engine/Protocol Translator
 Requires-Python: >=3.7
 Description-Content-Type: text/markdown
+License-File: LICENSE
 Requires-Dist: pyvisa
 Requires-Dist: pyserial
 Requires-Dist: toml
@@ -24,6 +25,7 @@ Requires-Dist: pytest-asyncio; extra == "test"
 Provides-Extra: docs
 Requires-Dist: mkdocs-material; extra == "docs"
 Requires-Dist: mkdocstrings[python]; extra == "docs"
+Dynamic: license-file
 
 # Instrumation
 

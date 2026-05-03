@@ -9,7 +9,7 @@ class RealDriver(InstrumentDriver):
     @staticmethod
     def scan():
         """Scans for available instruments."""
-        from .factory import get_rm
+        from ..factory import get_rm
         return get_rm().list_resources()
 
     def __init__(self, resource: str, rm: pyvisa.ResourceManager = None):
