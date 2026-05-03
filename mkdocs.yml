@@ -69,6 +69,8 @@ nav:
   - API Reference: api_ref/index.md
   - Development Logs:
       - Overview: logs/index.md
+      - 2026-05-03:
+          - Release & RF Validation: logs/2026-05-03/rf_validation_v020.md
       - 2026-05-01:
           - Binary Optimization: logs/2026-05-01/binary_optimization.md
           - Async & Latency Fixes: logs/2026-05-01/async_latency_fix.md

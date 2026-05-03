@@ -2,6 +2,9 @@
 
 A quick look at how we've been building and breaking things. These logs track the architectural moves and performance wins as we push the HAL to production grade.
 
+## 2026-05-03
+- [v0.2.0 Release & RF Validation](2026-05-03/rf_validation_v020.md) - Validating against Keysight X-Series and standardizing SA drivers.
+
 ## 2026-05-01
 - [Turbo-charging Traces: Binary Optimization](2026-05-01/binary_optimization.md) - ASCII is slow, binary is king.
 - [Keeping it Real: Async & Latency Fixes](2026-05-01/async_latency_fix.md) - Teaching the Digital Twin to wait.
