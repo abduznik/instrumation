@@ -26,3 +26,24 @@ with get_instrument(address, "DMM") as dmm:
     res = dmm.measure_voltage()
     print(f"Replayed: {res.value} {res.unit}")
 ```
+
+## Programmatic Recording (`RecordingWrapper`)
+
+For complex scripts, you can wrap any real instrument to capture its session automatically:
+
+```python
+from instrumation.factory import get_instrument
+from instrumation.drivers.replay import RecordingWrapper, GoldenMaster
+
+with get_instrument("AUTO", "SA") as sa:
+    # Wrap the instrument to record all SCPI traffic
+    gm = GoldenMaster("my_lab_session.json")
+    sa = RecordingWrapper(sa, gm)
+    
+    # Run your test logic
+    sa.preset()
+    sa.set_center_freq(2.4e9)
+    
+    # Save the session to disk
+    gm.save()
+```

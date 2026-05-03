@@ -7,11 +7,11 @@
 
 ## Main Features
 
-- Asynchronous Support: Take measurements from multiple instruments in parallel with `asyncio`.
-- Golden Master: Record real hardware sessions and replay them later for deterministic testing.
-- Plugin System: Easily add or load community-developed drivers without modifying the core.
-- Cross-Platform: Works on Windows, Linux, and macOS (including ARM64).
-- CLI Interface: Quick hardware verification and measurement from the command line.
+- **Intelligent Discovery**: Automatically find instruments over HiSLIP, USB, or GPIB with one-click `"AUTO"` addresses.
+- **Virtual Front Panel (VFP)**: Real-time web dashboard for visualizing traces and instrument health.
+- **Async Support**: Native parallel execution for high-speed automated test sequences.
+- **Golden Master**: Record real hardware sessions and replay them later for deterministic testing.
+- **Plugin System**: Dynamically load community-developed drivers from any directory.
 
 ## Quick Install
 
