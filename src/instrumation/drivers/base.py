@@ -186,7 +186,11 @@ class SpectrumAnalyzer(InstrumentDriver):
     @abstractmethod
     def set_center_freq(self, hz: float): pass
     @abstractmethod
+    def get_center_freq(self) -> float: pass
+    @abstractmethod
     def set_span(self, hz: float): pass
+    @abstractmethod
+    def get_span(self) -> float: pass
     @abstractmethod
     def set_rbw(self, hz: float): pass
     @abstractmethod

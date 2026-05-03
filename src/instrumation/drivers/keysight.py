@@ -14,19 +14,32 @@ class KeysightMXA(RealDriver, SpectrumAnalyzer):
         if automation_optimized:
             self.write(":DISP:ENAB OFF")
         self.wait_ready()
+    def shutdown_safety(self):
+        self.write(":DISP:ENAB ON")
+        self.sync_config()
 
     def peak_search(self):
+        self.write(":CALC:MARK1:STAT ON")
+        self.write(":CALC:MARK1:TRAC 1")
         self.safe_send(":CALC:MARK1:MAX") 
+        self.wait_ready()
 
     def get_marker_amplitude(self) -> MeasurementResult:
         val = self.query_ascii(":CALC:MARK1:Y?")
         return MeasurementResult(float(val), "dBm")
 
     def set_center_freq(self, hz: float):
-        self.safe_send(f":SENS:FREQ:CENT {self.format_frequency(hz)}")
+        self._validate_frequency(hz)
+        self.write(f":SENS:FREQ:CENT {hz}")
+
+    def get_center_freq(self) -> float:
+        return float(self.query(":SENS:FREQ:CENT?"))
 
     def set_span(self, hz: float):
-        self.safe_send(f":SENS:FREQ:SPAN {hz}")
+        self.write(f":SENS:FREQ:SPAN {hz}")
+
+    def get_span(self) -> float:
+        return float(self.query(":SENS:FREQ:SPAN?"))
 
     def set_rbw(self, hz: float):
         self.safe_send(f":SENS:BAND {hz}")
@@ -37,12 +50,24 @@ class KeysightMXA(RealDriver, SpectrumAnalyzer):
     def get_trace_data(self) -> MeasurementResult:
         # Optimization: Use 32-bit float binary transfer instead of ASCII
         self.write(":FORM:DATA REAL,32")
+        self.write(":FORM:BORD SWAP") # Ensure Little-Endian
+        self.write(":INIT:CONT OFF")  # Single sweep mode
+        self.write(":INIT:IMM")       # Trigger sweep
+        self.wait_ready()             # Wait for sweep completion
         data = self.query_binary_values(":TRAC? TRACE1", datatype='f', is_big_endian=False)
+        self.write(":INIT:CONT ON")   # Restore continuous sweep
         return MeasurementResult(list(data), "dBm")
-
     def measure_frequency(self) -> MeasurementResult: return MeasurementResult(0.0, "Hz")
     def measure_duty_cycle(self) -> MeasurementResult: return MeasurementResult(0.0, "%")
     def measure_v_peak_to_peak(self) -> MeasurementResult: return MeasurementResult(0.0, "V")
+
+@register_driver("SA")
+class KeysightPXA(KeysightMXA):
+    """Driver for Keysight PXA Series Spectrum Analyzers (N9030A/B)."""
+    def __init__(self, resource: str):
+        super().__init__(resource)
+        # PXA typically has higher performance and frequency range
+        self.max_frequency = 50e9 
 
 @register_driver("NA")
 class KeysightPNA(RealDriver, NetworkAnalyzer):
@@ -96,9 +121,10 @@ class KeysightSG(RealDriver, SignalGenerator):
         self.set_output(False)
 
     def shutdown_safety(self):
-        """Emergency Shutdown: RF OFF and -130 dBm."""
+        """Emergency Shutdown: RF OFF and -130 dBm, then restore Display."""
         self.set_output(False)
         self.set_amplitude(-130.0)
+        self.write(":DISP:STAT ON")
         self.sync_config()
 
     def set_frequency(self, hz: float):

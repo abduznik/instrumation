@@ -202,7 +202,7 @@ const Dashboard = () => {
 
       {/* Footer Info */}
       <footer className="flex justify-between items-center text-dim text-xs mono mt-auto py-4 border-t border-border-color">
-        <div>INSTRUMATION HAL ENGINE v0.1.6</div>
+        <div>INSTRUMATION HAL ENGINE v0.2.0</div>
         <div>STATION: LOCALHOST | DRIVER: {lastMessage?.metadata?.driver || 'GENERIC'}</div>
       </footer>
     </div>

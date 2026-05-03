@@ -14,6 +14,7 @@ import importlib.util
 import sys
 import os
 import logging
+from .scanner import scan
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +50,35 @@ def get_instrument(resource_address: str, driver_type: str):
     
     drivers = DriverRegistry.get_drivers_by_type(driver_type)
     
-    # Check for replay mode (address starts with 'replay://')
+    # 2. Handle AUTO address
+    if resource_address == "AUTO":
+        logger.info(f"AUTO address specified for {driver_type}. Scanning...")
+        devices = scan()
+        visa_devices = [d['id'] for d in devices if d['type'] == 'visa']
+        
+        if not visa_devices:
+            raise ValueError(f"AUTO address specified but no VISA instruments found for type: {driver_type}")
+        
+        # Sort candidates: Prioritize TCPIP and USB over ASRL/GPIB
+        def resource_priority(res: str) -> int:
+            if res.startswith("TCPIP"): return 0
+            if res.startswith("USB"): return 1
+            if res.startswith("GPIB"): return 2
+            return 3 # ASRL etc.
+
+        visa_devices.sort(key=resource_priority)
+        
+        # Filter out system serial ports (ASRL) if we have better candidates
+        real_instruments = [d for d in visa_devices if not d.startswith("ASRL")]
+        if real_instruments:
+            resource_address = real_instruments[0]
+        else:
+            resource_address = visa_devices[0]
+            
+        logger.info(f"AUTO: Resolved to {resource_address}")
+        print(f"AUTO: Resolved to {resource_address}")
+
+    # 3. Check for replay mode (address starts with 'replay://')
     if resource_address.startswith("replay://"):
         master_file = resource_address.replace("replay://", "")
         return ReplayDriver("REPLAY_DEVICE", master_file)

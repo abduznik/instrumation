@@ -63,6 +63,9 @@ nav:
       - Scanning & Discovery: cli/scanning.md
       - Measuring Hardware: cli/measuring.md
       - Record & Replay: cli/recording.md
+  - Experiments:
+      - PXA N9030A Validation: experiments/pxa_validation.md
+      - MXG N5183B Validation: experiments/mxg_validation.md
   - API Reference: api_ref/index.md
   - Development Logs:
       - Overview: logs/index.md
