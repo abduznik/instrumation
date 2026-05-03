@@ -38,13 +38,14 @@ class RohdeSchwarzSG(RealDriver, SignalGenerator):
 
     def set_mod_state(self, mod_type: str, state: bool):
         mod_upper = mod_type.upper()
-        state_str = '1' if state else '0'
+        state_str = 'ON' if state else 'OFF' # R&S standard
         if mod_upper == 'AM': self.safe_send(f":AM:STAT {state_str}")
         elif mod_upper == 'FM': self.safe_send(f":FM:STAT {state_str}")
-        elif mod_upper == 'PULSE': self.safe_send(f":PULM:STAT {state_str}")
+        elif mod_upper in ['PULSE', 'PULM']: self.safe_send(f":PULM:STAT {state_str}")
         else: self._unsupported_feature(f"{mod_type} Modulation")
 
     def start_sweep(self, start: float, stop: float, points: int, dwell: float):
+        self.set_output(True) # Ensure RF is ON for sweep
         self.safe_send(f":FREQ:STAR {start}")
         self.safe_send(f":FREQ:STOP {stop}")
         self.safe_send(f":SWE:POIN {points}")
@@ -54,7 +55,11 @@ class RohdeSchwarzSG(RealDriver, SignalGenerator):
         self.wait_ready()
 
     def configure_list_sweep(self, freq_list: List[float], power_list: List[float]):
-        self._unsupported_feature("List Sweep (Custom)")
+        freq_str = ",".join([str(f) for f in freq_list])
+        pow_str = ",".join([str(p) for p in power_list])
+        self.safe_send(f":LIST:FREQ {freq_str}")
+        self.safe_send(f":LIST:POW {pow_str}")
+        self.safe_send(":FREQ:MODE LIST")
 
     def set_reference_clock(self, source: str):
         self.safe_send(f":ROSC:SOUR {source}")
@@ -86,6 +91,12 @@ class RohdeSchwarzSA(RealDriver, SpectrumAnalyzer):
     def get_span(self) -> float:
         return float(self.query(":FREQ:SPAN?"))
 
+    def set_ref_level(self, dbm: float):
+        self.write(f":DISP:WIND:TRAC:Y:RLEV {dbm}")
+
+    def set_attenuation(self, db: float):
+        self.write(f":SENS:POW:ATT {db}")
+
     def set_rbw(self, hz: float):
         self.safe_send(f":BAND {self.format_frequency(hz)}")
 
@@ -93,7 +104,10 @@ class RohdeSchwarzSA(RealDriver, SpectrumAnalyzer):
         self.safe_send(f":BAND:VID {self.format_frequency(hz)}")
 
     def get_trace_data(self) -> MeasurementResult:
-        # Optimization: Use 32-bit float binary transfer
-        self.write("FORM REAL,32")
-        data = self.query_binary_values(":TRAC? TRACE1", datatype='f', is_big_endian=False)
+        # Optimization: Use 32-bit float binary transfer with *WAI sync
+        self.write(":FORM REAL,32")
+        self.write(":INIT:CONT OFF")
+        self.write(":INIT;*WAI") # Single sweep and wait
+        data = self.query_binary_values(":TRAC:DATA? TRACE1", datatype='f', is_big_endian=False)
+        self.write(":INIT:CONT ON")
         return MeasurementResult(list(data), "dBm")

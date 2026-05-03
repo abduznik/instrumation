@@ -41,6 +41,15 @@ class KeysightMXA(RealDriver, SpectrumAnalyzer):
     def get_span(self) -> float:
         return float(self.query(":SENS:FREQ:SPAN?"))
 
+    def set_sweep_points(self, points: int):
+        self.write(f":SENS:SWE:POIN {points}")
+
+    def set_ref_level(self, dbm: float):
+        self.write(f":DISP:WIND:TRAC:Y:RLEV {dbm}")
+
+    def set_attenuation(self, db: float):
+        self.write(f":SENS:POW:ATT {db}")
+
     def set_rbw(self, hz: float):
         self.safe_send(f":SENS:BAND {hz}")
 
@@ -68,6 +77,11 @@ class KeysightPXA(KeysightMXA):
         super().__init__(resource)
         # PXA typically has higher performance and frequency range
         self.max_frequency = 50e9 
+
+    def set_center_freq(self, hz: float):
+        # Explicitly override to ensure PXA's 50GHz limit is validated
+        self._validate_frequency(hz)
+        super().set_center_freq(hz)
 
 @register_driver("NA")
 class KeysightPNA(RealDriver, NetworkAnalyzer):
@@ -136,12 +150,18 @@ class KeysightSG(RealDriver, SignalGenerator):
     def set_output(self, state: bool):
         self.write(f":OUTP {'ON' if state else 'OFF'}")
 
+    def get_frequency(self) -> float:
+        return float(self.query(":FREQ:CW?"))
+
+    def get_amplitude(self) -> float:
+        return float(self.query(":POW?"))
+
     def set_mod_state(self, mod_type: str, state: bool):
         mod_upper = mod_type.upper()
         state_str = 'ON' if state else 'OFF'
         if mod_upper == 'AM': self.safe_send(f":AM:STAT {state_str}")
         elif mod_upper == 'FM': self.safe_send(f":FM:STAT {state_str}")
-        elif mod_upper == 'PULSE': self.safe_send(f":PULM:STAT {state_str}")
+        elif mod_upper in ['PULSE', 'PULM']: self.safe_send(f":PULM:STAT {state_str}")
         else: self._unsupported_feature(f"{mod_type} Modulation")
 
     def start_sweep(self, start: float, stop: float, points: int, dwell: float):
@@ -149,7 +169,8 @@ class KeysightSG(RealDriver, SignalGenerator):
         self.safe_send(f":FREQ:STOP {self.format_frequency(stop)}")
         self.safe_send(f":SWE:POIN {points}")
         self.safe_send(f":SWE:DWEL {dwell}")
-        self.safe_send(":FREQ:MODE LIST")
+        self.safe_send(":LIST:TYPE STEP")   # Toggle to linear stepped mode
+        self.safe_send(":FREQ:MODE SWE")    # Linear sweep mode
         self.write(":INIT:CONT OFF")
         self.write(":INIT")
         self.wait_ready()

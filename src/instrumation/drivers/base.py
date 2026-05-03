@@ -198,6 +198,11 @@ class SpectrumAnalyzer(InstrumentDriver):
     @abstractmethod
     def get_trace_data(self) -> MeasurementResult: pass
 
+    def get_peak_value(self) -> MeasurementResult:
+        """Helper: Performs peak search and returns marker amplitude."""
+        self.peak_search()
+        return self.get_marker_amplitude()
+
 class NetworkAnalyzer(InstrumentDriver):
     @abstractmethod
     def set_start_frequency(self, freq_hz: float): pass

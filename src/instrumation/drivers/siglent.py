@@ -16,11 +16,18 @@ class SiglentSDS(RealDriver, Oscilloscope):
     def single(self): self.write("SING")
 
     def get_waveform(self, channel: int) -> MeasurementResult:
+        # Siglent requires reading raw bytes to handle its specific header
         self.write(f"C{channel}:WF? DAT2")
-        prefix = f"C{channel}:WF DAT2,"
-        self.inst.read_bytes(len(prefix))
-        data = self.query_binary_values("", datatype='b')
-        return MeasurementResult([float(b) for b in data], "V")
+        raw_data = self.inst.read_raw()
+        # Find where the data starts (after the header prefix 'Cx:WF DAT2,')
+        header_prefix = f"C{channel}:WF DAT2,".encode()
+        header_start = raw_data.find(header_prefix)
+        if header_start != -1:
+            data_start = header_start + len(header_prefix)
+            # The data is everything after the header, excluding the last 2 bytes (footer)
+            data_bytes = raw_data[data_start:-2]
+            return MeasurementResult([float(b) for b in data_bytes], "V")
+        return MeasurementResult([], "V")
 
     def auto_scale(self):
         self.safe_send("AUTOSCALE")

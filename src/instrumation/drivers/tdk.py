@@ -32,10 +32,22 @@ class TDKLambdaZPlus(RealDriver, PowerSupply):
         return state == "1" or state.upper() == "ON"
 
     def set_ovp(self, voltage: float):
-        self.safe_send(f":VOLT:PROT {voltage}")
+        self.write(f":VOLT:PROT {voltage}")
+
+    def get_ovp(self) -> float:
+        return float(self.query(":VOLT:PROT?"))
+
+    def clear_protection(self):
+        """Clears hardware protection latches (OVP/OCP)."""
+        self.write(":OUTP:PROT:CLE")
 
     def set_ocp(self, current: float):
         self.safe_send(f":CURR:PROT {current}")
+
+    def measure_voltage_actual(self) -> MeasurementResult:
+        """Queries the actual measured output voltage."""
+        val = self.query_ascii(":MEAS:VOLT?")
+        return MeasurementResult(float(val), "V")
 
     def measure_frequency(self) -> MeasurementResult: return MeasurementResult(0.0, "Hz")
     def measure_duty_cycle(self) -> MeasurementResult: return MeasurementResult(0.0, "%")

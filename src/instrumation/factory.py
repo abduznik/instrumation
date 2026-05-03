@@ -118,6 +118,14 @@ def get_instrument(resource_address: str, driver_type: str):
             from .drivers.keysight import KeysightFieldFox
             return KeysightFieldFox(resource_address)
 
+        if "ROHDE" in idn or "R&S" in idn:
+            if any(m in idn for m in ["FSW", "FSV", "FSP", "FSG", "FSL"]):
+                from .drivers.rs import RohdeSchwarzSA
+                return RohdeSchwarzSA(resource_address)
+            if any(m in idn for m in ["SMA", "SMB", "SMM", "SMC"]):
+                from .drivers.rs import RohdeSchwarzSG
+                return RohdeSchwarzSG(resource_address)
+
         # 3. Fallback to registry-based selection
         for drv_cls in drivers:
             if "Simulated" not in drv_cls.__name__:

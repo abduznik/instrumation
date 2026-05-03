@@ -36,10 +36,15 @@ class RigolDSA(RealDriver, SpectrumAnalyzer):
     def set_vbw(self, hz: float):
         self.safe_send(f":SENS:BAND:VID {hz}")
 
+    def set_ref_level(self, dbm: float):
+        self.write(f":DISP:WIND:TRAC:Y:RLEV {dbm}")
+
+    def set_attenuation(self, db: float):
+        self.write(f":SENS:POW:ATT {db}")
+
     def get_trace_data(self) -> MeasurementResult:
-        # Optimization: Use binary transfer
-        self.write(":FORM:TRAC:DATA REAL")
-        data = self.query_binary_values(":TRAC? TRACE1", datatype='f', is_big_endian=False)
+        # The Rigol DSA800 uses :TRAC:DATA? and is most reliable with ASCII
+        data = self.query_ascii_values(":TRAC:DATA? TRACE1")
         return MeasurementResult(list(data), "dBm")
 
     def measure_frequency(self) -> MeasurementResult:

@@ -2,15 +2,14 @@ import time
 from .transport import VisaDriver, SerialDriver
 
 class UUTHandler:
-    """The main object the user interacts with.
-
-    It manages the connection to the specific UUT.
-
-    Attributes:
-        box (SerialDriver): Driver for the serial connection to the multiplexer/box.
-        inst (VisaDriver): Driver for the VISA instrument connection.
+    """[LEGACY] The main object the user interacts with.
+    
+    .. deprecated:: 0.2.0
+       Use :func:`instrumation.factory.get_instrument` for a modern HAL experience.
     """
     def __init__(self, serial_port, visa_address):
+        import warnings
+        warnings.warn("UUTHandler is legacy and will be removed in v0.3.0. Use factory.get_instrument() instead.", DeprecationWarning, stacklevel=2)
         """Initializes the UUTHandler.
 
         We assume the user needs BOTH to test a UUT properly.

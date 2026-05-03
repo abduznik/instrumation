@@ -30,6 +30,12 @@ class AnritsuSA(RealDriver, SpectrumAnalyzer):
     def get_span(self) -> float:
         return float(self.query(":FREQ:SPAN?"))
 
+    def set_ref_level(self, dbm: float):
+        self.write(f":DISP:WIND:TRAC:Y:RLEV {dbm}")
+
+    def set_attenuation(self, db: float):
+        self.write(f":SENS:POW:ATT {db}")
+
     def set_rbw(self, hz: float):
         self.safe_send(f":BAND {self.format_frequency(hz)}")
 
@@ -37,9 +43,9 @@ class AnritsuSA(RealDriver, SpectrumAnalyzer):
         self.safe_send(f":BAND:VID {self.format_frequency(hz)}")
 
     def get_trace_data(self) -> MeasurementResult:
-        # Optimization: Use binary transfer
-        self.write(":FORM REAL")
-        data = self.query_binary_values(":TRAC? TRACE1", datatype='f', is_big_endian=False)
+        # Optimization: Use 32-bit float binary transfer
+        self.write(":FORM:DATA REAL32")
+        data = self.query_binary_values(":TRAC:DATA? TRACE1", datatype='f', is_big_endian=False)
         return MeasurementResult(list(data), "dBm")
 
     def shutdown_safety(self):

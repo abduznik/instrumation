@@ -18,15 +18,26 @@ class TektronixTDS(RealDriver, Oscilloscope):
         self.write(":ACQUIRE:STATE ON")
 
     def get_waveform(self, channel: int) -> MeasurementResult:
-        self.write(f":DATA:SOURCE CH{channel}")
-        self.write(":DATA:ENC ASC")
-        self.write(":DATA:WIDTH 1")
-        raw_data = self.query_ascii(":CURVE?")
-        data = [float(x) for x in raw_data.split(',')]
-        return MeasurementResult(data, "V")
+        self.write(f"DATA:SOURCE CH{channel}")
+        self.write("DATA:ENCdg RIBINARY") # Signed binary
+        self.write("DATA:WIDTH 2")        # 2 bytes per point
+        
+        # Query scaling parameters
+        ymult = float(self.query("WFMPRE:YMULT?"))
+        yoff = float(self.query("WFMPRE:YOFF?"))
+        yzero = float(self.query("WFMPRE:YZERO?"))
+        
+        # Fetch raw binary curve
+        raw_counts = self.query_binary_values("CURVE?", datatype='h', is_big_endian=True)
+        
+        # Scale to Volts: (raw - yoff) * ymult + yzero
+        scaled_data = [(x - yoff) * ymult + yzero for x in raw_counts]
+        return MeasurementResult(scaled_data, "V")
 
     def auto_scale(self):
-        self.safe_send("AUTOSC")
+        """Standard Tektronix autoset command."""
+        self.write("AUTOSET EXECUTE")
+        self.wait_ready()
 
     def set_trigger(self, source: str, level: float, slope: str):
         self.safe_send(f"TRIG:MAIN:EDGE:SOURCE {source}")

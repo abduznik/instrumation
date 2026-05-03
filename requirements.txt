@@ -1,2 +1,14 @@
-PyVISA
+# Core Dependencies
+pyvisa
 pyserial
+toml
+numpy
+websockets
+
+# Development Dependencies
+pytest
+pytest-asyncio
+mkdocs-material
+mkdocstrings[python]
+build
+twine
