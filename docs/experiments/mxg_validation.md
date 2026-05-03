@@ -6,11 +6,12 @@ This document summarizes the validation of the Keysight MXG N5183B Signal Genera
 The MXG was connected via LAN (HiSLIP).
 
 ## Validation Script
-The following script was used to test sweeps and modulation.
+The following script was used to test sweeps and modulation. We utilized the `"AUTO"` address resolution, which successfully identified the MXG over HiSLIP.
 
 ```python
 def run_advanced_session():
-    address = "AUTO"
+    # Use AUTO to let the HAL find the Signal Generator
+    address = "AUTO" 
     with get_instrument(address, "SG") as sg:
         sg.preset()
         sg.set_frequency(2.4e9)

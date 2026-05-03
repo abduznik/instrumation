@@ -14,8 +14,22 @@ Addresses typically follow the VISA standard:
 - **TCP/IP**: `TCPIP0::192.168.1.10::inst0::INSTR`
 - **GPIB**: `GPIB0::7::INSTR`
 
-## Auto-Discovery
-If you have only one instrument of a type connected, use `"AUTO"`:
+## Intelligent Auto-Discovery
+
+Starting with **v0.2.0**, the HAL includes an intelligent priority engine for `"AUTO"` resolution. It automatically scans your system and prioritizes high-speed interfaces:
+
+1. **TCPIP (HiSLIP/VXI-11)** - Prioritized for modern LXI hardware.
+2. **USB** - Plug-and-play instruments.
+3. **GPIB** - Legacy hardware.
+4. **ASRL** - Serial/System ports (Filtered by default to avoid debug console conflicts).
+
+### Usage Recommendation
+Always try `"AUTO"` first to keep your scripts portable:
+
 ```python
-instr = get_instrument("AUTO", "DMM")
+# The HAL will find your Signal Generator automatically
+sg = get_instrument("AUTO", "SG")
 ```
+
+> [!TIP]
+> If your instrument is on a different subnet or has discovery disabled, you can always fall back to an explicit IP: `TCPIP0::169.254.x.x::inst0::INSTR`.

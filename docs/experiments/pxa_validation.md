@@ -11,25 +11,24 @@ Standard VISA discovery (VXI-11) did not immediately find the instrument. We use
 - **Address Format**: Successful connection was established using the `TCPIP0` resource format: `TCPIP0::169.254.243.110::inst0::INSTR`.
 
 ## Validation Script
-The following script was used to exercise the Spectrum Analyzer suite. It leverages the `RecordingWrapper` to capture the SCPI traffic for future replay.
+The following script was used to exercise the Spectrum Analyzer suite. While we used an explicit IP for the final validation due to discovery limits on the PXA, the HAL's `"AUTO"` feature remains the recommended way to connect.
 
 ```python
 from instrumation.factory import get_instrument
-from instrumation.drivers.replay import RecordingWrapper, GoldenMaster
 
-def run_pxa_validation():
-    address = "TCPIP0::169.254.243.110::inst0::INSTR"
-    with get_instrument(address, "SA") as sa:
-        gm = GoldenMaster("pxa_session.json")
-        sa = RecordingWrapper(sa, gm)
-        
-        sa.preset()
-        sa.set_center_freq(2.4e9)
-        sa.set_span(100e6)
-        sa.peak_search()
-        trace = sa.get_trace_data()
-        sa.check_errors()
-        gm.save()
+# Recommended: Let the HAL find it
+# address = "AUTO" 
+
+# Fallback: Used in this experiment
+address = "TCPIP0::169.254.243.110::inst0::INSTR" 
+
+with get_instrument(address, "SA") as sa:
+    sa.preset()
+    sa.set_center_freq(2.4e9)
+    sa.set_span(100e6)
+    sa.peak_search()
+    trace = sa.get_trace_data()
+    sa.check_errors()
 ```
 
 ## Results
