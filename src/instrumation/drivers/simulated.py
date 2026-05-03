@@ -1,7 +1,7 @@
 import random
 import time
 import math
-from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, SignalGenerator
+from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, SignalGenerator, FunctionGenerator
 from .registry import register_driver
 from ..results import MeasurementResult
 
@@ -132,7 +132,7 @@ class SimulatedOscilloscope(SimulatedBaseDriver, Oscilloscope):
     def get_screenshot(self): return b"SIM_SCREENSHOT"
 
 @register_driver("SG")
-class SimulatedSignalGenerator(SimulatedBaseDriver, SignalGenerator):
+class SimulatedSignalGenerator(SimulatedBaseDriver, FunctionGenerator):
     def set_frequency(self, hz):
         self._validate_frequency(hz)
         print(f"[SIM] Setting SG Frequency: {hz}")
@@ -144,6 +144,10 @@ class SimulatedSignalGenerator(SimulatedBaseDriver, SignalGenerator):
     def start_sweep(self, start, stop, points, dwell): pass
     def configure_list_sweep(self, freq_list, power_list): pass
     def set_reference_clock(self, source): pass
+    def set_voltage(self, vpp): pass
+    def set_offset(self, volts): pass
+    def set_waveform(self, shape):
+        print(f"[SIM] Setting Waveform: {shape}")
 
 class SimulatedDriver(SimulatedMultimeter):
     pass

@@ -4,7 +4,7 @@ import os
 import time
 from .drivers.real import RealDriver
 from .drivers.registry import DriverRegistry
-from .drivers.base import Oscilloscope, SpectrumAnalyzer, SignalGenerator, FunctionGenerator, PowerSupply, Multimeter
+from .drivers.base import Oscilloscope, SpectrumAnalyzer, SignalGenerator, FunctionGenerator, PowerSupply, Multimeter, NetworkAnalyzer
 
 logger = logging.getLogger(__name__)
 

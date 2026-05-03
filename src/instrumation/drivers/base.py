@@ -169,6 +169,9 @@ class PowerSupply(InstrumentDriver):
     def get_voltage(self) -> float: pass
     @abstractmethod
     def set_current_limit(self, current: float): pass
+    def set_current(self, current: float):
+        """Generalized alias for set_current_limit."""
+        self.set_current_limit(current)
     @abstractmethod
     def get_current(self) -> MeasurementResult: pass
     @abstractmethod
@@ -179,6 +182,21 @@ class PowerSupply(InstrumentDriver):
     def set_ovp(self, voltage: float): pass
     @abstractmethod
     def set_ocp(self, current: float): pass
+    @abstractmethod
+    def measure_voltage_actual(self) -> MeasurementResult: pass
+    @abstractmethod
+    def measure_current(self) -> MeasurementResult: pass
+
+    def set_voltage_limit(self, voltage: float):
+        """Generalized alias for Over-Voltage Protection (OVP)."""
+        self.set_ovp(voltage)
+
+    def measure_voltage(self) -> MeasurementResult:
+        """Generalized alias for measure_voltage_actual."""
+        return self.measure_voltage_actual()
+
+    @abstractmethod
+    def clear_protection(self): pass
 
 class SpectrumAnalyzer(InstrumentDriver):
     @abstractmethod
