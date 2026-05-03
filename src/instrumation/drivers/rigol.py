@@ -21,8 +21,14 @@ class RigolDSA(RealDriver, SpectrumAnalyzer):
     def set_center_freq(self, hz: float):
         self.safe_send(f":SENS:FREQ:CENT {self.format_frequency(hz)}")
 
+    def get_center_freq(self) -> float:
+        return float(self.query(":SENS:FREQ:CENT?"))
+
     def set_span(self, hz: float):
         self.safe_send(f":SENS:FREQ:SPAN {hz}")
+
+    def get_span(self) -> float:
+        return float(self.query(":SENS:FREQ:SPAN?"))
 
     def set_rbw(self, hz: float):
         self.safe_send(f":SENS:BAND:RES {hz}")

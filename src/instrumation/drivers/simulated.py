@@ -89,8 +89,11 @@ class SimulatedSpectrumAnalyzer(SimulatedBaseDriver, SpectrumAnalyzer):
         return MeasurementResult(-20.0, "dBm")
     def set_center_freq(self, hz):
         self._validate_frequency(hz)
+        self._center_freq = hz
         print(f"[SIM] Setting SA Center Freq: {hz}")
-    def set_span(self, hz): pass
+    def get_center_freq(self) -> float: return getattr(self, "_center_freq", 2.4e9)
+    def set_span(self, hz): self._span = hz
+    def get_span(self) -> float: return getattr(self, "_span", 100e6)
     def set_rbw(self, hz): pass
     def set_vbw(self, hz): pass
     def get_trace_data(self): return MeasurementResult([0.0]*1001, "dBm")

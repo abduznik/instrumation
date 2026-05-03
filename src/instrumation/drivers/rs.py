@@ -77,8 +77,14 @@ class RohdeSchwarzSA(RealDriver, SpectrumAnalyzer):
     def set_center_freq(self, hz: float):
         self.safe_send(f":FREQ:CENT {self.format_frequency(hz)}")
 
+    def get_center_freq(self) -> float:
+        return float(self.query(":FREQ:CENT?"))
+
     def set_span(self, hz: float):
         self.safe_send(f":FREQ:SPAN {self.format_frequency(hz)}")
+
+    def get_span(self) -> float:
+        return float(self.query(":FREQ:SPAN?"))
 
     def set_rbw(self, hz: float):
         self.safe_send(f":BAND {self.format_frequency(hz)}")
