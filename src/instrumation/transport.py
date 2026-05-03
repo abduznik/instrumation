@@ -1,11 +1,11 @@
-import pyvisa
 import serial
 import time
 
 class VisaDriver:
     """Generic wrapper for VISA instruments."""
     def __init__(self, address, timeout=5000):
-        self.rm = pyvisa.ResourceManager()
+        from .factory import get_rm
+        self.rm = get_rm()
         self.address = address
         try:
             self.inst = self.rm.open_resource(address)
@@ -31,7 +31,7 @@ class VisaDriver:
     def close(self):
         if self.inst:
             self.inst.close()
-            self.rm.close()
+        # Note: We do NOT close the RM here as it is a global singleton
 
 class SerialDriver:
     """Generic wrapper for Serial devices."""

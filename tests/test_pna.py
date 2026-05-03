@@ -3,11 +3,12 @@ from unittest.mock import MagicMock, patch
 from instrumation.drivers.keysight import KeysightPNA
 
 class TestKeysightPNA(unittest.TestCase):
-    @patch('instrumation.drivers.real.pyvisa.ResourceManager')
-    def setUp(self, mock_rm_cls):
+    @patch('instrumation.factory.get_rm')
+    def setUp(self, mock_get_rm):
         self.mock_inst = MagicMock()
-        mock_rm = mock_rm_cls.return_value
+        mock_rm = MagicMock()
         mock_rm.open_resource.return_value = self.mock_inst
+        mock_get_rm.return_value = mock_rm
         
         self.driver = KeysightPNA("GPIB0::16::INSTR")
         self.driver.connect()

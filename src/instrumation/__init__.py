@@ -3,7 +3,7 @@ from .device import UUTHandler
 from .station import Station
 from .utils import DataBroadcaster
 from .factory import get_instrument, get_instrument_from_config
-import pyvisa
+
 
 __all__ = ["scan", "UUTHandler", "Station", "DataBroadcaster", "get_instrument", "get_instrument_from_config"]
 
@@ -50,7 +50,8 @@ def connect_instrument(visa_address: str, driver_type: str = None):
         
     # Auto-detection logic
     try:
-        rm = pyvisa.ResourceManager()
+        from .factory import get_rm
+        rm = get_rm()
         resource = rm.open_resource(visa_address)
         idn = resource.query("*IDN?").upper()
         resource.close()

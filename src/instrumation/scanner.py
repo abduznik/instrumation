@@ -1,4 +1,3 @@
-import pyvisa
 import serial.tools.list_ports
 
 def scan():
@@ -19,7 +18,8 @@ def scan():
 
     # 2. Scan for VISA Instruments (Keysight, etc.)
     try:
-        rm = pyvisa.ResourceManager()
+        from .factory import get_rm
+        rm = get_rm()
         resources = rm.list_resources()
         for res in resources:
             found_devices.append({

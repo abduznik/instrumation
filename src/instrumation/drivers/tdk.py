@@ -26,7 +26,7 @@ class TDKLambdaZPlus(RealDriver, PowerSupply):
             
             # 3. Now run the standard discovery
             self._discover_identity()
-            self.options = []
+            self._discover_options()
         except Exception as e:
             self.connected = False
             raise InstrumentError(f"Failed to connect to TDK-Lambda at {self.resource}: {e}")
@@ -40,16 +40,21 @@ class TDKLambdaZPlus(RealDriver, PowerSupply):
         self.safe_send(f":VOLT {voltage}")
 
     def get_voltage(self) -> float:
+        """Returns the programmed voltage setpoint."""
         return float(self.query_ascii(":VOLT?"))
 
+    def get_current(self) -> float:
+        """Returns the programmed current setpoint (CC limit)."""
+        return float(self.query_ascii(":CURR?"))
 
-    def get_current(self) -> MeasurementResult:
-        val = self.query_ascii(":MEAS:CURR?")
-        return MeasurementResult(float(val), "A")
-
-    def measure_current(self) -> MeasurementResult:
+    def get_current_limit(self) -> float:
         """Alias for get_current."""
         return self.get_current()
+
+    def measure_current(self) -> MeasurementResult:
+        """Queries the actual measured output current."""
+        val = self.query_ascii(":MEAS:CURR?")
+        return MeasurementResult(float(val), "A")
 
     def set_output(self, state: bool):
         self.write(f":OUTP {'ON' if state else 'OFF'}")

@@ -3,8 +3,8 @@ from unittest.mock import MagicMock, patch
 from instrumation.drivers.tdk import TDKLambdaZPlus
 
 class TestTDKLambdaZPlus(unittest.TestCase):
-    @patch('instrumation.drivers.real.pyvisa.ResourceManager')
-    def setUp(self, mock_rm_cls):
+    @patch('instrumation.factory.get_rm')
+    def setUp(self, mock_get_rm):
         self.mock_inst = MagicMock()
         def mock_query(cmd):
             if "SYST:ERR?" in cmd: return '+0,"No error"'
@@ -13,10 +13,11 @@ class TestTDKLambdaZPlus(unittest.TestCase):
             if "*IDN?" in cmd: return "TDK,Z+,1,1"
             return "0"
         self.mock_inst.query.side_effect = mock_query
-        
-        mock_rm = mock_rm_cls.return_value
+    
+        mock_rm = MagicMock()
         mock_rm.open_resource.return_value = self.mock_inst
-        
+        mock_get_rm.return_value = mock_rm
+    
         self.driver = TDKLambdaZPlus("GPIB0::1::INSTR")
         self.driver.connect()
 
@@ -29,7 +30,14 @@ class TestTDKLambdaZPlus(unittest.TestCase):
         self.assertEqual(val, 12.5)
 
     def test_get_current(self):
+        # mock_query returns "0" for :CURR? if not handled
+        self.mock_inst.query.side_effect = lambda cmd: "2.5" if ":CURR?" in cmd else "1.234"
         val = self.driver.get_current()
+        self.assertEqual(val, 2.5)
+
+    def test_measure_current(self):
+        self.mock_inst.query.side_effect = lambda cmd: "1.234" if ":MEAS:CURR?" in cmd else "0"
+        val = self.driver.measure_current()
         self.assertEqual(val.value, 1.234)
         self.assertEqual(val.unit, "A")
 

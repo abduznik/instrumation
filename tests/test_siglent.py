@@ -67,7 +67,7 @@ class TestSiglentSDS(unittest.TestCase):
         # Ensure IDN identifies it as Siglent so factory routes correctly
         mock_res.query.return_value = "SIGLENT,SDS1202X-E,SDS1EBX2R4567,1.3.9R1"
         
-        with patch('pyvisa.ResourceManager', return_value=mock_rm), \
+        with patch('instrumation.factory.get_rm', return_value=mock_rm), \
              patch('instrumation.factory.RealDriver') as mock_real:
             mock_real.return_value.get_id.return_value = "SIGLENT,SDS1202X-E,..."
             mock_rm.open_resource.return_value = mock_res

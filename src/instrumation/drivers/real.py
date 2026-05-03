@@ -6,13 +6,20 @@ from ..exceptions import ConnectionLost, ConfigurationError, InstrumentTimeout
 
 class RealDriver(InstrumentDriver):
     """Refined RealDriver with Auto-Handshake Engine."""
+    @staticmethod
+    def scan():
+        """Scans for available instruments."""
+        from .factory import get_rm
+        return get_rm().list_resources()
+
     def __init__(self, resource: str, rm: pyvisa.ResourceManager = None):
         super().__init__(resource)
+        from ..factory import get_rm
         if rm:
             self.rm = rm
         else:
             try:
-                self.rm = pyvisa.ResourceManager()
+                self.rm = get_rm()
             except Exception:
                 self.rm = None
         self.inst = None
