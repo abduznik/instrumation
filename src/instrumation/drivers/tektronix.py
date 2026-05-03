@@ -1,3 +1,4 @@
+from typing import List
 from .base import Oscilloscope, FunctionGenerator
 from .registry import register_driver
 from .real import RealDriver
