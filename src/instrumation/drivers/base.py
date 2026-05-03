@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional, Union, Dict
+from typing import List, Union, Dict
 import asyncio
-import re
 from ..results import MeasurementResult
-from ..exceptions import InstrumentError, InstrumentTimeout, ConnectionLost, OverloadError, ConfigurationError
+from ..exceptions import OverloadError, ConfigurationError
 
 class InstrumentDriver(ABC):
     """Abstract Base Class for all instrument drivers following the 'Abstract Hardware' spec."""
@@ -107,9 +106,12 @@ class InstrumentDriver(ABC):
         """Ensures input is Hz and formats for SCPI (e.g. 1.5e9 -> '1.5 GHz')."""
         hz = float(val)
         self._validate_frequency(hz)
-        if hz >= 1e9: return f"{hz/1e9:.6f} GHz"
-        if hz >= 1e6: return f"{hz/1e6:.6f} MHz"
-        if hz >= 1e3: return f"{hz/1e3:.6f} kHz"
+        if hz >= 1e9:
+            return f"{hz/1e9:.6f} GHz"
+        if hz >= 1e6:
+            return f"{hz/1e6:.6f} MHz"
+        if hz >= 1e3:
+            return f"{hz/1e3:.6f} kHz"
         return f"{hz:.0f} Hz"
 
     def format_power(self, dbm: float) -> str:
@@ -142,7 +144,7 @@ class InstrumentDriver(ABC):
     def __exit__(self, exc_type, exc_val, exc_tb):
         try:
             self.shutdown_safety()
-        except:
+        except Exception:
             pass
         self.disconnect()
 

@@ -2,18 +2,22 @@ import pyvisa
 import time
 from .base import InstrumentDriver
 from ..results import MeasurementResult
-from ..exceptions import InstrumentError, ConnectionLost, ConfigurationError, InstrumentTimeout
+from ..exceptions import ConnectionLost, ConfigurationError, InstrumentTimeout
 
 class RealDriver(InstrumentDriver):
     """Refined RealDriver with Auto-Handshake Engine."""
-    def __init__(self, resource: str):
+    def __init__(self, resource: str, rm: pyvisa.ResourceManager = None):
         super().__init__(resource)
-        try:
-            self.rm = pyvisa.ResourceManager()
-        except:
-            self.rm = None
+        if rm:
+            self.rm = rm
+        else:
+            try:
+                self.rm = pyvisa.ResourceManager()
+            except Exception:
+                self.rm = None
         self.inst = None
         self.is_simulated = False
+        self.bridge_config = {} # e.g. {"type": "prologix", "gpib_address": 1}
 
     def connect(self):
         """Connects, runs sync_config, and discovers identity/options."""
@@ -42,7 +46,7 @@ class RealDriver(InstrumentDriver):
     def _discover_options(self):
         try:
             self.options = self.query("*OPT?").split(',')
-        except:
+        except Exception:
             self.options = []
 
     def disconnect(self):
@@ -51,7 +55,14 @@ class RealDriver(InstrumentDriver):
         self.connected = False
 
     def write(self, command: str):
-        if not self.inst: raise ConnectionLost("Not connected.")
+        if not self.inst:
+            raise ConnectionLost("Not connected.")
+        
+        # Bridge handling
+        if self.bridge_config.get("type") == "prologix":
+            if not command.endswith("\n") and not command.startswith("++"):
+                command += "\n"
+        
         self.inst.write(command)
 
     def safe_send(self, command: str):
@@ -60,7 +71,15 @@ class RealDriver(InstrumentDriver):
         self.check_errors()
 
     def query(self, command: str) -> str:
-        if not self.inst: raise ConnectionLost("Not connected.")
+        if not self.inst:
+            raise ConnectionLost("Not connected.")
+        
+        # Bridge handling
+        if self.bridge_config.get("type") == "prologix":
+            self.write(command)
+            self.write("++read eoi")
+            return self.inst.read().strip()
+            
         return self.inst.query(command).strip()
 
     def query_ascii(self, command: str) -> str:
@@ -70,7 +89,8 @@ class RealDriver(InstrumentDriver):
         return resp
 
     def query_binary_values(self, command: str, datatype: str = 'f', is_big_endian: bool = False) -> list:
-        if not self.inst: raise ConnectionLost("Not connected.")
+        if not self.inst:
+            raise ConnectionLost("Not connected.")
         return self.inst.query_binary_values(command, datatype=datatype, is_big_endian=is_big_endian)
 
     # --- Global Logic & Sync ---
@@ -90,7 +110,7 @@ class RealDriver(InstrumentDriver):
                 # Direct query to PyVISA to avoid recursion
                 if self.inst.query("*OPC?").strip() == "1":
                     return
-            except:
+            except Exception:
                 pass
             time.sleep(0.1)
         raise InstrumentTimeout(f"Timeout waiting for *OPC? on {self.resource}")

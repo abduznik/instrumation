@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional, Dict, List, Union
+from typing import Any, Optional, Dict, Union
 import json
 
 try:

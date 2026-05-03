@@ -39,10 +39,14 @@ class RohdeSchwarzSG(RealDriver, SignalGenerator):
     def set_mod_state(self, mod_type: str, state: bool):
         mod_upper = mod_type.upper()
         state_str = 'ON' if state else 'OFF' # R&S standard
-        if mod_upper == 'AM': self.safe_send(f":AM:STAT {state_str}")
-        elif mod_upper == 'FM': self.safe_send(f":FM:STAT {state_str}")
-        elif mod_upper in ['PULSE', 'PULM']: self.safe_send(f":PULM:STAT {state_str}")
-        else: self._unsupported_feature(f"{mod_type} Modulation")
+        if mod_upper == 'AM':
+            self.safe_send(f":AM:STAT {state_str}")
+        elif mod_upper == 'FM':
+            self.safe_send(f":FM:STAT {state_str}")
+        elif mod_upper in ['PULSE', 'PULM']:
+            self.safe_send(f":PULM:STAT {state_str}")
+        else:
+            self._unsupported_feature(f"{mod_type} Modulation")
 
     def start_sweep(self, start: float, stop: float, points: int, dwell: float):
         self.set_output(True) # Ensure RF is ON for sweep

@@ -2,7 +2,6 @@ from .base import SpectrumAnalyzer, NetworkAnalyzer, SignalGenerator, Oscillosco
 from .registry import register_driver
 from .real import RealDriver
 from ..results import MeasurementResult
-from ..exceptions import ConfigurationError, OverloadError
 from typing import List
 
 @register_driver("SA")
@@ -159,10 +158,14 @@ class KeysightSG(RealDriver, SignalGenerator):
     def set_mod_state(self, mod_type: str, state: bool):
         mod_upper = mod_type.upper()
         state_str = 'ON' if state else 'OFF'
-        if mod_upper == 'AM': self.safe_send(f":AM:STAT {state_str}")
-        elif mod_upper == 'FM': self.safe_send(f":FM:STAT {state_str}")
-        elif mod_upper in ['PULSE', 'PULM']: self.safe_send(f":PULM:STAT {state_str}")
-        else: self._unsupported_feature(f"{mod_type} Modulation")
+        if mod_upper == 'AM':
+            self.safe_send(f":AM:STAT {state_str}")
+        elif mod_upper == 'FM':
+            self.safe_send(f":FM:STAT {state_str}")
+        elif mod_upper in ['PULSE', 'PULM']:
+            self.safe_send(f":PULM:STAT {state_str}")
+        else:
+            self._unsupported_feature(f"{mod_type} Modulation")
 
     def start_sweep(self, start: float, stop: float, points: int, dwell: float):
         self.safe_send(f":FREQ:STAR {self.format_frequency(start)}")
@@ -291,7 +294,7 @@ class KeysightInfiniiVision(RealDriver, Oscilloscope):
         self.wait_ready()
 
     def set_trigger(self, source: str, level: float, slope: str):
-        self.write(f":TRIGger:MODE EDGE")
+        self.write(":TRIGger:MODE EDGE")
         self.write(f":TRIGger:EDGE:SOURce {source.upper()}")
         self.write(f":TRIGger:EDGE:LEVel {level}")
         self.write(f":TRIGger:EDGE:SLOPe {slope.upper()}")

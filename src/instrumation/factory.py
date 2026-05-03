@@ -1,13 +1,23 @@
 import pyvisa
 import logging
 import os
+import time
 from .drivers.real import RealDriver
-from .drivers.replay import ReplayDriver
-from .drivers.simulated import SimulatedDriver
 from .drivers.registry import DriverRegistry
 from .drivers.base import Oscilloscope, SpectrumAnalyzer, SignalGenerator, FunctionGenerator, PowerSupply, Multimeter
 
 logger = logging.getLogger(__name__)
+
+# Global Resource Manager to prevent "Too many managers" errors on macOS
+_GLOBAL_RM = None
+
+def get_rm():
+    global _GLOBAL_RM
+    if _GLOBAL_RM is None:
+        ni_lib = "/Library/Frameworks/VISA.framework/VISA"
+        rm_args = ni_lib if os.path.exists(ni_lib) else None
+        _GLOBAL_RM = pyvisa.ResourceManager(rm_args)
+    return _GLOBAL_RM
 
 def is_sim_mode() -> bool:
     return os.environ.get("INSTRUMATION_MODE", "REAL").upper() == "SIM"
@@ -18,11 +28,13 @@ def _discover_lan_resources() -> list:
     try:
         import subprocess
         import re
-        output = subprocess.check_output(["arp", "-a"]).decode()
+        output = subprocess.check_output(["arp", "-an"]).decode()
         ips = re.findall(r"\((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\)", output)
         for ip in ips:
-            if ip.startswith("169.254") or ip.startswith("192.168"):
-                resources.append(f"TCPIP::{ip}::INSTR")
+            # Skip broadcast and local loopback
+            if ip.endswith(".255") or ip.startswith("127."):
+                continue
+            resources.append(f"TCPIP::{ip}::INSTR")
     except Exception:
         pass
     return resources
@@ -30,73 +42,173 @@ def _discover_lan_resources() -> list:
 def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
     # 1. Handle AUTO discovery
     if resource_address == "AUTO":
-        ni_lib = "/Library/Frameworks/VISA.framework/VISA"
-        rm_args = ni_lib if os.path.exists(ni_lib) else None
-        rm = pyvisa.ResourceManager(rm_args)
+        import json
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        cache_file = ".visa_cache.json"
         
-        visa_resources = list(rm.list_resources())
-        candidate_resources = visa_resources + _discover_lan_resources()
-        
-        logger.info(f"AUTO-Discovery checking candidates: {candidate_resources}")
-        
-        for res in candidate_resources:
+        # 1. Load Cache & LAN (The Fast Resources)
+        cached_resources = []
+        if os.path.exists(cache_file):
             try:
-                if res.startswith("ASRL") and len(candidate_resources) > 1:
-                    continue
-                
+                with open(cache_file, "r") as f:
+                    cached_resources = json.load(f)
+            except (IOError, OSError, json.JSONDecodeError):
+                pass
+        
+        lan_resources = _discover_lan_resources()
+        tried = set()
+
+        def run_probe(resources, desc):
+            # Sort by priority and recency
+            candidates = []
+            for r in resources:
+                if r not in tried:
+                    candidates.append(r)
+            
+            if not candidates:
+                return None
+            
+            # Sort: Priority first, then preserve order (recency)
+            candidates.sort(key=lambda x: "ASRL5" in x or "TCPIP" in x or "USB0" in x, reverse=True)
+            
+            logger.info(f"AUTO-Discovery checking {desc}: {candidates}")
+            
+            if len(candidates) <= 2:
+                for res in candidates:
+                    tried.add(res)
+                    result = probe_resource(res)
+                    if result:
+                        update_cache(result.resource_address)
+                        return result
+                return None
+
+            with ThreadPoolExecutor(max_workers=4) as executor:
+                future_to_res = {executor.submit(probe_resource, res): res for res in candidates}
+                for future in as_completed(future_to_res):
+                    tried.add(future_to_res[future])
+                    result = future.result()
+                    if result:
+                        update_cache(result.resource_address)
+                        return result
+            return None
+
+        def update_cache(res):
+            try:
+                # Move successful resource to the front of the cache
+                new_cache = [res] + [r for r in cached_resources if r != res]
+                with open(cache_file, "w") as f:
+                    json.dump(new_cache[:10], f) # Keep top 10 for speed
+            except (IOError, OSError):
+                pass
+
+        def probe_resource(res):
+            try:
+                if "ASRL" in res and any(p in res for p in ["1", "2", "3", "4"]):
+                    return None
                 dev = get_instrument(res, driver_type)
-                
-                type_map = {
-                    "SCOPE": Oscilloscope,
-                    "SA": SpectrumAnalyzer,
-                    "SG": (SignalGenerator, FunctionGenerator),
-                    "PSU": PowerSupply,
-                    "DMM": Multimeter
-                }
-                
-                if driver_type == "GENERIC":
+                type_map = {"SCOPE": Oscilloscope, "SA": SpectrumAnalyzer, "SG": (SignalGenerator, FunctionGenerator), "PSU": PowerSupply, "DMM": Multimeter}
+                if driver_type == "GENERIC" or (type_map.get(driver_type) and isinstance(dev, type_map.get(driver_type))):
                     return dev
-                
-                expected_base = type_map.get(driver_type)
-                if expected_base and isinstance(dev, expected_base):
-                    return dev
-                    
                 dev.disconnect()
             except Exception:
-                continue
+                pass
+            return None
+
+        # --- Phase 0: Try ONLY Cache (Super Fast) ---
+        if cached_resources:
+            result = run_probe(cached_resources, "Super Fast (Cache Only)")
+            if result:
+                return result
+
+        # --- Phase 1: Try LAN (Quick Search) ---
+        result = run_probe(lan_resources, "Fast Track (LAN)")
+        if result:
+            return result
+
+        # --- Phase 2: Try Full VISA Scan (The 10s Tax) ---
+        rm = get_rm()
+        visa_resources = list(rm.list_resources())
+        result = run_probe(visa_resources, "Slow Track (Full Scan)")
+        if result:
+            return result
         
         raise ValueError(f"AUTO-Discovery could not find a suitable {driver_type} instrument.")
 
-    # 2. Check for replay mode
+    # 2. Check for Prologix Bridge (prologix:///dev/cu.usbserial-xxx:address)
+    if resource_address.startswith("prologix://"):
+        addr_part = resource_address.replace("prologix://", "")
+        if ":" in addr_part:
+            serial_port, gpib_addr = addr_part.rsplit(":", 1)
+            gpib_addr = int(gpib_addr)
+        else:
+            serial_port = addr_part
+            gpib_addr = 1
+            
+        from .drivers.prologix import PrologixDriver
+        # 1. Create the bridge
+        bridge = PrologixDriver(serial_port, gpib_addr)
+        bridge.connect()
+        
+        # 2. Use the bridge to get the IDN of the real instrument
+        idn = bridge.query("*IDN?").upper()
+        bridge.disconnect()
+        
+        # 3. Resolve the driver and inject bridge config
+        final_drv = get_instrument(serial_port, driver_type)
+        final_drv.bridge_config = {"type": "prologix", "gpib_address": gpib_addr}
+        
+        # We need to re-prime the bridge after the final driver connects
+        final_drv.write("++mode 1")
+        final_drv.write("++auto 0")
+        final_drv.write(f"++addr {gpib_addr}")
+        
+        return final_drv
+    
+    # 3. Check for replay mode
     if resource_address.startswith("replay://"):
-        master_file = resource_address.replace("replay://", "")
-        return ReplayDriver("REPLAY_DEVICE", master_file)
+        file_path = resource_address.replace("replay://", "")
+        from .drivers.replay import ReplayDriver
+        return ReplayDriver(resource_address, master_file=file_path)
 
-    # 3. Simulation Logic
     if is_sim_mode():
+        from .drivers.simulated import SimulatedMultimeter
         drivers = DriverRegistry.get_drivers_by_type(driver_type)
         for drv_cls in drivers:
             if "Simulated" in drv_cls.__name__:
                 return drv_cls(resource_address)
         if driver_type == "DMM":
-            return SimulatedDriver(resource_address)
+            return SimulatedMultimeter(resource_address)
         raise ValueError(f"No simulated driver found for type: {driver_type}")
 
     # 4. Real Hardware Logic
-    ni_lib = "/Library/Frameworks/VISA.framework/VISA"
-    rm_args = ni_lib if os.path.exists(ni_lib) else None
-    
     idn = ""
     try:
         if "SIM" in resource_address or "MOCK" in resource_address:
             idn = ""
         else:
-            base_dev = RealDriver(resource_address)
-            if rm_args:
-                base_dev.rm = pyvisa.ResourceManager(rm_args)
-            base_dev.connect()
-            idn = base_dev.get_id().upper()
-            base_dev.disconnect()
+            base_dev = RealDriver(resource_address, rm=get_rm())
+            
+            # Smart Probe for Serial Ports (like TDK-Lambda)
+            if "ASRL" in resource_address:
+                try:
+                    base_dev.inst = base_dev.rm.open_resource(resource_address)
+                    base_dev.inst.baud_rate = 9600
+                    base_dev.inst.read_termination = '\r\n'
+                    base_dev.inst.write_termination = '\r\n'
+                    base_dev.inst.timeout = 500 # 500ms is enough for local Serial
+                    base_dev.inst.write('INST:NSEL 6')
+                    time.sleep(0.2)
+                    idn = base_dev.inst.query("*IDN?").upper()
+                    base_dev.inst.close()
+                except Exception:
+                    pass
+            
+            if not idn:
+                base_dev.connect()
+                # Set a safer timeout for the ID query during discovery
+                base_dev.inst.timeout = 2000
+                idn = base_dev.get_id().upper()
+                base_dev.disconnect()
     except Exception as e:
         logger.warning(f"Identification failed for {resource_address}: {e}")
         idn = ""
@@ -127,7 +239,7 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
         from .drivers.siglent import SiglentSDS
         final_drv = SiglentSDS(resource_address)
     elif "TDK-LAMBDA" in idn or "Z+" in idn:
-        from .drivers.tdk_lambda import TDKLambdaZPlus
+        from .drivers.tdk import TDKLambdaZPlus
         final_drv = TDKLambdaZPlus(resource_address)
 
     if not final_drv:
@@ -137,10 +249,9 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
                 final_drv = drv_cls(resource_address)
                 break
     if not final_drv:
-        final_drv = RealDriver(resource_address)
+        final_drv = RealDriver(resource_address, rm=get_rm())
 
-    if rm_args:
-        final_drv.rm = pyvisa.ResourceManager(rm_args)
+
     final_drv.connect()
     return final_drv
 

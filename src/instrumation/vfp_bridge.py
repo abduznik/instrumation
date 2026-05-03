@@ -33,7 +33,7 @@ class VFPBridge:
             pass
         finally:
             self.clients.remove(websocket)
-            logger.info(f"Dashboard client disconnected")
+            logger.info("Dashboard client disconnected")
 
     async def udp_listener(self):
         """Listens for UDP packets and broadcasts them to all WebSocket clients."""

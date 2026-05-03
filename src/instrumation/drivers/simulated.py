@@ -1,7 +1,6 @@
 import random
 import time
 import math
-import asyncio
 from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, SignalGenerator
 from .registry import register_driver
 from ..results import MeasurementResult
@@ -28,9 +27,12 @@ class SimulatedBaseDriver(InstrumentDriver):
     def query(self, command: str) -> str:
         print(f"[SIM] Query: {command}")
         time.sleep(self.latency)
-        if "*IDN?" in command: return "SIM,SIM_DRIVER,123,1.0"
-        if "SYST:ERR?" in command: return '+0,"No error"'
-        if "*OPC?" in command: return "1"
+        if "*IDN?" in command:
+            return "SIM,SIM_DRIVER,123,1.0"
+        if "SYST:ERR?" in command:
+            return '+0,"No error"'
+        if "*OPC?" in command:
+            return "1"
         return "0"
 
     def query_ascii(self, command: str) -> str:

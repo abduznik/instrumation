@@ -4,7 +4,8 @@ from .station import Station
 from .utils import DataBroadcaster
 from .factory import get_instrument, get_instrument_from_config
 import pyvisa
-import os
+
+__all__ = ["scan", "UUTHandler", "Station", "DataBroadcaster", "get_instrument", "get_instrument_from_config"]
 
 # Global storage for the last found devices to help with auto-connect
 _discovered_devices = []
@@ -55,15 +56,20 @@ def connect_instrument(visa_address: str, driver_type: str = None):
         resource.close()
         
         if "KEYSIGHT" in idn or "AGILENT" in idn:
-            if "MXA" in idn: return get_instrument(visa_address, "SA")
-            if "EXG" in idn or "MXG" in idn: return get_instrument(visa_address, "SG")
-            return get_instrument(visa_address, "SG") # Default Keysight
-        if "SIGLENT" in idn: return get_instrument(visa_address, "SCOPE")
-        if "RIGOL" in idn: return get_instrument(visa_address, "SA")
-        if "TEKTRONIX" in idn: return get_instrument(visa_address, "SCOPE")
-        if "ROHDE" in idn: return get_instrument(visa_address, "SG")
-        
-    except:
+            if "MXA" in idn:
+                return get_instrument(visa_address, "SA")
+            if "EXG" in idn or "MXG" in idn:
+                return get_instrument(visa_address, "SG")
+            return get_instrument(visa_address, "SG")
+        if "SIGLENT" in idn:
+            return get_instrument(visa_address, "SCOPE")
+        if "RIGOL" in idn:
+            return get_instrument(visa_address, "SA")
+        if "TEKTRONIX" in idn:
+            return get_instrument(visa_address, "SCOPE")
+        if "ROHDE" in idn:
+            return get_instrument(visa_address, "SG")
+    except Exception:
         pass
         
     return get_instrument(visa_address, "DMM") # Fallback

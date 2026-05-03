@@ -49,7 +49,7 @@ class SiglentSDS(RealDriver, Oscilloscope):
             # Remove unit (Hz, V, %, etc)
             val_str = "".join([c for c in val_part if c.isdigit() or c in ".-eE"])
             return float(val_str)
-        except:
+        except Exception:
             return 0.0
 
     def measure_frequency(self, channel: int = 1) -> MeasurementResult:
