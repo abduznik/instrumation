@@ -121,6 +121,13 @@ class SimulatedNetworkAnalyzer(SimulatedBaseDriver, NetworkAnalyzer):
         data = [complex(random.uniform(-0.3, 0.3), random.uniform(-0.3, 0.3)) for _ in range(201)]
         return MeasurementResult(data, "IQ")
 
+    def get_smith_data(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult:
+        """Simulates the VNA's built-in Smith math (R + jX)."""
+        print(f"[SIM] VNA Native Smith Engine: {measurement_name}")
+        # Return R + jX centered around 50 ohms
+        data = [complex(random.uniform(45, 55), random.uniform(-2, 2)) for _ in range(201)]
+        return MeasurementResult(data, "Z")
+
 @register_driver("SCOPE")
 class SimulatedOscilloscope(SimulatedBaseDriver, Oscilloscope):
     def run(self): pass

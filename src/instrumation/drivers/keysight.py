@@ -123,6 +123,16 @@ class KeysightPNA(RealDriver, NetworkAnalyzer):
         data = [complex(raw_data[i], raw_data[i+1]) for i in range(0, len(raw_data), 2)]
         return MeasurementResult(data, "IQ")
 
+    def get_smith_data(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult:
+        """Fetches Smith Chart data (R + jX) using the instrument's built-in math engine."""
+        self.safe_send(f"CALC:PAR:SEL '{measurement_name}'")
+        self.write("CALC:FORM SMITH") # Switch display to Smith (R+jX)
+        self.write("FORM:BORD SWAP")
+        self.write("FORM:DATA REAL,32")
+        raw_data = self.query_binary_values("CALC:DATA? FDATA", datatype='f', is_big_endian=False)
+        data = [complex(raw_data[i], raw_data[i+1]) for i in range(0, len(raw_data), 2)]
+        return MeasurementResult(data, "Z")
+
     def measure_frequency(self) -> MeasurementResult: return MeasurementResult(0.0, "Hz")
     def measure_duty_cycle(self) -> MeasurementResult: return MeasurementResult(0.0, "%")
     def measure_v_peak_to_peak(self) -> MeasurementResult: return MeasurementResult(0.0, "V")

@@ -236,6 +236,8 @@ class NetworkAnalyzer(InstrumentDriver):
     def get_trace_data(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult: pass
     @abstractmethod
     def get_complex_trace(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult: pass
+    @abstractmethod
+    def get_smith_data(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult: pass
 
 class Oscilloscope(InstrumentDriver):
     @abstractmethod

@@ -149,6 +149,7 @@ class ReplayDriver(SignalGenerator, SpectrumAnalyzer, NetworkAnalyzer, Oscillosc
     def set_points(self, num_points: int): self.write(f"SENS:SWE:POIN {num_points}")
     def set_parameter(self, parameter: str): self.write(f"CALC:PAR:MOD {parameter}")
     def get_complex_trace(self, measurement_name: str = "CH1_S11_1"): return MeasurementResult([complex(0,0)], "IQ")
+    def get_smith_data(self, measurement_name: str = "CH1_S11_1"): return MeasurementResult([complex(50,0)], "Z")
 
     # --- Oscilloscope ---
     def run(self): self.write(":RUN")
