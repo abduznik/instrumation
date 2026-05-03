@@ -109,6 +109,7 @@ class KeysightPNA(RealDriver, NetworkAnalyzer):
     def get_trace_data(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult:
         """Fetches magnitude data (dB) for the specified measurement."""
         self.safe_send(f"CALC:PAR:SEL '{measurement_name}'")
+        self.write("FORM:BORD SWAP") # Force Little Endian for consistency with query_binary_values
         self.write("FORM:DATA REAL,32")
         data = self.query_binary_values("CALC:DATA? FDATA", datatype='f', is_big_endian=False)
         return MeasurementResult(list(data), "dB")
@@ -116,6 +117,7 @@ class KeysightPNA(RealDriver, NetworkAnalyzer):
     def get_complex_trace(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult:
         """Fetches complex data (Real/Imag) for the specified measurement."""
         self.safe_send(f"CALC:PAR:SEL '{measurement_name}'")
+        self.write("FORM:BORD SWAP") # Force Little Endian
         self.write("FORM:DATA REAL,32")
         raw_data = self.query_binary_values("CALC:DATA? SDATA", datatype='f', is_big_endian=False)
         data = [complex(raw_data[i], raw_data[i+1]) for i in range(0, len(raw_data), 2)]
