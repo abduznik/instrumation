@@ -21,7 +21,7 @@ def main():
             
             try:
                 # Use a dummy port for demonstration
-                with UUTHandler(serial_port="DUMMY_SERIAL", visa_address="DUMMY_VISA") as uut:
+                with UUTHandler(serial_port="DUMMY_SERIAL", visa_address="DUMMY_VISA"):
                     print("Powering on UUT...")
                     time.sleep(0.5)
                     
@@ -33,7 +33,7 @@ def main():
                         print("RESULT: PASS")
                     else:
                         print(f"RESULT: FAIL (Value {res.value} out of range)")
-            except Exception as e:
+            except Exception:
                 print(f"UUT connection skipped (No hardware). Measurement only: {dmm.measure_voltage()}")
 
     except InstrumentError as e:

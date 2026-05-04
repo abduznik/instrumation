@@ -1,7 +1,6 @@
 import socket
 import json
 import os
-import sys
 
 def main():
     # Setup UDP listener

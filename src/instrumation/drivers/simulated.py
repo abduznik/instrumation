@@ -50,6 +50,8 @@ class SimulatedBaseDriver(InstrumentDriver):
     def wait_ready(self, timeout=30): pass
     def shutdown_safety(self): pass
     def check_errors(self): pass
+    def save_state(self, index): print(f"[SIM] Saving state to {index}")
+    def load_state(self, index): print(f"[SIM] Loading state from {index}")
     def measure_frequency(self): return MeasurementResult(1000.0, "Hz")
     def measure_duty_cycle(self): return MeasurementResult(50.0, "%")
     def measure_v_peak_to_peak(self): return MeasurementResult(2.0, "V")
@@ -88,6 +90,12 @@ class SimulatedPowerSupply(SimulatedBaseDriver, PowerSupply):
     def measure_current(self) -> MeasurementResult:
         return MeasurementResult(0.0, "A")
     def clear_protection(self): pass
+    def measure_power(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "W")
+    def set_foldback_mode(self, mode: str): pass
+    def set_foldback_delay(self, seconds: float): pass
+    def set_autostart(self, state: bool): pass
+    def get_mode(self) -> str: return "CV"
 
 @register_driver("SA")
 class SimulatedSpectrumAnalyzer(SimulatedBaseDriver, SpectrumAnalyzer):
@@ -111,7 +119,14 @@ class SimulatedSpectrumAnalyzer(SimulatedBaseDriver, SpectrumAnalyzer):
 class SimulatedNetworkAnalyzer(SimulatedBaseDriver, NetworkAnalyzer):
     def set_start_frequency(self, freq_hz): pass
     def set_stop_frequency(self, freq_hz): pass
+    def set_center_frequency(self, freq_hz): pass
+    def set_span(self, span_hz): pass
     def set_points(self, num_points): pass
+    def set_if_bandwidth(self, hz: float): pass
+    def set_power_level(self, dbm: float): pass
+    def set_sweep_type(self, sweep_type: str): pass
+    def set_averaging(self, state: bool, count: int = 10): pass
+    def set_continuous(self, state: bool): pass
     def set_parameter(self, parameter: str):
         print(f"[SIM] VNA Setting Parameter: {parameter}")
     def get_trace_data(self, measurement_name: str = "CH1_S11_1"): 
@@ -128,6 +143,14 @@ class SimulatedNetworkAnalyzer(SimulatedBaseDriver, NetworkAnalyzer):
         data = [complex(random.uniform(45, 55), random.uniform(-2, 2)) for _ in range(201)]
         return MeasurementResult(data, "Z")
 
+    def peak_search(self, marker: int = 1): pass
+    def get_marker_x(self, marker: int = 1) -> float: return 2.4e9
+    def get_marker_y(self, marker: int = 1) -> float: return -10.0
+    def save_state(self, filename: str): pass
+    def load_state(self, filename: str): pass
+    def wait_for_sweep(self):
+        time.sleep(0.5) # Simulate sweep time
+
 @register_driver("SCOPE")
 class SimulatedOscilloscope(SimulatedBaseDriver, Oscilloscope):
     def run(self): pass
@@ -142,6 +165,11 @@ class SimulatedOscilloscope(SimulatedBaseDriver, Oscilloscope):
 
 @register_driver("SG")
 class SimulatedSignalGenerator(SimulatedBaseDriver, FunctionGenerator):
+    def __init__(self, resource: str):
+        super().__init__(resource)
+        self.max_power_dbm = 25.0
+        self.max_frequency = 50e9
+
     def set_frequency(self, hz):
         self._validate_frequency(hz)
         print(f"[SIM] Setting SG Frequency: {hz}")

@@ -1,4 +1,3 @@
-import numpy as np
 import os
 import sys
 
@@ -26,7 +25,7 @@ def main():
         # Access the numpy array of complex values
         trace = result.value
         print(f"Captured {len(trace)} complex points.")
-        print(f"First 3 points (Real + j*Imag):")
+        print("First 3 points (Real + j*Imag):")
         for val in trace[:3]:
             print(f"  {val}")
 

@@ -27,9 +27,20 @@ class TDKLambdaZPlus(RealDriver, PowerSupply):
             # 3. Now run the standard discovery
             self._discover_identity()
             self._discover_options()
+            self._discover_capabilities()
         except Exception as e:
             self.connected = False
             raise InstrumentError(f"Failed to connect to TDK-Lambda at {self.resource}: {e}")
+
+    def _discover_capabilities(self):
+        """Query the Z+ for its actual voltage and current limits."""
+        try:
+            self.max_voltage = float(self.query(":VOLT? MAX"))
+            self.max_power_dbm = 0.0 # Not a signal generator
+            # We don't have a max_current in the base class, but we can store it
+            self.max_current = float(self.query(":CURR? MAX"))
+        except Exception:
+            pass
 
 
     def preset(self, automation_optimized: bool = True):
@@ -96,6 +107,49 @@ class TDKLambdaZPlus(RealDriver, PowerSupply):
         """Queries the actual measured output voltage."""
         val = self.query_ascii(":MEAS:VOLT?")
         return MeasurementResult(float(val), "V")
+
+    def measure_power(self) -> MeasurementResult:
+        """Queries the actual measured output power (Watts)."""
+        val = self.query_ascii(":MEAS:POW?")
+        return MeasurementResult(float(val), "W")
+
+    def set_foldback_mode(self, mode: str):
+        """Sets the foldback protection mode (OFF, CC, or CV)."""
+        mode = mode.upper()
+        if mode not in ["OFF", "CC", "CV"]:
+            raise ValueError("Foldback mode must be OFF, CC, or CV")
+        self.write(f":OUTP:PROT:FOLD {mode}")
+
+    def set_foldback_delay(self, seconds: float):
+        """Sets the delay for foldback protection (0-100 seconds)."""
+        self.write(f":OUTP:PROT:DEL {seconds}")
+
+    def set_autostart(self, state: bool):
+        """Sets the Power-ON state (SAFE/OFF or AUTO/ON)."""
+        self.write(f":OUTP:PON {'ON' if state else 'OFF'}")
+
+    def get_mode(self) -> str:
+        """Returns the current operation mode (CV, CC, or OFF)."""
+        return self.query_ascii(":OUTP:MODE?").strip()
+
+    def set_remote_state(self, state: str):
+        """Sets the remote state (LOC, REM, or LLO)."""
+        state = state.upper()
+        if state not in ["LOC", "REM", "LLO"]:
+            raise ValueError("State must be LOC, REM, or LLO")
+        self.write(f":SYST:REM {state}")
+
+    def save_state(self, index: int):
+        """Saves current state to memory (1-4)."""
+        if not (1 <= index <= 4):
+            raise ValueError("Index must be 1-4")
+        self.write(f"*SAV {index}")
+
+    def load_state(self, index: int):
+        """Recalls state from memory (1-4)."""
+        if not (1 <= index <= 4):
+            raise ValueError("Index must be 1-4")
+        self.write(f"*RCL {index}")
 
     def measure_frequency(self) -> MeasurementResult: return MeasurementResult(0.0, "Hz")
     def measure_duty_cycle(self) -> MeasurementResult: return MeasurementResult(0.0, "%")

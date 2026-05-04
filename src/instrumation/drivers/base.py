@@ -101,6 +101,14 @@ class InstrumentDriver(ABC):
         """Queries SYST:ERR? and updates local error_stack."""
         pass
 
+    def save_state(self, index: Union[int, str]):
+        """Saves current state to memory."""
+        self._unsupported_feature("save_state")
+
+    def load_state(self, index: Union[int, str]):
+        """Recalls state from memory."""
+        self._unsupported_feature("load_state")
+
     # --- Unit Guards & Formatting ---
     def format_frequency(self, val: Union[float, str]) -> str:
         """Ensures input is Hz and formats for SCPI (e.g. 1.5e9 -> '1.5 GHz')."""
@@ -198,6 +206,28 @@ class PowerSupply(InstrumentDriver):
     @abstractmethod
     def clear_protection(self): pass
 
+    def measure_power(self) -> MeasurementResult:
+        """Queries the actual measured output power (Watts)."""
+        self._unsupported_feature("measure_power")
+        return MeasurementResult(0.0, "W")
+
+    def set_foldback_mode(self, mode: str):
+        """Sets the foldback protection mode (OFF, CC, or CV)."""
+        self._unsupported_feature("set_foldback_mode")
+
+    def set_foldback_delay(self, seconds: float):
+        """Sets the delay for foldback protection."""
+        self._unsupported_feature("set_foldback_delay")
+
+    def set_autostart(self, state: bool):
+        """Sets the Power-ON state (SAFE/OFF or AUTO/ON)."""
+        self._unsupported_feature("set_autostart")
+
+    def get_mode(self) -> str:
+        """Returns the current operation mode (CV, CC, or OFF)."""
+        self._unsupported_feature("get_mode")
+        return "OFF"
+
 class SpectrumAnalyzer(InstrumentDriver):
     @abstractmethod
     def peak_search(self): pass
@@ -228,16 +258,67 @@ class NetworkAnalyzer(InstrumentDriver):
     def set_start_frequency(self, freq_hz: float): pass
     @abstractmethod
     def set_stop_frequency(self, freq_hz: float): pass
+    
+    def set_center_freq(self, freq_hz: float): 
+        self._unsupported_feature("set_center_freq")
+
+    def set_center_frequency(self, freq_hz: float):
+        """Alias for set_center_freq."""
+        self.set_center_freq(freq_hz)
+    
+    def set_span(self, span_hz: float): 
+        self._unsupported_feature("set_span")
+    
     @abstractmethod
     def set_points(self, num_points: int): pass
+    
+    def set_if_bandwidth(self, hz: float): 
+        self._unsupported_feature("set_if_bandwidth")
+    
+    def set_power_level(self, dbm: float): 
+        self._unsupported_feature("set_power_level")
+    
+    def set_sweep_type(self, sweep_type: str): 
+        self._unsupported_feature("set_sweep_type")
+    
+    def set_averaging(self, state: bool, count: int = 10): 
+        self._unsupported_feature("set_averaging")
+    
+    def set_continuous(self, state: bool): 
+        self._unsupported_feature("set_continuous")
+    
     @abstractmethod
     def set_parameter(self, parameter: str): pass  # e.g., "S11", "S21"
+    
     @abstractmethod
     def get_trace_data(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult: pass
+    
     @abstractmethod
     def get_complex_trace(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult: pass
+    
     @abstractmethod
     def get_smith_data(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult: pass
+    
+    def peak_search(self, marker: int = 1): 
+        self._unsupported_feature("peak_search")
+    
+    def get_marker_x(self, marker: int = 1) -> float: 
+        self._unsupported_feature("get_marker_x")
+        return 0.0
+    
+    def get_marker_y(self, marker: int = 1) -> float: 
+        self._unsupported_feature("get_marker_y")
+        return 0.0
+    
+    def save_state(self, filename: str): 
+        self._unsupported_feature("save_state")
+    
+    def load_state(self, filename: str): 
+        self._unsupported_feature("load_state")
+
+    def wait_for_sweep(self):
+        """Wait for the current sweep to complete."""
+        self._unsupported_feature("wait_for_sweep")
 
 class Oscilloscope(InstrumentDriver):
     @abstractmethod

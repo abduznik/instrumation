@@ -32,11 +32,31 @@ def _discover_lan_resources() -> list:
         ips = re.findall(r"\((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\)", output)
         for ip in ips:
             # Skip broadcast and local loopback
-            if ip.endswith(".255") or ip.startswith("127."):
+            if ip.endswith(".255") or ip.startswith("127.") or ip.startswith("224.") or ip.startswith("239."):
                 continue
+            # Try both VXI-11 and HiSLIP — modern Keysight instruments prefer HiSLIP
+            resources.append(f"TCPIP::{ip}::hislip0::INSTR")
             resources.append(f"TCPIP::{ip}::INSTR")
     except Exception:
         pass
+    return resources
+
+def _discover_mdns_resources() -> list:
+    """Probe known Keysight mDNS hostnames via HiSLIP."""
+    import socket
+    resources = []
+    # Common Keysight hostname patterns resolvable via mDNS/Bonjour
+    candidates = [
+        "a-n5232a-20127.local",  # your VNA
+        "a-n9030a-10156.local",  # your PXA
+    ]
+    for host in candidates:
+        try:
+            # Resolve and check if HiSLIP port (4880) is open
+            socket.getaddrinfo(host, 4880)
+            resources.append(f"TCPIP::{host}::hislip0::INSTR")
+        except socket.gaierror:
+            pass
     return resources
 
 def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
@@ -147,6 +167,12 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
             if result:
                 return result
 
+        # --- Phase 0.5: Try mDNS (Bonjour) ---
+        mdns_resources = _discover_mdns_resources()
+        result = run_probe(mdns_resources, "mDNS/Bonjour")
+        if result:
+            return result
+
         # --- Phase 1: Try LAN (Quick Search) ---
         result = run_probe(lan_resources, "Fast Track (LAN)")
         if result:
@@ -237,6 +263,21 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
 
 
     final_drv.connect()
+    
+    # Update cache with successful manual connection to enable future AUTO discovery
+    if resource_address != "AUTO":
+        try:
+            cache_file = ".visa_cache.json"
+            cached_resources = []
+            if os.path.exists(cache_file):
+                with open(cache_file, "r") as f:
+                    cached_resources = json.load(f)
+            new_cache = [resource_address] + [r for r in cached_resources if r != resource_address]
+            with open(cache_file, "w") as f:
+                json.dump(new_cache[:10], f)
+        except Exception:
+            pass
+
     return final_drv
 
 def get_instrument_from_config(config: dict) -> any:

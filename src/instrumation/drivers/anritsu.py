@@ -68,22 +68,40 @@ class AnritsuVNA(RealDriver, NetworkAnalyzer):
     def set_points(self, num_points: int):
         self.safe_send(f":SENS:SWE:POIN {num_points}")
 
-    def get_trace_data(self, measurement_name: str) -> MeasurementResult:
+    def set_parameter(self, parameter: str):
+        self.safe_send(f":CALC:PAR:SEL '{parameter}'")
+
+    def get_trace_data(self, measurement_name: str = "S11") -> MeasurementResult:
         self.safe_send(f":CALC:PAR:SEL '{measurement_name}'")
         self.write(":FORM REAL")
         data = self.query_binary_values(":CALC:DATA? FDATA", datatype='f', is_big_endian=False)
         return MeasurementResult(list(data), "dB")
 
-    def get_complex_trace(self, measurement_name: str) -> MeasurementResult:
+    def get_complex_trace(self, measurement_name: str = "S11") -> MeasurementResult:
         self.safe_send(f":CALC:PAR:SEL '{measurement_name}'")
         self.write(":FORM REAL")
         raw_data = self.query_binary_values(":CALC:DATA? SDATA", datatype='f', is_big_endian=False)
         data = [complex(raw_data[i], raw_data[i+1]) for i in range(0, len(raw_data), 2)]
         return MeasurementResult(data, "IQ")
 
+    def get_smith_data(self, measurement_name: str = "S11") -> MeasurementResult:
+        self._unsupported_feature("get_smith_data")
+        return MeasurementResult([], "Z")
+
 @register_driver("NA")
 class AnritsuShockLineVNA(RealDriver, NetworkAnalyzer):
     """Driver for Anritsu ShockLine MS46522B/MS46524B VNAs."""
+
+    def connect(self):
+        super().connect()
+        self._discover_capabilities()
+
+    def _discover_capabilities(self):
+        try:
+            self.min_frequency = float(self.query(":SENS1:FREQ:STAR? MIN"))
+            self.max_frequency = float(self.query(":SENS1:FREQ:STOP? MAX"))
+        except Exception:
+            pass
 
     def preset(self, automation_optimized: bool = True):
         self.write("*RST")
@@ -102,6 +120,9 @@ class AnritsuShockLineVNA(RealDriver, NetworkAnalyzer):
 
     def set_if_bandwidth(self, hz: float):
         self.write(f":SENSe1:BANDwidth:RESolution {hz}")
+
+    def set_parameter(self, parameter: str):
+        self.write(f":CALCulate1:PARameter:SELect '{parameter}'")
 
     def get_trace_data(self, measurement_name: str = "S21") -> MeasurementResult:
         self.write(f":CALCulate1:PARameter:SELect '{measurement_name}'")
@@ -125,6 +146,10 @@ class AnritsuShockLineVNA(RealDriver, NetworkAnalyzer):
         )
         data = [complex(raw[i], raw[i+1]) for i in range(0, len(raw), 2)]
         return MeasurementResult(data, "IQ")
+
+    def get_smith_data(self, measurement_name: str = "S21") -> MeasurementResult:
+        self._unsupported_feature("get_smith_data")
+        return MeasurementResult([], "Z")
 
     def shutdown_safety(self):
         self.write(":SYSTem:DISPlay:UPDate ON")
@@ -181,6 +206,26 @@ class AnritsuMS2035B(RealDriver, SpectrumAnalyzer, NetworkAnalyzer):
         raw_data = self.query_binary_values(":CALC:DATA? SDATA", datatype='f', is_big_endian=False)
         data = [complex(raw_data[i], raw_data[i+1]) for i in range(0, len(raw_data), 2)]
         return MeasurementResult(data, "IQ")
+
+    def set_start_frequency(self, freq_hz: float):
+        self._set_mode(self.VNA_MODE)
+        self.write(f":SENS:FREQ:STAR {freq_hz}")
+
+    def set_stop_frequency(self, freq_hz: float):
+        self._set_mode(self.VNA_MODE)
+        self.write(f":SENS:FREQ:STOP {freq_hz}")
+
+    def set_points(self, num_points: int):
+        self._set_mode(self.VNA_MODE)
+        self.write(f":SENS:SWE:POIN {num_points}")
+
+    def set_parameter(self, parameter: str):
+        self._set_mode(self.VNA_MODE)
+        self.write(f":CALC:PAR:SEL '{parameter}'")
+
+    def get_smith_data(self, measurement_name: str = "S11") -> MeasurementResult:
+        self._unsupported_feature("get_smith_data")
+        return MeasurementResult([], "Z")
 
     def preset(self, automation_optimized: bool = True):
         self.write("*RST")
