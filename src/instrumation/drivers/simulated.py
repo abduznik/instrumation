@@ -1,7 +1,7 @@
 import random
 import time
 import math
-from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, FunctionGenerator
+from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, FunctionGenerator, ElectronicLoad
 from .registry import register_driver
 from ..results import MeasurementResult
 
@@ -293,6 +293,179 @@ class SimulatedKeysight34461A(SimulatedBaseDriver, Multimeter):
     def measure_v_peak_to_peak(self):
         return MeasurementResult(2.0, "V")
 
+
+@register_driver("LOAD")
+@register_driver("ELOAD")
+class SimulatedElectronicLoad(SimulatedBaseDriver, ElectronicLoad):
+    def __init__(self, resource: str):
+        super().__init__(resource)
+        self.max_voltage = 150.0
+        self.max_current = 30.0
+        self.max_power = 200.0
+
+        self._mode = "CC"
+        self._input_enabled = False
+
+        self._target_current = 0.0
+        self._target_voltage = 0.0
+        self._target_resistance = 10.0
+        self._target_power = 0.0
+
+        self._ovp_limit = 60.0
+        self._ocp_limit = 30.0
+        self._opp_limit = 150.0
+        self._protection_tripped = False
+
+        self.source_voltage = 12.0
+        self.source_resistance = 0.05
+
+    def connect(self):
+        super().connect()
+        self.identity = {"manufacturer": "SIM", "model": "SIM_ELOAD_3000", "serial": "456", "version": "1.0"}
+
+    def get_id(self):
+        return "SIM_ELOAD_3000"
+
+    def set_mode(self, mode: str):
+        mode_upper = mode.upper()
+        if mode_upper not in ["CC", "CV", "CR", "CP"]:
+            raise ValueError(f"Invalid electronic load mode: {mode}")
+        self._mode = mode_upper
+        print(f"[SIM] Electronic Load Mode set to: {self._mode}")
+
+    def get_mode(self) -> str:
+        return self._mode
+
+    def set_current(self, amps: float):
+        if amps < 0 or amps > self.max_current:
+            raise ValueError(f"Current {amps} A is out of instrument range (0 to {self.max_current} A)")
+        self._target_current = amps
+
+    def get_current(self) -> float:
+        return self._target_current
+
+    def set_voltage(self, volts: float):
+        if volts < 0 or volts > self.max_voltage:
+            raise ValueError(f"Voltage {volts} V is out of instrument range (0 to {self.max_voltage} V)")
+        self._target_voltage = volts
+
+    def get_voltage(self) -> float:
+        return self._target_voltage
+
+    def set_resistance(self, ohms: float):
+        if ohms <= 0 or ohms > 100000.0:
+            raise ValueError(f"Resistance {ohms} Ohm is out of valid range")
+        self._target_resistance = ohms
+
+    def get_resistance(self) -> float:
+        return self._target_resistance
+
+    def set_power(self, watts: float):
+        if watts < 0 or watts > self.max_power:
+            raise ValueError(f"Power {watts} W is out of instrument range (0 to {self.max_power} W)")
+        self._target_power = watts
+
+    def get_power(self) -> float:
+        return self._target_power
+
+    def set_input(self, state: bool):
+        if state and self._protection_tripped:
+            raise RuntimeError(f"Cannot enable input: Protection tripped ({self._protection_tripped})")
+        self._input_enabled = state
+        print(f"[SIM] Electronic Load input state: {'ON' if state else 'OFF'}")
+        if state:
+            self._update_physics()
+
+    def get_input(self) -> bool:
+        return self._input_enabled
+
+    def set_ovp(self, voltage: float):
+        self._ovp_limit = voltage
+
+    def set_ocp(self, current: float):
+        self._ocp_limit = current
+
+    def set_opp(self, power: float):
+        self._opp_limit = power
+
+    def clear_protection(self):
+        self._protection_tripped = False
+        print("[SIM] Electronic Load protection cleared.")
+
+    def _update_physics(self) -> tuple:
+        if not self._input_enabled or self._protection_tripped:
+            return self.source_voltage, 0.0, 0.0
+
+        v_act, i_act, p_act = 0.0, 0.0, 0.0
+
+        if self._mode == "CC":
+            i_max = self.source_voltage / self.source_resistance
+            i_act = min(self._target_current, i_max)
+            v_act = max(0.0, self.source_voltage - i_act * self.source_resistance)
+            p_act = v_act * i_act
+
+        elif self._mode == "CV":
+            if self._target_voltage >= self.source_voltage:
+                i_act = 0.0
+                v_act = self.source_voltage
+            else:
+                i_act = (self.source_voltage - self._target_voltage) / self.source_resistance
+                v_act = self._target_voltage
+            p_act = v_act * i_act
+
+        elif self._mode == "CR":
+            i_act = self.source_voltage / (self.source_resistance + self._target_resistance)
+            v_act = i_act * self._target_resistance
+            p_act = v_act * i_act
+
+        elif self._mode == "CP":
+            disc = (self.source_voltage ** 2) - (4 * self.source_resistance * self._target_power)
+            if disc < 0:
+                i_act = self.source_voltage / (2 * self.source_resistance)
+            else:
+                i_act = (self.source_voltage - math.sqrt(disc)) / (2 * self.source_resistance)
+
+            v_act = self.source_voltage - i_act * self.source_resistance
+            p_act = v_act * i_act
+
+        if v_act > self._ovp_limit:
+            self._protection_tripped = "OVP"
+            self._input_enabled = False
+            print(f"[SIM] PROTECTION TRIPPED: Over-Voltage Protection! Measured: {v_act:.3f}V > Limit: {self._ovp_limit}V")
+            return self.source_voltage, 0.0, 0.0
+
+        if i_act > self._ocp_limit:
+            self._protection_tripped = "OCP"
+            self._input_enabled = False
+            print(f"[SIM] PROTECTION TRIPPED: Over-Current Protection! Measured: {i_act:.3f}A > Limit: {self._ocp_limit}A")
+            return self.source_voltage, 0.0, 0.0
+
+        if p_act > self._opp_limit:
+            self._protection_tripped = "OPP"
+            self._input_enabled = False
+            print(f"[SIM] PROTECTION TRIPPED: Over-Power Protection! Measured: {p_act:.3f}W > Limit: {self._opp_limit}W")
+            return self.source_voltage, 0.0, 0.0
+
+        return v_act, i_act, p_act
+
+    def measure_voltage(self) -> MeasurementResult:
+        v_act, _, _ = self._update_physics()
+        noise = random.uniform(-0.001, 0.001) * v_act
+        return MeasurementResult(v_act + noise, "V")
+
+    def measure_current(self) -> MeasurementResult:
+        _, i_act, _ = self._update_physics()
+        noise = random.uniform(-0.001, 0.001) * i_act
+        return MeasurementResult(i_act + noise, "A")
+
+    def measure_power(self) -> MeasurementResult:
+        _, _, p_act = self._update_physics()
+        noise = random.uniform(-0.001, 0.001) * p_act
+        return MeasurementResult(p_act + noise, "W")
+
+    def shutdown_safety(self):
+        self.set_input(False)
+        self.sync_config()
 
 class SimulatedDriver(SimulatedMultimeter):
     pass

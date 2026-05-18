@@ -4,7 +4,7 @@ import os
 import time
 from .drivers.real import RealDriver
 from .drivers.registry import DriverRegistry
-from .drivers.base import Oscilloscope, SpectrumAnalyzer, SignalGenerator, FunctionGenerator, PowerSupply, Multimeter, NetworkAnalyzer
+from .drivers.base import Oscilloscope, SpectrumAnalyzer, SignalGenerator, FunctionGenerator, PowerSupply, Multimeter, NetworkAnalyzer, ElectronicLoad
 
 logger = logging.getLogger(__name__)
 
@@ -154,7 +154,7 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
                 if "ASRL" in res and any(p in res for p in ["1", "2", "3", "4"]):
                     return None
                 dev = get_instrument(res, driver_type)
-                type_map = {"SCOPE": Oscilloscope, "SA": SpectrumAnalyzer, "SG": (SignalGenerator, FunctionGenerator), "PSU": PowerSupply, "DMM": Multimeter, "VNA": NetworkAnalyzer, "NA": NetworkAnalyzer}
+                type_map = {"SCOPE": Oscilloscope, "SA": SpectrumAnalyzer, "SG": (SignalGenerator, FunctionGenerator), "PSU": PowerSupply, "DMM": Multimeter, "VNA": NetworkAnalyzer, "NA": NetworkAnalyzer, "LOAD": ElectronicLoad, "ELOAD": ElectronicLoad}
                 if driver_type == "GENERIC" or (type_map.get(driver_type) and isinstance(dev, type_map.get(driver_type))):
                     return dev
                 dev.disconnect()

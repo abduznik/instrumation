@@ -1,4 +1,4 @@
-from .base import Oscilloscope
+from .base import Oscilloscope, ElectronicLoad
 from .registry import register_driver
 from .real import RealDriver
 from ..results import MeasurementResult
@@ -66,4 +66,81 @@ class SiglentSDS(RealDriver, Oscilloscope):
 
     def shutdown_safety(self):
         self.stop()
+        self.sync_config()
+
+@register_driver("LOAD")
+@register_driver("ELOAD")
+class SiglentSDL1000X(RealDriver, ElectronicLoad):
+    """Driver for Siglent SDL1000X series DC Electronic Loads."""
+
+    def preset(self, automation_optimized: bool = True):
+        self.write("*RST")
+        self.wait_ready()
+
+    def set_mode(self, mode: str):
+        # Siglent SDL modes: CC, CV, CR, CP
+        mode_upper = mode.upper()
+        if mode_upper not in ["CC", "CV", "CR", "CP"]:
+            raise ValueError(f"Invalid mode: {mode}")
+        self.safe_send(f":SOUR:FUNC {mode_upper}")
+
+    def get_mode(self) -> str:
+        return self.query_ascii(":SOUR:FUNC?").strip()
+
+    def set_current(self, amps: float):
+        self.safe_send(f":SOUR:CURR:LEV:IMM {amps}")
+
+    def get_current(self) -> float:
+        return float(self.query_ascii(":SOUR:CURR:LEV:IMM?"))
+
+    def set_voltage(self, volts: float):
+        self.safe_send(f":SOUR:VOLT:LEV:IMM {volts}")
+
+    def get_voltage(self) -> float:
+        return float(self.query_ascii(":SOUR:VOLT:LEV:IMM?"))
+
+    def set_resistance(self, ohms: float):
+        self.safe_send(f":SOUR:RES:LEV:IMM {ohms}")
+
+    def get_resistance(self) -> float:
+        return float(self.query_ascii(":SOUR:RES:LEV:IMM?"))
+
+    def set_power(self, watts: float):
+        self.safe_send(f":SOUR:POW:LEV:IMM {watts}")
+
+    def get_power(self) -> float:
+        return float(self.query_ascii(":SOUR:POW:LEV:IMM?"))
+
+    def set_input(self, state: bool):
+        self.safe_send(f":SOUR:INP:STAT {'ON' if state else 'OFF'}")
+
+    def get_input(self) -> bool:
+        return self.query_ascii(":SOUR:INP:STAT?").strip() == "ON"
+
+    def measure_voltage(self) -> MeasurementResult:
+        val = self.query_ascii(":MEAS:VOLT?")
+        return MeasurementResult(float(val), "V")
+
+    def measure_current(self) -> MeasurementResult:
+        val = self.query_ascii(":MEAS:CURR?")
+        return MeasurementResult(float(val), "A")
+
+    def measure_power(self) -> MeasurementResult:
+        val = self.query_ascii(":MEAS:POW?")
+        return MeasurementResult(float(val), "W")
+
+    def set_ovp(self, voltage: float):
+        self.safe_send(f":SOUR:VOLT:PROT {voltage}")
+
+    def set_ocp(self, current: float):
+        self.safe_send(f":SOUR:CURR:PROT {current}")
+
+    def set_opp(self, power: float):
+        self.safe_send(f":SOUR:POW:PROT {power}")
+
+    def clear_protection(self):
+        self.safe_send(":SOUR:PROT:CLE")
+
+    def shutdown_safety(self):
+        self.set_input(False)
         self.sync_config()

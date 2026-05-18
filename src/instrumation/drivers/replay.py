@@ -1,7 +1,7 @@
 import json
 import time
 from typing import List
-from .base import InstrumentDriver, SignalGenerator, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, Multimeter, PowerSupply
+from .base import InstrumentDriver, SignalGenerator, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, Multimeter, PowerSupply, ElectronicLoad
 from ..results import MeasurementResult
 
 class SCPIPair:
@@ -62,7 +62,7 @@ class RecordingWrapper:
         """Proxy all other calls to the original driver."""
         return getattr(self.driver, name)
 
-class ReplayDriver(SignalGenerator, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, Multimeter, PowerSupply):
+class ReplayDriver(SignalGenerator, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, Multimeter, PowerSupply, ElectronicLoad):
     """An instrument driver that replays responses from a Golden Master file."""
     def __init__(self, resource_address: str, master_file: str):
         super().__init__(resource_address)
@@ -169,3 +169,24 @@ class ReplayDriver(SignalGenerator, SpectrumAnalyzer, NetworkAnalyzer, Oscillosc
     def set_reference_clock(self, source: str): self.write(f":ROSC:SOUR {source}")
     def set_offset(self, volts: float): self.write(f":VOLT:OFFS {volts}")
     def set_waveform(self, shape: str): self.write(f":FUNC {shape}")
+
+    # --- ElectronicLoad ---
+    def set_mode(self, mode: str): self.write(f":SOUR:FUNC {mode}")
+    def get_mode(self) -> str: return self.query(":SOUR:FUNC?")
+    def set_current(self, amps: float): self.write(f":SOUR:CURR {amps}")
+    def get_current(self) -> float: return float(self.query(":SOUR:CURR?"))
+    def set_voltage(self, volts: float): self.write(f":SOUR:VOLT {volts}")
+    def get_voltage(self) -> float: return float(self.query(":SOUR:VOLT?"))
+    def set_resistance(self, ohms: float): self.write(f":SOUR:RES {ohms}")
+    def get_resistance(self) -> float: return float(self.query(":SOUR:RES?"))
+    def set_power(self, watts: float): self.write(f":SOUR:POW {watts}")
+    def get_power(self) -> float: return float(self.query(":SOUR:POW?"))
+    def set_input(self, state: bool): self.write(f":SOUR:INP:STAT {'ON' if state else 'OFF'}")
+    def get_input(self) -> bool: return self.query(":SOUR:INP:STAT?") == "ON"
+    def measure_voltage(self) -> MeasurementResult: return MeasurementResult(float(self.query("MEAS:VOLT?")), "V")
+    def measure_current(self) -> MeasurementResult: return MeasurementResult(float(self.query("MEAS:CURR?")), "A")
+    def measure_power(self) -> MeasurementResult: return MeasurementResult(float(self.query("MEAS:POW?")), "W")
+    def set_ovp(self, voltage: float): self.write(f":SOUR:VOLT:PROT {voltage}")
+    def set_ocp(self, current: float): self.write(f":SOUR:CURR:PROT {current}")
+    def set_opp(self, power: float): self.write(f":SOUR:POW:PROT {power}")
+    def clear_protection(self): self.write(":SOUR:PROT:CLE")

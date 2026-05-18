@@ -156,6 +156,102 @@ class InstrumentDriver(ABC):
             pass
         self.disconnect()
 
+class ElectronicLoad(InstrumentDriver):
+    @abstractmethod
+    def set_mode(self, mode: str):
+        """Sets the operating mode, typically CC, CV, CR, or CP."""
+        pass
+
+    @abstractmethod
+    def get_mode(self) -> str:
+        """Returns the active operating mode."""
+        pass
+
+    @abstractmethod
+    def set_current(self, amps: float):
+        """Sets the constant current value in CC mode."""
+        pass
+
+    @abstractmethod
+    def get_current(self) -> float:
+        """Returns the set current value in CC mode."""
+        pass
+
+    @abstractmethod
+    def set_voltage(self, volts: float):
+        """Sets the constant voltage value in CV mode."""
+        pass
+
+    @abstractmethod
+    def get_voltage(self) -> float:
+        """Returns the set voltage value in CV mode."""
+        pass
+
+    @abstractmethod
+    def set_resistance(self, ohms: float):
+        """Sets the constant resistance value in CR mode."""
+        pass
+
+    @abstractmethod
+    def get_resistance(self) -> float:
+        """Returns the set resistance value in CR mode."""
+        pass
+
+    @abstractmethod
+    def set_power(self, watts: float):
+        """Sets the constant power value in CP mode."""
+        pass
+
+    @abstractmethod
+    def get_power(self) -> float:
+        """Returns the set power value in CP mode."""
+        pass
+
+    @abstractmethod
+    def set_input(self, state: bool):
+        """Turns the load input ON (True) or OFF (False)."""
+        pass
+
+    @abstractmethod
+    def get_input(self) -> bool:
+        """Returns the input state (ON/OFF)."""
+        pass
+
+    @abstractmethod
+    def measure_voltage(self) -> MeasurementResult:
+        """Measures the actual input voltage at the load terminals."""
+        pass
+
+    @abstractmethod
+    def measure_current(self) -> MeasurementResult:
+        """Measures the actual current being drawn by the load."""
+        pass
+
+    @abstractmethod
+    def measure_power(self) -> MeasurementResult:
+        """Measures the actual power being consumed by the load."""
+        pass
+
+    @abstractmethod
+    def set_ovp(self, voltage: float):
+        """Sets the over-voltage protection limit."""
+        pass
+
+    @abstractmethod
+    def set_ocp(self, current: float):
+        """Sets the over-current protection limit."""
+        pass
+
+    @abstractmethod
+    def set_opp(self, power: float):
+        """Sets the over-power protection limit."""
+        pass
+
+    @abstractmethod
+    def clear_protection(self):
+        """Clears any tripped protection status."""
+        pass
+
 class Multimeter(InstrumentDriver):
     @abstractmethod
     def configure_voltage_dc(self): pass
