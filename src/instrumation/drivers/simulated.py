@@ -75,7 +75,8 @@ class SimulatedMultimeter(SimulatedBaseDriver, Multimeter):
 class SimulatedPowerSupply(SimulatedBaseDriver, PowerSupply):
     def set_voltage(self, voltage): 
         print(f"[SIM] Setting PSU Voltage: {voltage}")
-    def get_voltage(self): return 0.0
+        self._voltage = voltage
+    def get_voltage(self): return getattr(self, "_voltage", 0.0)
     def set_current_limit(self, current): pass
     def get_current(self) -> MeasurementResult:
         time.sleep(self.latency)
