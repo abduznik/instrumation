@@ -20,7 +20,8 @@ def get_rm():
     return _GLOBAL_RM
 
 def is_sim_mode() -> bool:
-    return os.environ.get("INSTRUMATION_MODE", "REAL").upper() == "SIM"
+    mode = os.environ.get("INSTRUMATION_MODE", "").upper()
+    return mode == "SIM" or mode == "SIMULATED"
 
 def _discover_lan_resources() -> list:
     """Scans the local ARP table for potential LAN instruments."""
