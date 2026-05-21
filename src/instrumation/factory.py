@@ -243,12 +243,25 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
         elif "N99" in idn or "FIELD FOX" in idn:
             from .drivers.keysight import KeysightFieldFox
             final_drv = KeysightFieldFox(resource_address)
+        elif "34461" in idn or "34460" in idn:
+            from .drivers.keysight import Keysight34461A
+            final_drv = Keysight34461A(resource_address)
         elif "E83" in idn or "N52" in idn or "PNA" in idn:
             from .drivers.keysight import KeysightPNA
             final_drv = KeysightPNA(resource_address)
+        elif any(m in idn for m in ["34401", "34410", "34411", "34420"]):
+            from .drivers.keysight import Keysight34461A
+            final_drv = Keysight34461A(resource_address)
     elif "SIGLENT" in idn:
         from .drivers.siglent import SiglentSDS
         final_drv = SiglentSDS(resource_address)
+    elif "KEITHLEY" in idn:
+        if "2400" in idn:
+            from .drivers.keithley import Keithley2400
+            final_drv = Keithley2400(resource_address)
+        elif "2000" in idn:
+            from .drivers.keithley import Keithley2000
+            final_drv = Keithley2000(resource_address)
     elif "TDK-LAMBDA" in idn or "Z+" in idn:
         from .drivers.tdk import TDKLambdaZPlus
         final_drv = TDKLambdaZPlus(resource_address)

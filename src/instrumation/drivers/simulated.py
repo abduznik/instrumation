@@ -187,5 +187,112 @@ class SimulatedSignalGenerator(SimulatedBaseDriver, FunctionGenerator):
     def set_waveform(self, shape):
         print(f"[SIM] Setting Waveform: {shape}")
 
+
+@register_driver("DMM")
+@register_driver("PSU")
+class SimulatedKeithley2400(SimulatedBaseDriver, Multimeter, PowerSupply):
+    """Simulated Keithley 2400 SourceMeter."""
+
+    def __init__(self, resource: str):
+        super().__init__(resource)
+        self._voltage = 0.0
+        self._current = 0.0
+        self._current_limit = 0.1
+        self._output = False
+        self._source_mode = "VOLT"
+
+    def connect(self):
+        super().connect()
+        self.identity = {"manufacturer": "KEITHLEY", "model": "2400", "serial": "SIM-2400", "version": "1.0"}
+
+    def get_id(self): return "KEITHLEY,2400,SIM-2400,1.0"
+
+    # ── PowerSupply ────────────────────────────────────────
+    def set_voltage(self, voltage):
+        self._voltage = voltage
+        print(f"[SIM] K2400 Source Voltage: {voltage} V")
+    def get_voltage(self) -> float:
+        return self._voltage
+    def set_current_limit(self, current):
+        self._current_limit = current
+        print(f"[SIM] K2400 Compliance: {current} A")
+    def set_current(self, current):
+        self._current = current
+        self._source_mode = "CURR"
+        print(f"[SIM] K2400 Source Current: {current} A")
+    def get_current(self) -> MeasurementResult:
+        return MeasurementResult(self._current if self._source_mode == "CURR" else 0.0, "A")
+    def set_output(self, state):
+        self._output = state
+        print(f"[SIM] K2400 Output: {'ON' if state else 'OFF'}")
+    def get_output(self) -> bool:
+        return self._output
+    def set_ovp(self, voltage):
+        print(f"[SIM] K2400 OVP: {voltage} V")
+    def set_ocp(self, current):
+        print(f"[SIM] K2400 OCP: {current} A")
+    def measure_voltage_actual(self) -> MeasurementResult:
+        return MeasurementResult(self._voltage, "V")
+    def clear_protection(self):
+        print("[SIM] K2400 Clear Protection")
+    def measure_power(self) -> MeasurementResult:
+        return MeasurementResult(self._voltage * 0.05, "W")
+    def get_mode(self) -> str:
+        return "CV" if self._source_mode == "VOLT" else "CC"
+
+    # ── Multimeter ─────────────────────────────────────────
+    def configure_voltage_dc(self): pass
+    def configure_voltage_ac(self): pass
+    def measure_voltage(self, ac=False):
+        return MeasurementResult(self._voltage if self._voltage != 0.0 else 5.0, "V")
+    def measure_resistance(self, four_wire=False):
+        return MeasurementResult(1000.0, "Ohm")
+    def measure_current(self, ac=False):
+        return MeasurementResult(0.01, "A")
+    def set_auto_range(self, state): pass
+
+
+@register_driver("DMM")
+class SimulatedKeysight34461A(SimulatedBaseDriver, Multimeter):
+    """Simulated Keysight 34461A Truevolt DMM."""
+
+    def __init__(self, resource: str):
+        super().__init__(resource)
+        self._auto_range = True
+
+    def connect(self):
+        super().connect()
+        self.identity = {"manufacturer": "KEYSIGHT", "model": "34461A", "serial": "SIM-34461A", "version": "1.0"}
+
+    def get_id(self): return "KEYSIGHT,34461A,SIM-34461A,1.0"
+
+    def configure_voltage_dc(self): pass
+    def configure_voltage_ac(self): pass
+    def measure_voltage(self, ac=False):
+        val = 4.95 if not ac else 4.90
+        return MeasurementResult(val, "V")
+    def measure_resistance(self, four_wire=False):
+        return MeasurementResult(1000.0, "Ohm")
+    def measure_current(self, ac=False):
+        val = 0.05 if not ac else 0.04
+        return MeasurementResult(val, "A")
+    def set_auto_range(self, state):
+        self._auto_range = state
+    def measure_frequency(self):
+        return MeasurementResult(1000.0, "Hz")
+    def measure_period(self):
+        return MeasurementResult(0.001, "s")
+    def measure_temperature(self, probe_type="TC", probe="K"):
+        return MeasurementResult(23.5, "C")
+    def measure_capacitance(self):
+        return MeasurementResult(10e-6, "F")
+    def measure_diode(self):
+        return MeasurementResult(0.6, "V")
+    def measure_duty_cycle(self):
+        return MeasurementResult(50.0, "%")
+    def measure_v_peak_to_peak(self):
+        return MeasurementResult(2.0, "V")
+
+
 class SimulatedDriver(SimulatedMultimeter):
     pass

@@ -1,6 +1,7 @@
 import unittest
 import os
 from instrumation.factory import get_instrument
+from instrumation.results import MeasurementResult
 
 class TestSimulation(unittest.TestCase):
     def setUp(self):
@@ -60,6 +61,94 @@ class TestSimulation(unittest.TestCase):
         self.assertAlmostEqual(vpp.value, 2.0, delta=0.5) 
         
         driver.disconnect()
+
+    def test_simulated_keithley2400_smu(self):
+        """Digital Twin: Simulated Keithley 2400 SMU."""
+        from instrumation.drivers.simulated import SimulatedKeithley2400
+        smu = SimulatedKeithley2400("USB::SIM::2400")
+        smu.connect()
+
+        # Test sourcing
+        smu.set_voltage(5.0)
+        self.assertEqual(smu.get_voltage(), 5.0)
+
+        smu.set_output(True)
+        self.assertTrue(smu.get_output())
+
+        # Test measurement
+        v = smu.measure_voltage()
+        self.assertIsInstance(v.value, float)
+        self.assertEqual(v.unit, "V")
+
+        i = smu.measure_current()
+        self.assertIsInstance(i.value, float)
+        self.assertEqual(i.unit, "A")
+
+        r = smu.measure_resistance()
+        self.assertIsInstance(r.value, float)
+        self.assertEqual(r.unit, "Ohm")
+
+        p = smu.measure_power()
+        self.assertIsInstance(p.value, float)
+        self.assertEqual(p.unit, "W")
+
+        smu.disconnect()
+
+    def test_simulated_keithley2400_psu_registration(self):
+        """Digital Twin: Keithley 2400 should be reachable as PSU."""
+        os.environ["INSTRUMATION_MODE"] = "SIM"
+        with get_instrument("SIM_PSU", "PSU") as psu:
+            self.assertTrue(psu.connected)
+            # Should have source capabilities
+            psu.set_voltage(12.0)
+            psu.set_output(True)
+
+    def test_simulated_keysight34461a_dmm(self):
+        """Digital Twin: Simulated Keysight 34461A DMM."""
+        from instrumation.drivers.simulated import SimulatedKeysight34461A
+        dmm = SimulatedKeysight34461A("USB::SIM::34461A")
+        dmm.connect()
+
+        v = dmm.measure_voltage()
+        self.assertAlmostEqual(v.value, 4.95, delta=0.1)
+        self.assertEqual(v.unit, "V")
+        self.assertIsInstance(v, MeasurementResult)
+
+        vac = dmm.measure_voltage(ac=True)
+        self.assertAlmostEqual(vac.value, 4.90, delta=0.1)
+        self.assertEqual(vac.unit, "V")
+
+        r = dmm.measure_resistance()
+        self.assertEqual(r.value, 1000.0)
+        self.assertEqual(r.unit, "Ohm")
+
+        i = dmm.measure_current()
+        self.assertEqual(i.unit, "A")
+
+        f = dmm.measure_frequency()
+        self.assertEqual(f.value, 1000.0)
+        self.assertEqual(f.unit, "Hz")
+
+        t = dmm.measure_temperature()
+        self.assertEqual(t.value, 23.5)
+        self.assertEqual(t.unit, "C")
+
+        c = dmm.measure_capacitance()
+        self.assertEqual(c.unit, "F")
+
+        d = dmm.measure_diode()
+        self.assertEqual(d.unit, "V")
+
+        dmm.disconnect()
+
+    def test_simulated_keysight34461a_factory_access(self):
+        """Digital Twin: Keysight 34461A via factory DMM."""
+        os.environ["INSTRUMATION_MODE"] = "SIM"
+        with get_instrument("SIM_DMM", "DMM") as dmm:
+            self.assertTrue(dmm.connected)
+            res = dmm.measure_voltage()
+            self.assertIsInstance(res, MeasurementResult)
+
 
 if __name__ == "__main__":
     unittest.main()
