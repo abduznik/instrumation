@@ -35,7 +35,7 @@ class MeasurementResult:
         """Allows MeasurementResult to be used in f-strings with float formatting."""
         if isinstance(self.value, (float, int)):
             return format(float(self.value), format_spec)
-        return format(str(self.value), format_spec)
+        return str(self.value)
 
     def __float__(self):
         """Allows direct conversion to float if the value is a scalar."""
