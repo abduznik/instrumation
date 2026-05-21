@@ -89,17 +89,19 @@ def test_measurement_format_on_none_value():
     assert isinstance(result, str)
 
 
-# ── 2. Simulated PSU state tracking bugs ──────────────────────────
+# ── 2. Simulated PSU state tracking regression guards ─────────────
 
 def test_psu_state_tracking_voltage():
     _set_sim()
     psu = get_instrument("PSU_ADDR", "PSU")
     psu.set_voltage(5.0)
-    # BUG: get_voltage() returns 0.0 even after set_voltage(5.0)
+
+    # Regression guard: ensure simulated PSU preserves voltage state after set_voltage()
     volt = psu.get_voltage()
+
     assert volt == pytest.approx(5.0, abs=1e-6), (
-        f"BUG: get_voltage() returned {volt} instead of 5.0. "
-        "SimulatedPowerSupply does not track voltage state."
+        f"Expected get_voltage() to return 5.0, got {volt}. "
+        "SimulatedPowerSupply should preserve voltage state."
     )
 
 
@@ -107,26 +109,32 @@ def test_psu_state_tracking_output():
     _set_sim()
     psu = get_instrument("PSU_ADDR", "PSU")
     psu.set_output(True)
-    # BUG: get_output() returns False even after set_output(True)
+
+    # Regression guard: ensure simulated PSU preserves output state after set_output()
     out = psu.get_output()
+
     assert out is True, (
-        f"BUG: get_output() returned {out} instead of True. "
-        "SimulatedPowerSupply does not track output state."
+        f"Expected get_output() to return True, got {out}. "
+        "SimulatedPowerSupply should preserve output state."
     )
 
 
 def test_psu_return_type_inconsistency():
     _set_sim()
     psu = get_instrument("PSU_ADDR", "PSU")
+
     # get_voltage() returns float, but get_current() returns MeasurementResult
     volt = psu.get_voltage()
     curr = psu.get_current()
+
     assert isinstance(volt, float), (
         f"get_voltage() returned {type(volt).__name__}, expected float"
     )
+
     assert isinstance(curr, MeasurementResult), (
         f"get_current() returned {type(curr).__name__}, expected MeasurementResult"
     )
+
     # This inconsistency could break code that treats all get_* uniformly
 
 
@@ -135,6 +143,7 @@ def test_psu_return_type_inconsistency():
 def test_frequency_validation_sim_sg():
     _set_sim()
     sg = get_instrument("SG_ADDR", "SG")
+
     with pytest.raises(ConfigurationError):
         sg.set_frequency(-1e9)
 
@@ -142,6 +151,7 @@ def test_frequency_validation_sim_sg():
 def test_frequency_validation_above_max():
     _set_sim()
     sg = get_instrument("SG_ADDR", "SG")
+
     with pytest.raises(ConfigurationError):
         sg.set_frequency(1e15)
 
@@ -149,6 +159,7 @@ def test_frequency_validation_above_max():
 def test_power_validation_over_max():
     _set_sim()
     sg = get_instrument("SG_ADDR", "SG")
+
     with pytest.raises(OverloadError):
         sg.set_amplitude(100.0)
 
@@ -156,6 +167,7 @@ def test_power_validation_over_max():
 def test_sa_frequency_validation():
     _set_sim()
     sa = get_instrument("SA_ADDR", "SA")
+
     with pytest.raises(ConfigurationError):
         sa.set_center_freq(-500)
 
@@ -164,6 +176,7 @@ def test_sa_frequency_validation():
 
 def test_instrument_isolation():
     _set_sim()
+
     dmm1 = get_instrument("DMM1", "DMM")
     dmm2 = get_instrument("DMM2", "DMM")
 
@@ -177,33 +190,41 @@ def test_instrument_isolation():
     assert dmm2.connected is True
 
     dmm1.disconnect()
-    assert dmm1.connected is False
-    assert dmm2.connected is True  # BUG: if this fails, instruments share state
 
+    assert dmm1.connected is False
+
+    # Regression guard: instrument instances should not share connection state
+    assert dmm2.connected is True
 
 
 # ── 5. Factory edge cases ─────────────────────────────────────────
 
 def test_factory_auto_with_no_hardware():
     """AUTO discovery with no hardware should raise ValueError, not hang."""
+
     from unittest.mock import patch
+
     _set_real()
+
     with patch("instrumation.factory.os.path.exists", return_value=False):
         with patch("instrumation.factory._discover_lan_resources", return_value=[]):
             with patch("instrumation.factory._discover_mdns_resources", return_value=[]):
                 with patch("instrumation.factory.get_rm") as mock_rm:
                     mock_rm.return_value.list_resources.return_value = []
+
                     with pytest.raises(ValueError, match="could not find"):
                         get_instrument("AUTO", "DMM")
 
 
 def test_factory_empty_address():
     _set_sim()
+
     try:
         instr = get_instrument("", "DMM")
         instr.connect()
         instr.disconnect()
-    except Exception as e:
+
+    except Exception:
         # Should not crash catastrophically; ideally handled gracefully
         pass
 
@@ -212,7 +233,9 @@ def test_factory_empty_address():
 
 def test_is_sim_mode_consistency():
     _set_sim()
+
     from instrumation.config import is_sim_mode as config_is_sim
+
     assert is_sim_mode() is True
     assert config_is_sim() is True
 
@@ -220,14 +243,17 @@ def test_is_sim_mode_consistency():
     _REAL = "REAL"
 
     os.environ["INSTRUMATION_MODE"] = _SIMULATED
-    # BUG: factory.py is_sim_mode() does NOT recognize "SIMULATED"
+
+    # Regression guard: factory and config should agree on "SIMULATED" behavior
     assert is_sim_mode() is True, (
-        "BUG: factory.is_sim_mode() returned False for 'SIMULATED'. "
+        "Expected factory.is_sim_mode() to recognize 'SIMULATED'. "
         "config.is_sim_mode() supports both 'SIM' and 'SIMULATED'."
     )
+
     assert config_is_sim() is True
 
     os.environ["INSTRUMATION_MODE"] = _REAL
+
     assert is_sim_mode() is False
     assert config_is_sim() is False
 
@@ -236,7 +262,9 @@ def test_is_sim_mode_consistency():
 
 def test_async_nonexistent_method():
     _set_sim()
+
     dmm = get_instrument("DMM_ADDR", "DMM")
+
     with pytest.raises(AttributeError):
         # async_nonexistent should not silently create an invalid wrapper
         _ = dmm.async_nonexistent_method
@@ -246,8 +274,10 @@ def test_async_nonexistent_method():
 
 def test_sg_min_frequency_protection():
     _set_sim()
+
     sg = get_instrument("SG_ADDR", "SG")
     sg.max_power_dbm = 25.0
+
     with pytest.raises(ConfigurationError):
         sg.set_frequency(-100)
 
@@ -256,13 +286,17 @@ def test_sg_min_frequency_protection():
 
 def test_measurement_complex_to_dict():
     r = MeasurementResult(1+2j, "V")
+
     d = r.to_dict()
+
     assert d["value"] == {"real": 1.0, "imag": 2.0}, f"Got {d['value']}"
 
     # Round-trip through JSON
     import json
+
     s = r.to_json()
     loaded = json.loads(s)
+
     assert loaded["value"] == {"real": 1.0, "imag": 2.0}
 
 
@@ -279,15 +313,19 @@ def test_station_double_connect():
                     "sa": {"driver": "SA", "address": "TCPIP::1::INSTR"}
                 }
             }
+
             with patch('instrumation.station.get_instrument') as mock_get:
                 mock_inst = MagicMock()
                 mock_get.return_value = mock_inst
 
                 station = Station("dummy.toml")
+
                 # Connect once
                 station.connect()
+
                 # Connect again (double connect)
                 station.connect()
+
                 # Should not crash, and connect should be called twice
                 assert mock_inst.connect.call_count == 2
 
@@ -296,8 +334,10 @@ def test_station_double_connect():
 
 def test_oscilloscope_screenshot_type():
     _set_sim()
+
     scope = get_instrument("SCOPE_ADDR", "SCOPE")
     screenshot = scope.get_screenshot()
+
     assert isinstance(screenshot, bytes), (
         f"get_screenshot() returned {type(screenshot).__name__}, expected bytes"
     )
@@ -307,11 +347,15 @@ def test_oscilloscope_screenshot_type():
 
 def test_repeated_connect_cycle():
     _set_sim()
+
     dmm = get_instrument("DMM_CYCLE", "DMM")
-    for i in range(10):
+
+    for _ in range(10):
         dmm.connect()
         assert dmm.connected is True
+
         _ = dmm.measure_voltage()
+
         dmm.disconnect()
         assert dmm.connected is False
 
@@ -321,5 +365,6 @@ def test_repeated_connect_cycle():
 def test_measurement_timestamp_different_instances():
     r1 = MeasurementResult(1.0, "V")
     r2 = MeasurementResult(2.0, "V")
+
     # Timestamps should be different (or at least this shouldn't crash)
     assert r1.timestamp <= r2.timestamp
