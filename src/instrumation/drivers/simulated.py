@@ -82,8 +82,8 @@ class SimulatedPowerSupply(SimulatedBaseDriver, PowerSupply):
         time.sleep(self.latency)
         return MeasurementResult(0.0, "A")
     def get_current_limit(self) -> float: return 0.0
-    def set_output(self, state): pass
-    def get_output(self): return False
+    def set_output(self, state): self._output = state
+    def get_output(self): return getattr(self, "_output", False)
     def set_ovp(self, voltage): pass
     def set_ocp(self, current): pass
     def measure_voltage_actual(self) -> MeasurementResult:
