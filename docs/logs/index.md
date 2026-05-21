@@ -2,6 +2,11 @@
 
 A quick look at how we've been building and breaking things. These logs track the architectural moves and performance wins as we push the HAL to production grade.
 
+## 2026-05-21
+- [v0.3.0 — SMU & DMM Drivers + Bug Bash](2026-05-21/keithley_2400_smu.md) - Keithley 2400 SMU and Keysight 34461A DMM drivers landed.
+- [Keysight 34461A Truevolt DMM](2026-05-21/keysight_34461a_dmm.md) - Full 6.5-digit multimeter with temperature, capacitance, diode.
+- [Bug Bash & Adversarial Testing](2026-05-21/bug_bash_adversarial.md) - Found 4 bugs via stress-testing, built permanent regression suite.
+
 ## 2026-05-03
 - [v0.2.0 Release & RF Validation](2026-05-03/rf_validation_v020.md) - Validating against Keysight X-Series and standardizing SA drivers.
 - [Multi-Mode Architecture](2026-05-03/multi_mode_architecture.md) - Supporting specialized VNAs and combo instruments (FieldFox/VNA Master).
