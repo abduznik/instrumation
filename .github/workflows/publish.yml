@@ -13,13 +13,13 @@ jobs:
       contents: write  # REQUIRED: To commit version bump & upload release assets
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
@@ -49,7 +49,7 @@ jobs:
           python -m build
 
       - name: Upload Release Assets to GitHub
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: dist/*
           tag_name: ${{ github.ref_name }}
