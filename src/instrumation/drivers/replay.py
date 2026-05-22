@@ -129,7 +129,7 @@ class ReplayDriver(SignalGenerator, SpectrumAnalyzer, NetworkAnalyzer, Oscillosc
     def get_output(self) -> bool: return False
     def set_ovp(self, voltage: float): self.write(f":VOLT:PROT {voltage}")
     def set_ocp(self, current: float): self.write(f":CURR:PROT {current}")
-    def measure_voltage_actual(self) -> MeasurementResult: return MeasurementResult(0.0, "V")
+    def measure_voltage_actual(self) -> MeasurementResult: return self.measure_voltage()
     def clear_protection(self): self.write(":OUTP:PROT:CLE")
 
     # --- SpectrumAnalyzer / NetworkAnalyzer Overlap ---

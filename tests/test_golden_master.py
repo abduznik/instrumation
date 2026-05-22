@@ -63,5 +63,21 @@ class TestGoldenMaster(unittest.TestCase):
         # Actually, it doesn't advance.
         self.assertEqual(replay.ptr, 0)
 
+    def test_measure_voltage_actual_delegates_to_replay(self):
+        master = GoldenMaster(self.test_file)
+        master.add("MEAS:VOLT?", "4.567")   # recorded voltage = 4.567 V
+        master.save()
+
+    
+        replay = ReplayDriver("DUMMY_ADDR", self.test_file)
+
+        result = replay.measure_voltage_actual()
+
+        self.assertAlmostEqual(result.value, 4.567, places=3,
+            msg="measure_voltage_actual() must return the replayed value, not hardcoded 0.0")
+        self.assertEqual(result.unit, "V",
+            msg="Unit must be 'V'")
+
+
 if __name__ == "__main__":
     unittest.main()
