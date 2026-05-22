@@ -73,19 +73,19 @@ class SimulatedMultimeter(SimulatedBaseDriver, Multimeter):
 
 @register_driver("PSU")
 class SimulatedPowerSupply(SimulatedBaseDriver, PowerSupply):
-    def set_voltage(self, voltage): 
+    def set_voltage(self, voltage: float): 
         print(f"[SIM] Setting PSU Voltage: {voltage}")
         self._voltage = voltage
-    def get_voltage(self): return getattr(self, "_voltage", 0.0)
-    def set_current_limit(self, current): pass
+    def get_voltage(self) -> float: return getattr(self, "_voltage", 0.0)
+    def set_current_limit(self, current: float): pass
     def get_current(self) -> MeasurementResult:
         time.sleep(self.latency)
         return MeasurementResult(0.0, "A")
     def get_current_limit(self) -> float: return 0.0
-    def set_output(self, state): self._output = state
-    def get_output(self): return getattr(self, "_output", False)
-    def set_ovp(self, voltage): pass
-    def set_ocp(self, current): pass
+    def set_output(self, state: bool): self._output = state
+    def get_output(self) -> bool: return getattr(self, "_output", False)
+    def set_ovp(self, voltage: float): pass
+    def set_ocp(self, current: float): pass
     def measure_voltage_actual(self) -> MeasurementResult:
         return MeasurementResult(0.0, "V")
     def measure_current(self) -> MeasurementResult:
