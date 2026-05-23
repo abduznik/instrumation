@@ -158,7 +158,7 @@ class SimulatedOscilloscope(SimulatedBaseDriver, Oscilloscope):
     def stop(self): pass
     def single(self): pass
     def get_waveform(self, channel: int) -> MeasurementResult:
-        data = [math.sin(i * 0.1) for i in range(1000)]
+        data = [0.75 if math.sin(i * 0.1) >= 0 else -0.75 for i in range(1000)]
         return MeasurementResult(data, "V")
     def auto_scale(self): pass
     def set_trigger(self, source, level, slope): pass
