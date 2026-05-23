@@ -1,16 +1,28 @@
 ## Key Features in v0.3.1
 
-### New Digital Twin Features
-- **SimulatedKeithley2400.configure_voltage_ac()**: Implemented AC voltage configuration with a warning that the 2400 does not support true AC voltage (matching real hardware behavior). Falls back to DC voltage mode.
-- **SimulatedSpectrumAnalyzer.peak_search()**: Full peak-search implementation that generates realistic sweep data across the configured frequency span and finds the highest-amplitude signal. Also improves `get_trace_data()` to return actual generated data instead of zeros.
-- **peaks on SimulatedSpectrumAnalyzer**: Sweep data is regenerated when center frequency or span changes, keeping simulations realistic.
+### New Instrument Drivers
+- **DC Electronic Load**: Full digital twin simulation for programmable DC electronic loads with Constant Current (CC), Constant Voltage (CV), Constant Resistance (CR), and Constant Power (CP) modes. Includes physics-based power dissipation modeling, OVP/OCP/OPP protection simulation, and foldback mode support. Registered as `"E_LOAD"` type.
+- **Siglent SDL1000X Load Driver**: Real hardware driver for Siglent SDL1000X series programmable DC electronic loads, with full CC/CV/CR/CP mode support.
+
+### Community Contributions
+- **@AYUSH4951 (Ayush Sharma)** — [#67](https://github.com/abduznik/instrumation/pull/67): Fixed `ReplayDriver.measure_voltage_actual()` returning hardcoded `0.0 V` instead of delegating to the replay log. Now correctly reads recorded responses from golden master files.
+- **@Sula-bh (Sulabh Acharya)** — [#66](https://github.com/abduznik/instrumation/pull/66): Added type hints to `SimulatedPowerSupply` methods for better IDE support and static analysis.
+- **@krishna7805 (Mohan R. Barde)** — [#65](https://github.com/abduznik/instrumation/pull/65): Replaced stale BUG-related comments in adversarial tests with regression-guard terminology to avoid misleading references to already-fixed behavior.
+
+### Digital Twin Improvements
+- **SimulatedKeithley2400.configure_voltage_ac()**: AC voltage configuration now prints a warning (matching real hardware — 2400 doesn't support AC) and falls back to DC voltage mode.
+- **SimulatedSpectrumAnalyzer.peak_search()**: Full peak-search implementation that generates realistic sweep data across the configured frequency span, finds the highest-amplitude signal. `get_trace_data()` now returns actual generated data instead of zeros.
+- **AFG-DSOX loopback fix**: Square wave output corrected in the AFG-DSOX loopback digital twin experiment.
 
 ### Exports & DX
-- **ReplayDriver** is now directly importable as `from instrumation.drivers import ReplayDriver`.
-- **search_devices** is now exportable as `from instrumation import search_devices` (added to `__all__`).
+- `ReplayDriver` is now directly importable as `from instrumation.drivers import ReplayDriver`.
+- `search_devices` added to `__all__` in `src/instrumation/__init__.py`.
 
-### Bug Fixes
-- None — this release focuses on Digital Twin method completeness for easier offline development.
+### CI & Infrastructure
+- Removed stale Gemini workflow.
+- Fixed `test_broadcaster.yml` to install `pytest-asyncio`.
+- Bumped all CI actions to Node.js 24-compatible versions.
+- Added cache-busting hash to docs image URL for reliable image rendering.
 
 ## Key Features in v0.3.0
 
