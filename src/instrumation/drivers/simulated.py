@@ -242,7 +242,9 @@ class SimulatedKeithley2400(SimulatedBaseDriver, Multimeter, PowerSupply):
 
     # ── Multimeter ─────────────────────────────────────────
     def configure_voltage_dc(self): pass
-    def configure_voltage_ac(self): pass
+    def configure_voltage_ac(self):
+        print("[SIM] K2400: AC voltage not supported, configuring DC voltage instead")
+        self._source_mode = "VOLT"
     def measure_voltage(self, ac=False):
         return MeasurementResult(self._voltage if self._voltage != 0.0 else 5.0, "V")
     def measure_resistance(self, four_wire=False):
