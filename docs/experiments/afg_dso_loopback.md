@@ -78,7 +78,7 @@ afg.set_output(False)
 The experiment successfully verified that **AUTO** mode is robust for both high-speed USB-TMC and network-based VXI-11 protocols.
 
 ### Visual Validation
-![AFG to DSOX Loopback](../assets/afg_dso_loopback.png)
+![AFG to DSOX Loopback](../assets/afg_dso_loopback.png?6a9f55f)
 
 ## Conclusion
 The `instrumation` HAL now supports true plug-and-play operation for the entire RF test bench. By combining ARP probing with USB scanning, the system eliminates the need for manual IP configuration in test scripts.
