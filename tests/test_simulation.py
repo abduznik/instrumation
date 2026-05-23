@@ -163,6 +163,26 @@ class TestSimulation(unittest.TestCase):
         self.assertEqual(t.value, 23.5)
         self.assertEqual(t.unit, "C")
 
+    def test_simulated_multimeter_capacitance_and_diode(self):
+        """Base SimulatedMultimeter should expose measure_capacitance and measure_diode.
+
+        Factory-built SIM_DMM returns SimulatedMultimeter (not the Keysight
+        subclass), so the base class needs these methods or any code reading
+        a capacitance/diode through the factory crashes with AttributeError.
+        """
+        from instrumation.drivers.simulated import SimulatedMultimeter
+        dmm = SimulatedMultimeter("SIM::DMM")
+
+        c = dmm.measure_capacitance()
+        self.assertIsInstance(c, MeasurementResult)
+        self.assertEqual(c.value, 10e-6)
+        self.assertEqual(c.unit, "F")
+
+        d = dmm.measure_diode()
+        self.assertIsInstance(d, MeasurementResult)
+        self.assertEqual(d.value, 0.6)
+        self.assertEqual(d.unit, "V")
+
 
 if __name__ == "__main__":
     unittest.main()

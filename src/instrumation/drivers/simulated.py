@@ -71,6 +71,10 @@ class SimulatedMultimeter(SimulatedBaseDriver, Multimeter):
         return MeasurementResult(0.01, "A")
     def measure_temperature(self, probe_type="TC", probe="K"):
         return MeasurementResult(23.5, "C")
+    def measure_capacitance(self):
+        return MeasurementResult(10e-6, "F")
+    def measure_diode(self):
+        return MeasurementResult(0.6, "V")
     def set_auto_range(self, state): pass
 
 @register_driver("PSU")

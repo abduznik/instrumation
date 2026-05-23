@@ -34,10 +34,12 @@ src/instrumation/drivers/siglent.py
 src/instrumation/drivers/simulated.py
 src/instrumation/drivers/tdk.py
 src/instrumation/drivers/tektronix.py
+tests/test_adversarial.py
 tests/test_async.py
 tests/test_broadcaster.py
 tests/test_cli.py
 tests/test_context_manager.py
+tests/test_electronic_load.py
 tests/test_exceptions.py
 tests/test_factory.py
 tests/test_golden_master.py

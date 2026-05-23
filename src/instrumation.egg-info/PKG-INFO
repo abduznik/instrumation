@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: instrumation
-Version: 0.2.1
+Version: 0.3.1
 Summary: A high-level Hardware Abstraction Layer (HAL) for RF test stations with Digital Twin support.
 Author-email: abduznik <abduznik@users.noreply.github.com>
 License: MIT
