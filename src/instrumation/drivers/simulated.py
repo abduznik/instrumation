@@ -483,8 +483,8 @@ class SimulatedElectronicLoad(SimulatedBaseDriver, ElectronicLoad):
         return v_act, i_act, p_act
 
     def measure_voltage(self) -> MeasurementResult:
-        v_act, _, _ = self._update_physics()
-        noise = random.uniform(-0.001, 0.001) * v_act
+        v_act, i_act, _ = self._update_physics()
+        noise = random.uniform(-0.001, 0.001) * v_act if i_act != 0.0 else 0.0
         return MeasurementResult(v_act + noise, "V")
 
     def measure_current(self) -> MeasurementResult:
