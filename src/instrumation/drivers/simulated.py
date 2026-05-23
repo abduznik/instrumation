@@ -66,9 +66,13 @@ class SimulatedMultimeter(SimulatedBaseDriver, Multimeter):
     def measure_resistance(self, four_wire: bool = False): 
         time.sleep(self.latency)
         return MeasurementResult(1000.0, "Ohm")
-    def measure_current(self, ac: bool = False): 
+    def measure_current(self, ac: bool = False):
         time.sleep(self.latency)
         return MeasurementResult(0.01, "A")
+    def measure_capacitance(self):
+        return MeasurementResult(10e-6, "F")
+    def measure_diode(self):
+        return MeasurementResult(0.6, "V")
     def set_auto_range(self, state): pass
 
 @register_driver("PSU")
