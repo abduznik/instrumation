@@ -100,20 +100,52 @@ class SimulatedPowerSupply(SimulatedBaseDriver, PowerSupply):
 
 @register_driver("SA")
 class SimulatedSpectrumAnalyzer(SimulatedBaseDriver, SpectrumAnalyzer):
-    def peak_search(self): pass
+    def __init__(self, resource: str, latency: float = 0.01):
+        super().__init__(resource, latency)
+        self._center_freq = 2.4e9
+        self._span = 100e6
+        self._sweep_data: list[tuple[float, float]] = []
+
+    def _generate_sweep_data(self):
+        num_points = 1001
+        start_freq = self._center_freq - self._span / 2
+        stop_freq = self._center_freq + self._span / 2
+        self._sweep_data = []
+        for i in range(num_points):
+            freq = start_freq + (stop_freq - start_freq) * i / (num_points - 1)
+            amp = random.uniform(-100, -60)
+            self._sweep_data.append((freq, amp))
+        peak_idx = random.randint(0, num_points - 1)
+        freq, _ = self._sweep_data[peak_idx]
+        self._sweep_data[peak_idx] = (freq, random.uniform(-30, -10))
+
+    def peak_search(self):
+        if not self._sweep_data:
+            self._generate_sweep_data()
+        max_idx = max(range(len(self._sweep_data)), key=lambda i: self._sweep_data[i][1])
+        freq, amp = self._sweep_data[max_idx]
+        return MeasurementResult(freq, "Hz"), MeasurementResult(amp, "dBm")
+
     def get_marker_amplitude(self): 
         time.sleep(self.latency)
         return MeasurementResult(-20.0, "dBm")
     def set_center_freq(self, hz):
         self._validate_frequency(hz)
         self._center_freq = hz
+        self._sweep_data = []
         print(f"[SIM] Setting SA Center Freq: {hz}")
-    def get_center_freq(self) -> float: return getattr(self, "_center_freq", 2.4e9)
-    def set_span(self, hz): self._span = hz
-    def get_span(self) -> float: return getattr(self, "_span", 100e6)
+    def get_center_freq(self) -> float: return self._center_freq
+    def set_span(self, hz):
+        self._span = hz
+        self._sweep_data = []
+    def get_span(self) -> float: return self._span
     def set_rbw(self, hz): pass
     def set_vbw(self, hz): pass
-    def get_trace_data(self): return MeasurementResult([0.0]*1001, "dBm")
+    def get_trace_data(self):
+        if not self._sweep_data:
+            self._generate_sweep_data()
+        amps = [amp for _, amp in self._sweep_data]
+        return MeasurementResult(amps, "dBm")
 
 @register_driver("NA")
 @register_driver("VNA")
