@@ -1,3 +1,17 @@
+## Key Features in v0.3.1
+
+### New Digital Twin Features
+- **SimulatedKeithley2400.configure_voltage_ac()**: Implemented AC voltage configuration with a warning that the 2400 does not support true AC voltage (matching real hardware behavior). Falls back to DC voltage mode.
+- **SimulatedSpectrumAnalyzer.peak_search()**: Full peak-search implementation that generates realistic sweep data across the configured frequency span and finds the highest-amplitude signal. Also improves `get_trace_data()` to return actual generated data instead of zeros.
+- **peaks on SimulatedSpectrumAnalyzer**: Sweep data is regenerated when center frequency or span changes, keeping simulations realistic.
+
+### Exports & DX
+- **ReplayDriver** is now directly importable as `from instrumation.drivers import ReplayDriver`.
+- **search_devices** is now exportable as `from instrumation import search_devices` (added to `__all__`).
+
+### Bug Fixes
+- None — this release focuses on Digital Twin method completeness for easier offline development.
+
 ## Key Features in v0.3.0
 
 ### New Instrument Drivers
