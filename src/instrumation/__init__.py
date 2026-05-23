@@ -5,7 +5,7 @@ from .utils import DataBroadcaster
 from .factory import get_instrument, get_instrument_from_config
 
 
-__all__ = ["scan", "UUTHandler", "Station", "DataBroadcaster", "get_instrument", "get_instrument_from_config"]
+__all__ = ["scan", "UUTHandler", "Station", "DataBroadcaster", "get_instrument", "get_instrument_from_config", "search_devices"]
 
 # Global storage for the last found devices to help with auto-connect
 _discovered_devices = []
