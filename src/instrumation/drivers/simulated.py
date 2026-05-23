@@ -48,7 +48,7 @@ class SimulatedBaseDriver(InstrumentDriver):
     def clear_status(self): pass
     def sync_config(self): pass
     def wait_ready(self, timeout=30): pass
-    def shutdown_safety(self): pass
+    def shutdown_safety(self): print("[SIM] Shutting down safely")
     def check_errors(self): pass
     def save_state(self, index): print(f"[SIM] Saving state to {index}")
     def load_state(self, index): print(f"[SIM] Loading state from {index}")
