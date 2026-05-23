@@ -149,6 +149,20 @@ class TestSimulation(unittest.TestCase):
             res = dmm.measure_voltage()
             self.assertIsInstance(res, MeasurementResult)
 
+    def test_simulated_multimeter_measure_temperature(self):
+        """Base SimulatedMultimeter should expose measure_temperature.
+
+        The factory returns SimulatedMultimeter (not the Keysight subclass)
+        when no specific model is requested, so the base class needs the
+        method too — otherwise SIM_DMM crashes with AttributeError.
+        """
+        from instrumation.drivers.simulated import SimulatedMultimeter
+        dmm = SimulatedMultimeter("SIM::DMM")
+        t = dmm.measure_temperature()
+        self.assertIsInstance(t, MeasurementResult)
+        self.assertEqual(t.value, 23.5)
+        self.assertEqual(t.unit, "C")
+
     def test_simulated_multimeter_capacitance_and_diode(self):
         """Base SimulatedMultimeter should expose measure_capacitance and measure_diode.
 
