@@ -1,10 +1,10 @@
 """Tests for the Frequency Counter driver (issue #86)."""
 
 import os
-from src.instrumation.factory import get_instrument
-from src.instrumation.drivers.simulated import SimulatedFrequencyCounter
-from src.instrumation.drivers.keysight import Keysight53230A
-from src.instrumation.drivers.base import FrequencyCounter, MeasurementResult
+from instrumation.factory import get_instrument
+from instrumation.drivers.simulated import SimulatedFrequencyCounter
+from instrumation.drivers.keysight import Keysight53230A
+from instrumation.drivers.base import FrequencyCounter, MeasurementResult
 
 
 def test_frequency_counter_base_class():
