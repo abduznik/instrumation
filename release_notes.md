@@ -1,3 +1,16 @@
+## Key Features in v0.3.2
+
+### Simulated Driver Completeness
+- **SimulatedMultimeter enhancements**: Added `measure_temperature()` ([#68](https://github.com/abduznik/instrumation/issues/68)), `measure_capacitance()` and `measure_diode()` ([#69](https://github.com/abduznik/instrumation/issues/69)), and `measure_period()` ([#70](https://github.com/abduznik/instrumation/issues/70)) — achieving parity with `SimulatedKeysight34461A`.
+- **SimulatedOscilloscope print stubs** ([#71](https://github.com/abduznik/instrumation/issues/71)): `run()`, `stop()`, `single()`, and `auto_scale()` now log their actions instead of being silent `pass` stubs.
+- **SimulatedSpectrumAnalyzer RBW/VBW** ([#72](https://github.com/abduznik/instrumation/issues/72)): `set_rbw()` and `set_vbw()` now store the value and print a simulation log.
+- **SimulatedSignalGenerator set_output** ([#75](https://github.com/abduznik/instrumation/issues/75)): `set_output()` now prints the ON/OFF state.
+- **shutdown_safety update** ([#78](https://github.com/abduznik/instrumation/issues/78)): Improved safety protocol across simulated drivers.
+- **Electronic Load noise fix**: Suppressed noise in `SimulatedElectronicLoad.measure_voltage()` when input is off.
+
+### Exports & DX
+- **driver classes exported** ([#73](https://github.com/abduznik/instrumation/issues/73)): All key simulated driver classes (`SimulatedMultimeter`, `SimulatedPowerSupply`, `SimulatedSpectrumAnalyzer`, `SimulatedNetworkAnalyzer`, `SimulatedOscilloscope`, `SimulatedSignalGenerator`, `SimulatedKeithley2400`, `SimulatedKeysight34461A`, `SimulatedElectronicLoad`) now directly importable from `instrumation.drivers`.
+
 ## Key Features in v0.3.1
 
 ### New Instrument Drivers
