@@ -1,4 +1,4 @@
-from .base import SpectrumAnalyzer, NetworkAnalyzer, SignalGenerator, Oscilloscope, Multimeter
+from .base import SpectrumAnalyzer, NetworkAnalyzer, SignalGenerator, Oscilloscope, Multimeter, FrequencyCounter
 from .registry import register_driver
 from .real import RealDriver
 from ..results import MeasurementResult
@@ -641,3 +641,93 @@ class Keysight34461A(RealDriver, Multimeter):
     def shutdown_safety(self):
         self.set_auto_range(True)
         self.sync_config()
+
+
+@register_driver("COUNTER")
+class Keysight53230A(RealDriver, FrequencyCounter):
+    """Driver for Keysight 53230A / 53220A Universal Frequency Counter / Timer.
+
+    SCPI Reference:
+        - :MEAS:FREQ? [{range}, {resolution}]  — frequency
+        - :MEAS:PER? [{range}, {resolution}]   — period
+        - :MEAS:TINT? [{start_slope},{stop_slope},{start_src},{stop_src}] — time interval
+        - :INP{ch}:IMP {50|1e6}                — input impedance
+        - :INP{ch}:LEV {volts}                 — trigger level
+        - :INP{ch}:COUP {DC|AC}               — coupling
+        - :INP{ch}:RANG:AUTO {ON|OFF}         — auto range
+    """
+
+    def __init__(self, resource: str):
+        super().__init__(resource)
+        self.min_frequency = 0.0
+        self.max_frequency = 20e9  # 53230A option 030
+        self._active_channel = 1
+
+    def _ch(self, channel: int = None) -> str:
+        ch = channel if channel else self._active_channel
+        return f"INP{ch}"
+
+    def preset(self, automation_optimized: bool = True):
+        self.write("*RST")
+        self.wait_ready()
+        if automation_optimized:
+            self.write(":DISP:ENAB OFF")
+
+    def shutdown_safety(self):
+        self.write(":DISP:ENAB ON")
+        self.sync_config()
+
+    # ── Measurements ──────────────────────────────────────
+
+    def measure_frequency(self, range: str = "AUTO") -> MeasurementResult:
+        if range.upper() == "AUTO":
+            val = self.query_ascii(":MEAS:FREQ?")
+        else:
+            val = self.query_ascii(f":MEAS:FREQ? {range}")
+        return MeasurementResult(float(val), "Hz")
+
+    def measure_period(self, range: str = "AUTO") -> MeasurementResult:
+        if range.upper() == "AUTO":
+            val = self.query_ascii(":MEAS:PER?")
+        else:
+            val = self.query_ascii(f":MEAS:PER? {range}")
+        return MeasurementResult(float(val), "s")
+
+    def measure_time_interval(self, start_trigger: str, stop_trigger: str) -> MeasurementResult:
+        """Measures time interval between start and stop trigger events.
+
+        Args:
+            start_trigger: Trigger source + slope, e.g. 'POS,1' (positive slope, channel 1)
+            stop_trigger:  Trigger source + slope, e.g. 'POS,2' (positive slope, channel 2)
+        """
+        val = self.query_ascii(f":MEAS:TINT? {start_trigger},{stop_trigger}")
+        return MeasurementResult(float(val), "s")
+
+    # ── Configuration ─────────────────────────────────────
+
+    def set_impedance(self, ohms: float, channel: int = 1):
+        ch = f"INP{channel}"
+        self.safe_send(f":{ch}:IMP {ohms}")
+
+    def set_trigger_level(self, volts: float, channel: int = 1):
+        ch = f"INP{channel}"
+        self.safe_send(f":{ch}:LEV {volts}")
+
+    def set_coupling(self, dc_ac: str, channel: int = 1):
+        ch = f"INP{channel}"
+        self.safe_send(f":{ch}:COUP {dc_ac.upper()}")
+
+    def set_auto_range(self, state: bool, channel: int = 1):
+        ch = f"INP{channel}"
+        val = "ON" if state else "OFF"
+        self.safe_send(f":{ch}:RANG:AUTO {val}")
+
+    # ── InstrumentDriver abstract methods ──────────────────
+
+    def measure_duty_cycle(self) -> MeasurementResult:
+        self._unsupported_feature("Duty Cycle")
+        return MeasurementResult(0.0, "%")
+
+    def measure_v_peak_to_peak(self) -> MeasurementResult:
+        self._unsupported_feature("Vpp")
+        return MeasurementResult(0.0, "V")

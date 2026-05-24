@@ -10,7 +10,9 @@ from .simulated import (
     SimulatedKeithley2400,
     SimulatedKeysight34461A,
     SimulatedElectronicLoad,
+    SimulatedFrequencyCounter,
 )
+from .keysight import Keysight53230A
 
 __all__ = [
     "ReplayDriver",
@@ -24,5 +26,7 @@ __all__ = [
     "SimulatedKeithley2400",
     "SimulatedKeysight34461A",
     "SimulatedElectronicLoad",
+    "SimulatedFrequencyCounter",
+    "Keysight53230A",
 ]
 
