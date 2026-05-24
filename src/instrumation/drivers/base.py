@@ -252,6 +252,44 @@ class ElectronicLoad(InstrumentDriver):
         """Clears any tripped protection status."""
         pass
 
+class FrequencyCounter(InstrumentDriver):
+    """Abstract Base for Frequency Counters / Timer/Counter instruments."""
+
+    @abstractmethod
+    def measure_frequency(self, range: str = "AUTO") -> MeasurementResult:
+        """Measures frequency. Range can be 'AUTO' or a specific range in Hz."""
+        pass
+
+    @abstractmethod
+    def measure_period(self, range: str = "AUTO") -> MeasurementResult:
+        """Measures period. Range can be 'AUTO' or a specific range in seconds."""
+        pass
+
+    @abstractmethod
+    def measure_time_interval(self, start_trigger: str, stop_trigger: str) -> MeasurementResult:
+        """Measures time interval between two events (e.g. 'CH1', 'CH2')."""
+        pass
+
+    @abstractmethod
+    def set_impedance(self, ohms: float):
+        """Sets input impedance (50 or 1e6)."""
+        pass
+
+    @abstractmethod
+    def set_trigger_level(self, volts: float):
+        """Sets the trigger level voltage."""
+        pass
+
+    @abstractmethod
+    def set_coupling(self, dc_ac: str):
+        """Sets input coupling — 'DC' or 'AC'."""
+        pass
+
+    @abstractmethod
+    def set_auto_range(self, state: bool):
+        """Enables or disables auto-ranging."""
+        pass
+
 class Multimeter(InstrumentDriver):
     @abstractmethod
     def configure_voltage_dc(self): pass
