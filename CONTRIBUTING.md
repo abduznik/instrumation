@@ -15,7 +15,7 @@ To set up your local development environment:
 2.  **Install in editable mode**:
     This allows you to test your changes immediately without re-installing.
     ```bash
-    pip install -e .
+    pip install -e ".[test]"
     ```
 
 ## Digital Twin Mode
