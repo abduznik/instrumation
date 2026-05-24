@@ -91,7 +91,9 @@ class SimulatedPowerSupply(SimulatedBaseDriver, PowerSupply):
         time.sleep(self.latency)
         return MeasurementResult(0.0, "A")
     def get_current_limit(self) -> float: return 0.0
-    def set_output(self, state: bool): self._output = state
+    def set_output(self, state: bool):
+        print(f"[SIM] PSU Output: {'ON' if state else 'OFF'}")
+        self._output = state
     def get_output(self) -> bool: return getattr(self, "_output", False)
     def set_ovp(self, voltage: float): pass
     def set_ocp(self, current: float): pass
