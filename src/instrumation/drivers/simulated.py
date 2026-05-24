@@ -75,6 +75,9 @@ class SimulatedMultimeter(SimulatedBaseDriver, Multimeter):
         return MeasurementResult(10e-6, "F")
     def measure_diode(self):
         return MeasurementResult(0.6, "V")
+    def measure_period(self):
+        time.sleep(self.latency)
+        return MeasurementResult(0.001, "s")
     def set_auto_range(self, state): pass
 
 @register_driver("PSU")
@@ -110,6 +113,8 @@ class SimulatedSpectrumAnalyzer(SimulatedBaseDriver, SpectrumAnalyzer):
         super().__init__(resource, latency)
         self._center_freq = 2.4e9
         self._span = 100e6
+        self._rbw = 1e3
+        self._vbw = 1e3
         self._sweep_data: list[tuple[float, float]] = []
 
     def _generate_sweep_data(self):
@@ -145,8 +150,12 @@ class SimulatedSpectrumAnalyzer(SimulatedBaseDriver, SpectrumAnalyzer):
         self._span = hz
         self._sweep_data = []
     def get_span(self) -> float: return self._span
-    def set_rbw(self, hz): pass
-    def set_vbw(self, hz): pass
+    def set_rbw(self, hz):
+        self._rbw = hz
+        print(f"[SIM] SA RBW: {hz}")
+    def set_vbw(self, hz):
+        self._vbw = hz
+        print(f"[SIM] SA VBW: {hz}")
     def get_trace_data(self):
         if not self._sweep_data:
             self._generate_sweep_data()
@@ -192,13 +201,17 @@ class SimulatedNetworkAnalyzer(SimulatedBaseDriver, NetworkAnalyzer):
 
 @register_driver("SCOPE")
 class SimulatedOscilloscope(SimulatedBaseDriver, Oscilloscope):
-    def run(self): pass
-    def stop(self): pass
-    def single(self): pass
+    def run(self):
+        print("[SIM] Scope: Run")
+    def stop(self):
+        print("[SIM] Scope: Stop")
+    def single(self):
+        print("[SIM] Scope: Single")
     def get_waveform(self, channel: int) -> MeasurementResult:
         data = [0.75 if math.sin(i * 0.1) >= 0 else -0.75 for i in range(1000)]
         return MeasurementResult(data, "V")
-    def auto_scale(self): pass
+    def auto_scale(self):
+        print("[SIM] Scope: Auto Scale")
     def set_trigger(self, source, level, slope): pass
     def get_screenshot(self): return b"SIM_SCREENSHOT"
 
@@ -215,7 +228,8 @@ class SimulatedSignalGenerator(SimulatedBaseDriver, FunctionGenerator):
     def set_amplitude(self, dbm):
         self._validate_power(dbm)
         print(f"[SIM] Setting SG Amplitude: {dbm}")
-    def set_output(self, state): pass
+    def set_output(self, state):
+        print(f"[SIM] SG Output: {'ON' if state else 'OFF'}")
     def set_mod_state(self, mod_type, state): pass
     def start_sweep(self, start, stop, points, dwell): pass
     def configure_list_sweep(self, freq_list, power_list): pass
