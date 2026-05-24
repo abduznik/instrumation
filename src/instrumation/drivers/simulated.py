@@ -1,7 +1,7 @@
 import random
 import time
 import math
-from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, FunctionGenerator, ElectronicLoad
+from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, FunctionGenerator, ElectronicLoad, FrequencyCounter
 from .registry import register_driver
 from ..results import MeasurementResult
 
@@ -520,6 +520,53 @@ class SimulatedElectronicLoad(SimulatedBaseDriver, ElectronicLoad):
     def shutdown_safety(self):
         self.set_input(False)
         self.sync_config()
+
+@register_driver("COUNTER")
+class SimulatedFrequencyCounter(SimulatedBaseDriver, FrequencyCounter):
+    """Simulated Frequency Counter / Timer/Counter."""
+
+    def __init__(self, resource: str):
+        super().__init__(resource)
+        self._impedance = 1e6
+        self._trigger_level = 0.0
+        self._coupling = "DC"
+        self._auto_range = True
+
+    def connect(self):
+        super().connect()
+        self.identity = {"manufacturer": "SIM", "model": "SIM_COUNTER", "serial": "999", "version": "1.0"}
+
+    def get_id(self): return "SIM_COUNTER"
+
+    def measure_frequency(self, range: str = "AUTO") -> MeasurementResult:
+        time.sleep(self.latency)
+        return MeasurementResult(10e6, "Hz")
+
+    def measure_period(self, range: str = "AUTO") -> MeasurementResult:
+        time.sleep(self.latency)
+        return MeasurementResult(100e-9, "s")
+
+    def measure_time_interval(self, start_trigger: str, stop_trigger: str) -> MeasurementResult:
+        time.sleep(self.latency)
+        print(f"[SIM] Time Interval: {start_trigger} -> {stop_trigger}")
+        return MeasurementResult(50e-9, "s")
+
+    def set_impedance(self, ohms: float):
+        self._impedance = ohms
+        print(f"[SIM] Counter Impedance: {ohms} Ohm")
+
+    def set_trigger_level(self, volts: float):
+        self._trigger_level = volts
+        print(f"[SIM] Counter Trigger Level: {volts} V")
+
+    def set_coupling(self, dc_ac: str):
+        self._coupling = dc_ac.upper()
+        print(f"[SIM] Counter Coupling: {self._coupling}")
+
+    def set_auto_range(self, state: bool):
+        self._auto_range = state
+        print(f"[SIM] Counter Auto Range: {'ON' if state else 'OFF'}")
+
 
 class SimulatedDriver(SimulatedMultimeter):
     pass
