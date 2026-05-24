@@ -6,6 +6,7 @@ A quick look at how we've been building and breaking things. These logs track th
 - [v0.3.1 — Digital Twin Completeness](2026-05-23/v031_digital_twin_completeness.md) - Peak search, AC voltage config, and missing exports added.
 
 ## 2026-05-21
+- [v0.3.2 — Community-Driven Digital Twin Completeness](2026-05-21/v032_community_drives.md) - 5 issues fixed, CD pipeline pushed, 9 new community issues opened.
 - [v0.3.0 — SMU & DMM Drivers + Bug Bash](2026-05-21/keithley_2400_smu.md) - Keithley 2400 SMU and Keysight 34461A DMM drivers landed.
 - [Keysight 34461A Truevolt DMM](2026-05-21/keysight_34461a_dmm.md) - Full 6.5-digit multimeter with temperature, capacitance, diode.
 - [Bug Bash & Adversarial Testing](2026-05-21/bug_bash_adversarial.md) - Found 4 bugs via stress-testing, built permanent regression suite.

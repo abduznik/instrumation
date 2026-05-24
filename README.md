@@ -4,6 +4,7 @@
 [![License](https://img.shields.io/pypi/l/instrumation)](https://pypi.org/project/instrumation/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/instrumation)](https://pypi.org/project/instrumation/)
 [![Stars](https://img.shields.io/github/stars/abduznik/instrumation?style=flat)](https://github.com/abduznik/instrumation/stargazers)
+[![Downloads](https://static.pepy.tech/personalized-badge/instrumation?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/instrumation)
 
 ![Example](assets/example.gif)
 
@@ -21,7 +22,56 @@ RF test bench automation is painful. Every instrument brand has its own quirks, 
 
 ---
 
---- 
+## Real Hardware Validation
+
+Instrumation has been validated against real lab hardware. See our experiment reports:
+
+- [🔬 AFG ↔ DSOX Loopback Validation](https://abduznik.github.io/instrumation/experiments/afg_dso_loopback/) — Plug-and-play AUTO discovery with Tektronix AFG3022C + Keysight DSOX2002A
+- [📡 PXA N9030A Spectrum Analyzer](https://abduznik.github.io/instrumation/experiments/pxa_validation/) — 32-bit binary trace transfers at high speed
+- [🎛️ MXG N5183B Signal Generator](https://abduznik.github.io/instrumation/experiments/mxg_validation/) — Pulse modulation and frequency sweeps
+- [📊 PNA N5232A Network Analyzer](https://abduznik.github.io/instrumation/experiments/vna_validation/) — S-parameter measurements and Smith charts
+
+---
+
+## PyVISA vs Instrumation: See the Difference
+
+Programming a signal generator the traditional way vs. with Instrumation:
+
+| Aspect | PyVISA (raw SCPI) | Instrumation |
+| :--- | :--- | :--- |
+| **Discovery** | Manual — find the resource string, manage `ResourceManager` | **Auto** — just pass `"AUTO"` and the HAL scans USB + LAN for you |
+| **Connection** | `rm.open_resource("TCPIP0::192.168.1.100::...")` — hardcoded address | `connect_instrument("AUTO", "SG")` — type-aware routing |
+| **Configuration** | `sg.write(":FREQ:CW 2.4e9")` — raw SCPI strings, no validation | `sg.set_frequency(2.4e9)` — typed method with bounds checking |
+| **Cleanup** | Manual `sg.close()` — easy to forget | Context manager — automatic `with` block cleanup |
+| **Offline Dev** | Requires real hardware connected | Digital Twin — set `INSTRUMATION_MODE=SIM` and develop anywhere |
+| **Portability** | Vendor-specific SCPI — rewrite for each brand | **One API** — works on Keysight, Rigol, Tektronix, Siglent, R&S, Anritsu |
+
+### Side-by-Side Code
+
+```python
+# ─── PyVISA: 8 lines of boilerplate ───
+import pyvisa
+rm = pyvisa.ResourceManager()
+# Manually find the right resource...
+sg = rm.open_resource("TCPIP0::192.168.1.100::inst0::INSTR")
+sg.write("*RST")
+sg.write(":FREQ:CW 2.4e9")
+sg.write(":POW:AMPL -10")
+sg.write(":OUTP ON")
+sg.close()
+
+# ─── Instrumation: 5 lines, zero config ───
+from instrumation import connect_instrument
+
+with connect_instrument("AUTO", "SG") as sg:
+    sg.set_frequency(2.4e9)
+    sg.set_amplitude(-10)
+    sg.set_output(True)
+```
+
+No resource manager. No SCPI strings. No hardcoded addresses. Just your test logic.
+
+---
 
 ## Live Data Streaming 
 

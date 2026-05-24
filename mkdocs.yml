@@ -72,6 +72,13 @@ nav:
   - API Reference: api_ref/index.md
   - Development Logs:
       - Overview: logs/index.md
+      - 2026-05-21:
+          - v0.3.2 — Community-Driven Digital Twin Completeness: logs/2026-05-21/v032_community_drives.md
+          - v0.3.0 — SMU & DMM Drivers: logs/2026-05-21/keithley_2400_smu.md
+          - Keysight 34461A Truevolt DMM: logs/2026-05-21/keysight_34461a_dmm.md
+          - Bug Bash & Adversarial Testing: logs/2026-05-21/bug_bash_adversarial.md
+      - 2026-05-23:
+          - v0.3.1 — Digital Twin Completeness: logs/2026-05-23/v031_digital_twin_completeness.md
       - 2026-05-03:
           - Release & RF Validation: logs/2026-05-03/rf_validation_v020.md
           - Multi-Mode Architecture: logs/2026-05-03/multi_mode_architecture.md
