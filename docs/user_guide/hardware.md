@@ -18,7 +18,7 @@ Starting with **v0.2.0**, the HAL includes an intelligent priority engine for `"
 
 1. **Standard VISA Scan**: Finds all USB-TMC and ASRL devices.
 2. **Smart LAN Probe (New)**: Performs a non-destructive ARP scan of the local subnet (`169.254.x.x` and `192.168.x.x`) to find instruments that don't broadcast their presence.
-3. **Type-Aware Routing**: Probes each candidate with `*IDN?` and only selects the one matching your requested category (e.g., `SCOPE`, `SG`).
+3. **Type-Aware Routing**: Probes each candidate with `*IDN?` and only selects the one matching your requested category (e.g., `SCOPE`, `SG`, `COUNTER`).
 
 ### Critical Device Setup
 For certain instruments, you must enable specific I/O modes on the front panel for they to be discoverable:

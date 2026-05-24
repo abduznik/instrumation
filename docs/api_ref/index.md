@@ -8,6 +8,7 @@ This page provides the automatically generated documentation for the core classe
 ::: instrumation.drivers.base.PowerSupply
 ::: instrumation.drivers.base.SpectrumAnalyzer
 ::: instrumation.drivers.base.SignalGenerator
+::: instrumation.drivers.base.FrequencyCounter
 
 ## Results
 ::: instrumation.results.MeasurementResult
