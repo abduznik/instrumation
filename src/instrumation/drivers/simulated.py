@@ -232,12 +232,18 @@ class SimulatedSignalGenerator(SimulatedBaseDriver, FunctionGenerator):
         print(f"[SIM] Setting SG Amplitude: {dbm}")
     def set_output(self, state):
         print(f"[SIM] SG Output: {'ON' if state else 'OFF'}")
-    def set_mod_state(self, mod_type, state): pass
-    def start_sweep(self, start, stop, points, dwell): pass
-    def configure_list_sweep(self, freq_list, power_list): pass
-    def set_reference_clock(self, source): pass
-    def set_voltage(self, vpp): pass
-    def set_offset(self, volts): pass
+    def set_mod_state(self, mod_type, state):
+        print(f"[SIM] SG Mod State: {mod_type} -> {'ON' if state else 'OFF'}")
+    def start_sweep(self, start, stop, points, dwell):
+        print(f"[SIM] SG Start Sweep: {start}-{stop} Hz, {points} pts, {dwell}s dwell")
+    def configure_list_sweep(self, freq_list, power_list):
+        print(f"[SIM] SG Configure List Sweep: {len(freq_list)} points")
+    def set_reference_clock(self, source):
+        print(f"[SIM] SG Reference Clock: {source}")
+    def set_voltage(self, vpp):
+        print(f"[SIM] SG Voltage: {vpp} Vpp")
+    def set_offset(self, volts):
+        print(f"[SIM] SG Offset: {volts} V")
     def set_waveform(self, shape):
         print(f"[SIM] Setting Waveform: {shape}")
 
