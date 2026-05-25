@@ -118,6 +118,8 @@ class SimulatedSpectrumAnalyzer(SimulatedBaseDriver, SpectrumAnalyzer):
         self._rbw = 1e3
         self._vbw = 1e3
         self._sweep_data: list[tuple[float, float]] = []
+        self._ref_level = -10
+        self._atn = 10
 
     def _generate_sweep_data(self):
         num_points = 1001
@@ -147,6 +149,13 @@ class SimulatedSpectrumAnalyzer(SimulatedBaseDriver, SpectrumAnalyzer):
         self._center_freq = hz
         self._sweep_data = []
         print(f"[SIM] Setting SA Center Freq: {hz}")
+    def set_ref_level(self, dbm):
+        self._ref_level = dbm
+        print(f"[SIM] SA Ref Level: {dbm} dBm")
+
+    def set_attenuation(self, db):
+        self._atn = db
+        print(f"[SIM] SA Attenuation: {db} dB")
     def get_center_freq(self) -> float: return self._center_freq
     def set_span(self, hz):
         self._span = hz
