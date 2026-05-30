@@ -1,3 +1,21 @@
+## Key Features in v0.4.0
+
+### Oscilloscope Channel-Aware Measurements
+- **Formalized channel-aware API** ([#87](https://github.com/abduznik/instrumation/issues/87)): Oscilloscope base class now declares channel-aware abstract methods `measure_frequency(channel=1)`, `measure_duty_cycle(channel=1)`, and `measure_v_peak_to_peak(channel=1)`. All scope drivers (KeysightInfiniiVision, SiglentSDS, TektronixTDS, SimulatedOscilloscope, ReplayDriver) updated accordingly.
+
+### Simulated Driver Completeness
+- **SimulatedPowerSupply print stubs** ([#82](https://github.com/abduznik/instrumation/issues/82)): `set_ovp`, `set_ocp`, and `clear_protection` now log their actions.
+- **SimulatedPowerSupply realistic power** ([#83](https://github.com/abduznik/instrumation/issues/83)): `measure_power()` now returns `voltage * 0.5` instead of hardcoded 0.0W.
+- **SimulatedOscilloscope set_trigger** ([#84](https://github.com/abduznik/instrumation/issues/84)): Trigger configuration now prints source, level, and slope parameters.
+- **SimulatedNetworkAnalyzer marker stubs** ([#85](https://github.com/abduznik/instrumation/issues/85)): `peak_search`, `get_marker_x`, and `get_marker_y` now log marker index.
+
+### Frequency Counter Driver
+- **Already implemented**: FrequencyCounter base class, Keysight53230A real driver, and SimulatedFrequencyCounter with full test coverage (11 tests) — tracked and closed as completed.
+
+### Maintenance
+- **Root directory cleanup**: Removed tracked artifacts (experiment images, session files, MkDocs build output, macOS .DS_Store) and added comprehensive .gitignore patterns.
+- **Gemini workflows removed**: All 6 gemini GitHub Actions workflow files deleted.
+
 ## Key Features in v0.3.2
 
 ### Simulated Driver Completeness

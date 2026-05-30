@@ -25,6 +25,25 @@ res = MeasurementResult(value=5.0, unit="V", channel=1)
 print(res) # Output: 5.0 V [CH 1] (OK) @ ...
 ```
 
+### Oscilloscope Channel-Aware Measurements (v0.4.0)
+
+All Oscilloscope drivers now expose channel-aware measurement methods:
+
+```python
+with get_instrument(scope_addr, "SCOPE") as scope:
+    # Measure on default channel (1)
+    freq = scope.measure_frequency()
+    duty = scope.measure_duty_cycle()
+    vpp = scope.measure_v_peak_to_peak()
+
+    # Measure on explicit channel
+    freq_ch2 = scope.measure_frequency(channel=2)
+    duty_ch2 = scope.measure_duty_cycle(channel=2)
+    vpp_ch2 = scope.measure_v_peak_to_peak(channel=2)
+```
+
+This works on KeysightInfiniiVision, SiglentSDS, TektronixTDS, SimulatedOscilloscope, and ReplayDriver — all scope-type drivers respect the `channel` parameter.
+
 ## NumPy Integration
 
 If `numpy` is installed, `MeasurementResult` can store high-performance arrays directly in the `value` field. When converted to JSON (via `to_json()`), these arrays are automatically serialized to lists.

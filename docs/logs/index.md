@@ -2,6 +2,9 @@
 
 A quick look at how we've been building and breaking things. These logs track the architectural moves and performance wins as we push the HAL to production grade.
 
+## 2026-05-30
+- [v0.4.0 — Simulated Driver Polish & Scope API Standardization](2026-05-30/v040_simulated_completeness.md) - Print stubs, realistic power, scope channel-aware API, repo cleanup.
+
 ## 2026-05-23
 - [v0.3.1 — Digital Twin Completeness](2026-05-23/v031_digital_twin_completeness.md) - Peak search, AC voltage config, and missing exports added.
 

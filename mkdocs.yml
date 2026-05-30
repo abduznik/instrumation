@@ -72,6 +72,8 @@ nav:
   - API Reference: api_ref/index.md
   - Development Logs:
       - Overview: logs/index.md
+      - 2026-05-30:
+          - v0.4.0 — Simulated Driver Polish & Scope API: logs/2026-05-30/v040_simulated_completeness.md
       - 2026-05-21:
           - v0.3.2 — Community-Driven Digital Twin Completeness: logs/2026-05-21/v032_community_drives.md
           - v0.3.0 — SMU & DMM Drivers: logs/2026-05-21/keithley_2400_smu.md
