@@ -205,9 +205,14 @@ class SimulatedNetworkAnalyzer(SimulatedBaseDriver, NetworkAnalyzer):
         data = [complex(random.uniform(45, 55), random.uniform(-2, 2)) for _ in range(201)]
         return MeasurementResult(data, "Z")
 
-    def peak_search(self, marker: int = 1): pass
-    def get_marker_x(self, marker: int = 1) -> float: return 2.4e9
-    def get_marker_y(self, marker: int = 1) -> float: return -10.0
+    def peak_search(self, marker: int = 1):
+        print(f"[SIM] VNA Peak Search: marker {marker}")
+    def get_marker_x(self, marker: int = 1) -> float:
+        print(f"[SIM] VNA Get Marker X: marker {marker}")
+        return 2.4e9
+    def get_marker_y(self, marker: int = 1) -> float:
+        print(f"[SIM] VNA Get Marker Y: marker {marker}")
+        return -10.0
     def save_state(self, filename: str): pass
     def load_state(self, filename: str): pass
     def wait_for_sweep(self):
