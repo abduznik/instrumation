@@ -260,5 +260,32 @@ class TestSimulation(unittest.TestCase):
         vna.disconnect()
 
 
+    def test_simulated_scope_channel_aware_measurements(self):
+        """Issue #87: Oscilloscope channel-aware measure_frequency/duty_cycle/vpp."""
+        from instrumation.drivers.simulated import SimulatedOscilloscope
+        scope = SimulatedOscilloscope("USB::SIM::SCOPE", latency=0)
+        scope.connect()
+
+        # Default channel (1)
+        f = scope.measure_frequency()
+        self.assertEqual(f.value, 1000.0)
+        self.assertEqual(f.unit, "Hz")
+
+        d = scope.measure_duty_cycle()
+        self.assertEqual(d.value, 50.0)
+        self.assertEqual(d.unit, "%")
+
+        v = scope.measure_v_peak_to_peak()
+        self.assertEqual(v.value, 2.0)
+        self.assertEqual(v.unit, "V")
+
+        # Explicit channel
+        f2 = scope.measure_frequency(channel=2)
+        self.assertEqual(f2.value, 1000.0)
+        self.assertEqual(f2.unit, "Hz")
+
+        scope.disconnect()
+
+
 if __name__ == "__main__":
     unittest.main()

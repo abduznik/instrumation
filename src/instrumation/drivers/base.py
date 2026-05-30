@@ -469,6 +469,12 @@ class Oscilloscope(InstrumentDriver):
     def set_trigger(self, source: str, level: float, slope: str): pass
     @abstractmethod
     def get_screenshot(self) -> bytes: pass
+    @abstractmethod
+    def measure_frequency(self, channel: int = 1) -> MeasurementResult: pass
+    @abstractmethod
+    def measure_duty_cycle(self, channel: int = 1) -> MeasurementResult: pass
+    @abstractmethod
+    def measure_v_peak_to_peak(self, channel: int = 1) -> MeasurementResult: pass
 
 class SignalGenerator(InstrumentDriver):
     @abstractmethod

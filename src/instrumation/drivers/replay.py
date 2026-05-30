@@ -116,9 +116,9 @@ class ReplayDriver(SignalGenerator, SpectrumAnalyzer, NetworkAnalyzer, Oscillosc
     def measure_voltage(self, ac: bool = False): return MeasurementResult(float(self.query("MEAS:VOLT?")), "V")
     def measure_resistance(self, four_wire: bool = False): return MeasurementResult(float(self.query("MEAS:RES?")), "Ohm")
     def measure_current(self, ac: bool = False): return MeasurementResult(float(self.query("MEAS:CURR?")), "A")
-    def measure_frequency(self): return MeasurementResult(float(self.query("MEAS:FREQ?")), "Hz")
-    def measure_duty_cycle(self): return MeasurementResult(0.0, "%")
-    def measure_v_peak_to_peak(self): return MeasurementResult(0.0, "V")
+    def measure_frequency(self, channel: int = 1): return MeasurementResult(float(self.query("MEAS:FREQ?")), "Hz")
+    def measure_duty_cycle(self, channel: int = 1): return MeasurementResult(0.0, "%")
+    def measure_v_peak_to_peak(self, channel: int = 1): return MeasurementResult(0.0, "V")
 
     # --- PowerSupply / FunctionGenerator Overlap ---
     def set_voltage(self, voltage: float): self.write(f":VOLT {voltage}")

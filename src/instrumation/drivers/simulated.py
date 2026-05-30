@@ -234,6 +234,15 @@ class SimulatedOscilloscope(SimulatedBaseDriver, Oscilloscope):
     def set_trigger(self, source, level, slope):
         print(f"[SIM] Scope Trigger: source={source}, level={level}, slope={slope}")
     def get_screenshot(self): return b"SIM_SCREENSHOT"
+    def measure_frequency(self, channel: int = 1) -> MeasurementResult:
+        print(f"[SIM] Scope Measure Frequency: channel {channel}")
+        return MeasurementResult(1000.0, "Hz")
+    def measure_duty_cycle(self, channel: int = 1) -> MeasurementResult:
+        print(f"[SIM] Scope Measure Duty Cycle: channel {channel}")
+        return MeasurementResult(50.0, "%")
+    def measure_v_peak_to_peak(self, channel: int = 1) -> MeasurementResult:
+        print(f"[SIM] Scope Measure Vpp: channel {channel}")
+        return MeasurementResult(2.0, "V")
 
 @register_driver("SG")
 class SimulatedSignalGenerator(SimulatedBaseDriver, FunctionGenerator):
