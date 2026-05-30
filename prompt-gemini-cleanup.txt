@@ -1,0 +1,19 @@
+Remove all Gemini-related files from the repo at F:\Coding\instrumation. Do these tasks in order and commit after each.
+
+### Task 1: Remove .gemini directory
+
+Delete the .gemini/ directory (contains GEMINI.md prompt file).
+
+Commit message: "chore: remove .gemini directory"
+
+### Task 2: Remove all gemini workflow files
+
+Delete these files:
+- .github/workflows/gemini-dispatch.yml
+- .github/workflows/gemini-invoke.yml
+- .github/workflows/gemini-plan-execute.yml
+- .github/workflows/gemini-review.yml
+- .github/workflows/gemini-scheduled-triage.yml
+- .github/workflows/gemini-triage.yml
+
+Commit message: "chore: remove all gemini GitHub Actions workflows"
