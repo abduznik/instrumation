@@ -226,7 +226,8 @@ class SimulatedOscilloscope(SimulatedBaseDriver, Oscilloscope):
         return MeasurementResult(data, "V")
     def auto_scale(self):
         print("[SIM] Scope: Auto Scale")
-    def set_trigger(self, source, level, slope): pass
+    def set_trigger(self, source, level, slope):
+        print(f"[SIM] Scope Trigger: source={source}, level={level}, slope={slope}")
     def get_screenshot(self): return b"SIM_SCREENSHOT"
 
 @register_driver("SG")
