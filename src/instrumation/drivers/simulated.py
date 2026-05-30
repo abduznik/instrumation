@@ -106,7 +106,7 @@ class SimulatedPowerSupply(SimulatedBaseDriver, PowerSupply):
     def clear_protection(self):
         print("[SIM] PSU Protection Cleared")
     def measure_power(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "W")
+        return MeasurementResult(self._voltage * 0.5, "W")
     def set_foldback_mode(self, mode: str): pass
     def set_foldback_delay(self, seconds: float): pass
     def set_autostart(self, state: bool): pass
