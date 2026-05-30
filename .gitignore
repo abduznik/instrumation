@@ -4,8 +4,11 @@ __pycache__/
 .venv/
 build/
 dist/
-*.egg-info/venv/
+*.egg-info/
+venv/
 test_report.csv
+_deps/
+prompt-opencode.txt
 
 .gemini/
 gha-creds-*.json

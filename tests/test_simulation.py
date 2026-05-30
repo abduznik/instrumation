@@ -184,5 +184,81 @@ class TestSimulation(unittest.TestCase):
         self.assertEqual(d.unit, "V")
 
 
+    def test_simulated_powersupply_measure_power_realistic(self):
+        """Issue #83: SimulatedPowerSupply.measure_power returns voltage * 0.5."""
+        from instrumation.drivers.simulated import SimulatedPowerSupply
+        psu = SimulatedPowerSupply("USB::SIM::PSU", latency=0)
+        psu.connect()
+
+        # Default voltage is 0 -> power should be 0
+        p = psu.measure_power()
+        self.assertEqual(p.value, 0.0)
+        self.assertEqual(p.unit, "W")
+
+        # Set voltage to 5V -> power should be 5 * 0.5 = 2.5W
+        psu.set_voltage(5.0)
+        p = psu.measure_power()
+        self.assertEqual(p.value, 2.5)
+        self.assertEqual(p.unit, "W")
+
+        # Set voltage to 12V -> power should be 12 * 0.5 = 6.0W
+        psu.set_voltage(12.0)
+        p = psu.measure_power()
+        self.assertEqual(p.value, 6.0)
+        self.assertEqual(p.unit, "W")
+
+        psu.disconnect()
+
+    def test_simulated_powersupply_protection_stubs(self):
+        """Issue #82: Verify set_ovp/set_ocp/clear_protection don't crash on SimulatedPowerSupply."""
+        from instrumation.drivers.simulated import SimulatedPowerSupply
+        psu = SimulatedPowerSupply("USB::SIM::PSU", latency=0)
+        psu.connect()
+
+        # These should not raise any exceptions
+        psu.set_ovp(30.0)
+        psu.set_ocp(5.0)
+        psu.clear_protection()
+
+        psu.disconnect()
+
+    def test_simulated_scope_set_trigger_stub(self):
+        """Issue #84: Verify set_trigger doesn't crash on SimulatedOscilloscope."""
+        from instrumation.drivers.simulated import SimulatedOscilloscope
+        scope = SimulatedOscilloscope("USB::SIM::SCOPE", latency=0)
+        scope.connect()
+
+        # Should not raise
+        scope.set_trigger("CH1", 0.5, "RISING")
+        scope.set_trigger("CH2", -1.0, "FALLING")
+
+        scope.disconnect()
+
+    def test_simulated_vna_marker_stubs(self):
+        """Issue #85: Verify peak_search/get_marker_x/get_marker_y don't crash on SimulatedNetworkAnalyzer."""
+        from instrumation.drivers.simulated import SimulatedNetworkAnalyzer
+        vna = SimulatedNetworkAnalyzer("USB::SIM::VNA", latency=0)
+        vna.connect()
+
+        # Should not raise
+        vna.peak_search()
+        vna.peak_search(marker=2)
+
+        x = vna.get_marker_x()
+        self.assertEqual(x, 2.4e9)
+
+        y = vna.get_marker_y()
+        self.assertEqual(y, -10.0)
+
+        # Test with explicit marker number
+        x2 = vna.get_marker_x(marker=2)
+        self.assertEqual(x2, 2.4e9)
+
+        y2 = vna.get_marker_y(marker=3)
+        self.assertEqual(y2, -10.0)
+
+        vna.disconnect()
+
+
 if __name__ == "__main__":
     unittest.main()
