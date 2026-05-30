@@ -95,13 +95,16 @@ class SimulatedPowerSupply(SimulatedBaseDriver, PowerSupply):
         print(f"[SIM] PSU Output: {'ON' if state else 'OFF'}")
         self._output = state
     def get_output(self) -> bool: return getattr(self, "_output", False)
-    def set_ovp(self, voltage: float): pass
-    def set_ocp(self, current: float): pass
+    def set_ovp(self, voltage: float):
+        print(f"[SIM] PSU OVP: {voltage} V")
+    def set_ocp(self, current: float):
+        print(f"[SIM] PSU OCP: {current} A")
     def measure_voltage_actual(self) -> MeasurementResult:
         return MeasurementResult(0.0, "V")
     def measure_current(self) -> MeasurementResult:
         return MeasurementResult(0.0, "A")
-    def clear_protection(self): pass
+    def clear_protection(self):
+        print("[SIM] PSU Protection Cleared")
     def measure_power(self) -> MeasurementResult:
         return MeasurementResult(0.0, "W")
     def set_foldback_mode(self, mode: str): pass
