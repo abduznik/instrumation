@@ -8,8 +8,30 @@ dist/
 venv/
 test_report.csv
 _deps/
-
 .gemini/
 gha-creds-*.json
 programming/
+
+# Build artifacts
+site/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Runtime caches
+*.pyc
+__pycache__/
+.visa_cache.json
+
+# Experiment artifacts
+characterization_plot.png
+lab_report.png
+mxg_session.json
+pxa_live_spectrum.png
+pxa_session.json
+scope_capture.png
+
+# Other docs/artifacts
+usage_guide.md
 
