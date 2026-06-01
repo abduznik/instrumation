@@ -601,7 +601,3 @@ class SimulatedFrequencyCounter(SimulatedBaseDriver, FrequencyCounter):
     def set_auto_range(self, state: bool):
         self._auto_range = state
         print(f"[SIM] Counter Auto Range: {'ON' if state else 'OFF'}")
-
-
-class SimulatedDriver(SimulatedMultimeter):
-    pass
