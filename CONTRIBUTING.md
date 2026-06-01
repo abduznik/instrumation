@@ -12,11 +12,23 @@ To set up your local development environment:
     cd instrumation
     ```
 
-2.  **Install in editable mode**:
+2.  **Create a virtual environment** (recommended):
+    ```bash
+    python -m venv .venv
+    source .venv/bin/activate  # Linux / Mac
+    # .venv\Scripts\activate   # Windows (PowerShell)
+    ```
+
+3.  **Install in editable mode with test and docs extras**:
     This allows you to test your changes immediately without re-installing.
     ```bash
-    pip install -e ".[test]"
+    pip install -e ".[test,docs]"
     ```
+
+    Available extras:
+    - `test` — pytest and pytest-asyncio for running the test suite
+    - `docs` — mkdocs-material and mkdocstrings for building documentation
+    - No extra needed for core dependencies (pyvisa, pyserial, toml, numpy, websockets)
 
 ## Digital Twin Mode
 
@@ -47,11 +59,108 @@ We use `pytest` for testing. Ensure you are in Simulation Mode before running te
 
 ```bash
 # Ensure SIM mode is on
-export INSTRUMATION_MODE=SIM 
+export INSTRUMATION_MODE=SIM
 
-# Run the test suite
+# Run the full test suite
 pytest
+
+# Run a specific test file
+pytest tests/test_psu.py
+
+# Run tests matching a keyword
+pytest -k "simulation"
+
+# Run with verbose output
+pytest -v
 ```
+
+## Code Style
+
+This project uses **flake8** for linting with the following configuration:
+
+- **Line length limit**: 127 characters
+- **Max complexity**: 10 (cyclomatic complexity)
+- The CI checks for Python syntax errors and undefined names as hard failures (`E9`, `F63`, `F7`, `F82`)
+
+To check your code locally before pushing:
+
+```bash
+# Check for syntax errors and undefined names (will fail CI if violated)
+flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
+# Full lint check (warnings, not blocking)
+flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+```
+
+## Pre-commit Checklist
+
+Before opening a pull request, verify the following:
+
+1. **Lint passes** — Run the flake8 checks above and fix any errors
+2. **Tests pass** — Run `pytest` in SIM mode and ensure all tests pass
+3. **No unrelated changes** — Keep your diff focused on the issue you're addressing
+4. **Commit messages** — Use clear, descriptive commit messages (see PR Workflow below)
+
+## PR Workflow
+
+### Branch Naming
+
+Use descriptive branch names with a type prefix:
+
+- `feat/short-description` — new features or instrument drivers
+- `fix/short-description` — bug fixes
+- `docs/short-description` — documentation changes
+- `refactor/short-description` — code restructuring without behavior changes
+- `test/short-description` — adding or updating tests
+
+### Commit Style
+
+We follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+type(scope): short description
+
+Optional longer explanation of what changed and why.
+```
+
+Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
+
+Examples:
+```
+feat(drivers): add Anritsu MS2720T spectrum analyzer driver
+fix(psu): correct voltage readback rounding error
+docs(readme): update installation instructions
+```
+
+### Linking Issues
+
+Reference the issue your PR addresses in the commit message or PR description:
+
+```
+Closes #42
+```
+
+This automatically closes the issue when the PR is merged.
+
+### Opening the PR
+
+1. Push your branch to your fork
+2. Open a PR against the `main` branch
+3. Fill in the PR description with:
+   - What changed and why
+   - How to test the change
+   - Reference to the related issue
+
+## Issue Labels
+
+| Label | Meaning |
+|-------|---------|
+| `good first issue` | Suitable for newcomers; well-scoped and documented |
+| `help wanted` | Maintainers would appreciate community help |
+| `bug` | Something isn't working as expected |
+| `enhancement` | New feature or improvement |
+| `documentation` | Documentation improvements |
+| `drivers` | Related to instrument driver implementations |
 
 ## Adding a New Instrument Driver
 
@@ -82,5 +191,8 @@ Want to add support for a new device (e.g., Anritsu Spectrum Analyzer)? Follow t
         return AnritsuMS2720T(resource_address)
     ```
 
-3.  **Submit a Pull Request**:
+3.  **Add Tests**:
+    Create a test file in `tests/` (e.g., `test_anritsu.py`) that verifies your driver works in simulation mode.
+
+4.  **Submit a Pull Request**:
     Push your changes and open a PR. Our CI will automatically run the simulation tests.
