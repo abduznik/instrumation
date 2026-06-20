@@ -1,3 +1,17 @@
+## Key Features in v0.4.1
+
+### Unit Tests: Rohde & Schwarz Drivers
+- **`tests/test_rs.py`** ([#94](https://github.com/abduznik/instrumation/issues/94)): 21 new unit tests covering `RohdeSchwarzSG` (preset, frequency, amplitude, output, modulation states AM/FM/PULSE, start sweep, list sweep) and `RohdeSchwarzSA` (preset, center freq, span, RBW, VBW, peak search, marker amplitude, trace data binary format).
+
+### Unit Tests: Prologix GPIB-USB Bridge
+- **`tests/test_prologix.py`** ([#93](https://github.com/abduznik/instrumation/issues/93)): 11 new unit tests covering `PrologixDriver` bridge initialization sequence (++mode, ++auto, ++eoi, ++addr), GPIB address switching, query read-eoi protocol, and the `write()` newline-append rules for SCPI vs Prologix `++` commands.
+
+### Multi-Python CI Matrix
+- **`.github/workflows/main.yml`** ([#97](https://github.com/abduznik/instrumation/issues/97)): CI now tests against Python `3.9`, `3.10`, `3.11`, and `3.12` in parallel via `strategy.matrix`. Previously only `3.10` was tested.
+
+### Test Count
+188 tests passing (up from 156 in v0.4.0).
+
 ## Key Features in v0.4.0
 
 ### Oscilloscope Channel-Aware Measurements

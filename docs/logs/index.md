@@ -2,6 +2,9 @@
 
 A quick look at how we've been building and breaking things. These logs track the architectural moves and performance wins as we push the HAL to production grade.
 
+## 2026-06-20
+- [v0.4.1 — Test Coverage Expansion & Multi-Python CI](2026-06-20/v041_testing_and_ci.md) - R&S and Prologix unit tests, 4-version CI matrix.
+
 ## 2026-05-30
 - [v0.4.0 — Simulated Driver Polish & Scope API Standardization](2026-05-30/v040_simulated_completeness.md) - Print stubs, realistic power, scope channel-aware API, repo cleanup.
 
