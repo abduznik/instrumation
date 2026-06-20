@@ -222,6 +222,32 @@ class TestSimulation(unittest.TestCase):
 
         psu.disconnect()
 
+    def test_simulated_powersupply_foldback_and_autostart_stubs(self):
+        """Issue #101: verify foldback/autostart state is tracked in SimulatedPowerSupply."""
+        from instrumation.drivers.simulated import SimulatedPowerSupply
+        psu = SimulatedPowerSupply("USB::SIM::PSU", latency=0)
+        psu.connect()
+
+        self.assertEqual(psu._foldback_mode, "OFF")
+        self.assertEqual(psu._foldback_delay, 0.0)
+        self.assertFalse(psu._autostart)
+
+        psu.set_foldback_mode("CC")
+        psu.set_foldback_delay(2.5)
+        psu.set_autostart(True)
+
+        self.assertEqual(psu._foldback_mode, "CC")
+        self.assertEqual(psu._foldback_delay, 2.5)
+        self.assertTrue(psu._autostart)
+
+        psu.set_foldback_mode("CV")
+        self.assertEqual(psu._foldback_mode, "CV")
+
+        psu.set_autostart(False)
+        self.assertFalse(psu._autostart)
+
+        psu.disconnect()
+
     def test_simulated_scope_set_trigger_stub(self):
         """Issue #84: Verify set_trigger doesn't crash on SimulatedOscilloscope."""
         from instrumation.drivers.simulated import SimulatedOscilloscope

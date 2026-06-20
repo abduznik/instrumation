@@ -82,6 +82,12 @@ class SimulatedMultimeter(SimulatedBaseDriver, Multimeter):
 
 @register_driver("PSU")
 class SimulatedPowerSupply(SimulatedBaseDriver, PowerSupply):
+    def __init__(self, resource: str, latency: float = 0.01):
+        super().__init__(resource, latency)
+        self._foldback_mode = "OFF"
+        self._foldback_delay = 0.0
+        self._autostart = False
+
     def set_voltage(self, voltage: float): 
         print(f"[SIM] Setting PSU Voltage: {voltage}")
         self._voltage = voltage
@@ -107,9 +113,15 @@ class SimulatedPowerSupply(SimulatedBaseDriver, PowerSupply):
         print("[SIM] PSU Protection Cleared")
     def measure_power(self) -> MeasurementResult:
         return MeasurementResult(getattr(self, "_voltage", 0.0) * 0.5, "W")
-    def set_foldback_mode(self, mode: str): pass
-    def set_foldback_delay(self, seconds: float): pass
-    def set_autostart(self, state: bool): pass
+    def set_foldback_mode(self, mode: str):
+        self._foldback_mode = mode
+        print(f"[SIM] PSU Foldback Mode: {mode}")
+    def set_foldback_delay(self, seconds: float):
+        self._foldback_delay = seconds
+        print(f"[SIM] PSU Foldback Delay: {seconds} s")
+    def set_autostart(self, state: bool):
+        self._autostart = state
+        print(f"[SIM] PSU Autostart: {'ON' if state else 'OFF'}")
     def get_mode(self) -> str: return "CV"
 
 @register_driver("SA")
