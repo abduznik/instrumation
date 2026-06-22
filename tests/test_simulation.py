@@ -312,6 +312,46 @@ class TestSimulation(unittest.TestCase):
 
         scope.disconnect()
 
+    def test_simulated_vna_configuration_stubs_logging(self):
+        """Verify configuration methods on SimulatedNetworkAnalyzer log to stdout."""
+        import io
+        import sys
+        from instrumation.drivers.simulated import SimulatedNetworkAnalyzer
+
+        vna = SimulatedNetworkAnalyzer("USB::SIM::VNA", latency=0)
+        vna.connect()
+
+        # Capture stdout
+        captured_output = io.StringIO()
+        sys.stdout = captured_output
+        try:
+            vna.set_start_frequency(1e6)
+            vna.set_stop_frequency(2e6)
+            vna.set_center_frequency(1.5e6)
+            vna.set_span(1e6)
+            vna.set_points(201)
+            vna.set_if_bandwidth(1000.0)
+            vna.set_power_level(-10.0)
+            vna.set_sweep_type("linear")
+            vna.set_averaging(True, count=5)
+            vna.set_continuous(False)
+        finally:
+            sys.stdout = sys.__stdout__
+
+        output = captured_output.getvalue()
+        self.assertIn("[SIM] VNA Start Frequency: 1000000.0 Hz", output)
+        self.assertIn("[SIM] VNA Stop Frequency: 2000000.0 Hz", output)
+        self.assertIn("[SIM] VNA Center Frequency: 1500000.0 Hz", output)
+        self.assertIn("[SIM] VNA Span: 1000000.0 Hz", output)
+        self.assertIn("[SIM] VNA Points: 201", output)
+        self.assertIn("[SIM] VNA IF Bandwidth: 1000.0 Hz", output)
+        self.assertIn("[SIM] VNA Power Level: -10.0 dBm", output)
+        self.assertIn("[SIM] VNA Sweep Type: linear", output)
+        self.assertIn("[SIM] VNA Averaging: ON, count=5", output)
+        self.assertIn("[SIM] VNA Continuous: OFF", output)
+
+        vna.disconnect()
+
 
 if __name__ == "__main__":
     unittest.main()

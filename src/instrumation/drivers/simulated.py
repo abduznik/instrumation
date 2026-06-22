@@ -191,16 +191,26 @@ class SimulatedSpectrumAnalyzer(SimulatedBaseDriver, SpectrumAnalyzer):
 @register_driver("NA")
 @register_driver("VNA")
 class SimulatedNetworkAnalyzer(SimulatedBaseDriver, NetworkAnalyzer):
-    def set_start_frequency(self, freq_hz): pass
-    def set_stop_frequency(self, freq_hz): pass
-    def set_center_frequency(self, freq_hz): pass
-    def set_span(self, span_hz): pass
-    def set_points(self, num_points): pass
-    def set_if_bandwidth(self, hz: float): pass
-    def set_power_level(self, dbm: float): pass
-    def set_sweep_type(self, sweep_type: str): pass
-    def set_averaging(self, state: bool, count: int = 10): pass
-    def set_continuous(self, state: bool): pass
+    def set_start_frequency(self, freq_hz):
+        print(f"[SIM] VNA Start Frequency: {freq_hz} Hz")
+    def set_stop_frequency(self, freq_hz):
+        print(f"[SIM] VNA Stop Frequency: {freq_hz} Hz")
+    def set_center_frequency(self, freq_hz):
+        print(f"[SIM] VNA Center Frequency: {freq_hz} Hz")
+    def set_span(self, span_hz):
+        print(f"[SIM] VNA Span: {span_hz} Hz")
+    def set_points(self, num_points):
+        print(f"[SIM] VNA Points: {num_points}")
+    def set_if_bandwidth(self, hz: float):
+        print(f"[SIM] VNA IF Bandwidth: {hz} Hz")
+    def set_power_level(self, dbm: float):
+        print(f"[SIM] VNA Power Level: {dbm} dBm")
+    def set_sweep_type(self, sweep_type: str):
+        print(f"[SIM] VNA Sweep Type: {sweep_type}")
+    def set_averaging(self, state: bool, count: int = 10):
+        print(f"[SIM] VNA Averaging: {'ON' if state else 'OFF'}, count={count}")
+    def set_continuous(self, state: bool):
+        print(f"[SIM] VNA Continuous: {'ON' if state else 'OFF'}")
     def set_parameter(self, parameter: str):
         print(f"[SIM] VNA Setting Parameter: {parameter}")
     def get_trace_data(self, measurement_name: str = "CH1_S11_1"): 
