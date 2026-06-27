@@ -1,6 +1,7 @@
 import random
 import time
 import math
+from typing import Optional
 from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, FunctionGenerator, ElectronicLoad, FrequencyCounter
 from .registry import register_driver
 from ..results import MeasurementResult
@@ -64,13 +65,16 @@ class SimulatedMultimeter(SimulatedBaseDriver, Multimeter):
         print("[SIM] DMM Configured: AC Voltage")
     def measure_voltage(self, ac=False): 
         time.sleep(self.latency)
-        return MeasurementResult(5.0, "V")
+        noise = random.gauss(0, 5.0 * 0.001)  # 0.1% of 5V
+        return MeasurementResult(5.0 + noise, "V")
     def measure_resistance(self, four_wire: bool = False): 
         time.sleep(self.latency)
-        return MeasurementResult(1000.0, "Ohm")
+        noise = random.gauss(0, 1000.0 * 0.01)  # 1% of 1kOhm
+        return MeasurementResult(1000.0 + noise, "Ohm")
     def measure_current(self, ac: bool = False):
         time.sleep(self.latency)
-        return MeasurementResult(0.01, "A")
+        noise = random.gauss(0, 0.01 * 0.005)  # 0.5% of 10mA
+        return MeasurementResult(0.01 + noise, "A")
     def measure_temperature(self, probe_type="TC", probe="K"):
         return MeasurementResult(23.5, "C")
     def measure_capacitance(self):
@@ -108,9 +112,12 @@ class SimulatedPowerSupply(SimulatedBaseDriver, PowerSupply):
     def set_ocp(self, current: float):
         print(f"[SIM] PSU OCP: {current} A")
     def measure_voltage_actual(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "V")
+        base = getattr(self, "_voltage", 0.0)
+        noise = random.gauss(0, base * 0.001) if base != 0.0 else 0.0
+        return MeasurementResult(base + noise, "V")
     def measure_current(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "A")
+        noise = random.gauss(0, 0.001)  # 1mA noise floor
+        return MeasurementResult(0.0 + noise, "A")
     def clear_protection(self):
         print("[SIM] PSU Protection Cleared")
     def measure_power(self) -> MeasurementResult:
@@ -160,7 +167,8 @@ class SimulatedSpectrumAnalyzer(SimulatedBaseDriver, SpectrumAnalyzer):
 
     def get_marker_amplitude(self): 
         time.sleep(self.latency)
-        return MeasurementResult(-20.0, "dBm")
+        noise = random.gauss(0, 0.1)  # 0.1 dBm noise
+        return MeasurementResult(-20.0 + noise, "dBm")
     def set_center_freq(self, hz):
         self._validate_frequency(hz)
         self._center_freq = hz
@@ -216,7 +224,9 @@ class SimulatedNetworkAnalyzer(SimulatedBaseDriver, NetworkAnalyzer):
     def set_parameter(self, parameter: str):
         print(f"[SIM] VNA Setting Parameter: {parameter}")
     def get_trace_data(self, measurement_name: str = "CH1_S11_1"): 
-        return MeasurementResult([random.uniform(-40, -10) for _ in range(201)], "dB")
+        # Base random trace + Gaussian noise for realism
+        data = [random.uniform(-40, -10) + random.gauss(0, 0.5) for _ in range(201)]
+        return MeasurementResult(data, "dB")
     def get_complex_trace(self, measurement_name: str = "CH1_S11_1"): 
         # Generate some random complex numbers with magnitude between 0.01 and 0.3
         data = [complex(random.uniform(-0.3, 0.3), random.uniform(-0.3, 0.3)) for _ in range(201)]
@@ -357,11 +367,15 @@ class SimulatedKeithley2400(SimulatedBaseDriver, Multimeter, PowerSupply):
         print("[SIM] K2400: AC voltage not supported, configuring DC voltage instead")
         self._source_mode = "VOLT"
     def measure_voltage(self, ac=False):
-        return MeasurementResult(self._voltage if self._voltage != 0.0 else 5.0, "V")
+        base = self._voltage if self._voltage != 0.0 else 5.0
+        noise = random.gauss(0, base * 0.001)  # 0.1% noise
+        return MeasurementResult(base + noise, "V")
     def measure_resistance(self, four_wire=False):
-        return MeasurementResult(1000.0, "Ohm")
+        noise = random.gauss(0, 1000.0 * 0.005)  # 0.5% noise
+        return MeasurementResult(1000.0 + noise, "Ohm")
     def measure_current(self, ac=False):
-        return MeasurementResult(0.01, "A")
+        noise = random.gauss(0, 0.01 * 0.005)  # 0.5% noise
+        return MeasurementResult(0.01 + noise, "A")
     def set_auto_range(self, state): pass
 
 
@@ -385,12 +399,15 @@ class SimulatedKeysight34461A(SimulatedBaseDriver, Multimeter):
         print("[SIM] 34461A Configured: AC Voltage")
     def measure_voltage(self, ac=False):
         val = 4.95 if not ac else 4.90
-        return MeasurementResult(val, "V")
+        noise = random.gauss(0, val * 0.0005)  # 0.05% noise for precision DMM
+        return MeasurementResult(val + noise, "V")
     def measure_resistance(self, four_wire=False):
-        return MeasurementResult(1000.0, "Ohm")
+        noise = random.gauss(0, 1000.0 * 0.002)  # 0.2% noise
+        return MeasurementResult(1000.0 + noise, "Ohm")
     def measure_current(self, ac=False):
         val = 0.05 if not ac else 0.04
-        return MeasurementResult(val, "A")
+        noise = random.gauss(0, val * 0.001)  # 0.1% noise
+        return MeasurementResult(val + noise, "A")
     def set_auto_range(self, state):
         self._auto_range = state
     def measure_frequency(self):
