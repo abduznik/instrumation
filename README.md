@@ -242,6 +242,43 @@ pytest
 
 ---
 
+## Related Projects
+
+### [instrumation-report](https://github.com/abduznik/instrumation-report)
+
+A lightweight Python library for generating structured UUT (Unit Under Test) test reports from measurement data. Works standalone or alongside Instrumation.
+
+**Features:**
+- HTML, Excel, and PDF report output
+- Automatic pass/fail evaluation with configurable conditions
+- Structured sections and test tables
+- Easy integration with Instrumation measurements
+
+```bash
+pip install instrumation-report
+```
+
+```python
+from instrumation_report import Report, Section, TestTable, Measurement
+
+report = Report(header=ReportHeader(
+    title="RF Subsystem Validation",
+    engineer="Yan",
+    uut_serial="SN-2024-001",
+))
+
+section = Section(number="1", title="Voltage Tests")
+table = TestTable(title="Power Supply Checks", sub_number="1.1")
+table.add(Measurement("3.3V Rail", 3.31, "V", condition=(3.2, 3.4)))
+section.add_table(table)
+report.add_section(section)
+
+report.generate_html("report.html")
+report.generate_excel("report.xlsx")
+```
+
+---
+
 ## Tech Stack
 
 - **Language:** Python 3.7+

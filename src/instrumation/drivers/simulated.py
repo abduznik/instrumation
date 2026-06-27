@@ -58,8 +58,10 @@ class SimulatedBaseDriver(InstrumentDriver):
 
 @register_driver("DMM")
 class SimulatedMultimeter(SimulatedBaseDriver, Multimeter):
-    def configure_voltage_dc(self): pass
-    def configure_voltage_ac(self): pass
+    def configure_voltage_dc(self):
+        print("[SIM] DMM Configured: DC Voltage")
+    def configure_voltage_ac(self):
+        print("[SIM] DMM Configured: AC Voltage")
     def measure_voltage(self, ac=False): 
         time.sleep(self.latency)
         return MeasurementResult(5.0, "V")
@@ -367,8 +369,10 @@ class SimulatedKeysight34461A(SimulatedBaseDriver, Multimeter):
 
     def get_id(self): return "KEYSIGHT,34461A,SIM-34461A,1.0"
 
-    def configure_voltage_dc(self): pass
-    def configure_voltage_ac(self): pass
+    def configure_voltage_dc(self):
+        print("[SIM] 34461A Configured: DC Voltage")
+    def configure_voltage_ac(self):
+        print("[SIM] 34461A Configured: AC Voltage")
     def measure_voltage(self, ac=False):
         val = 4.95 if not ac else 4.90
         return MeasurementResult(val, "V")
