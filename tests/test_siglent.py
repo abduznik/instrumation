@@ -73,6 +73,41 @@ class TestSiglentSDS(unittest.TestCase):
             mock_rm.open_resource.return_value = mock_res
             driver = connect_instrument("USB::SIGLENT::SDS::INSTR")
             self.assertIsInstance(driver, SiglentSDS)
+            
+class TestSiglentSDSInterface(unittest.TestCase):
+    """Issue #110: Interface validation tests for SiglentSDS, following the
+    test_anritsu_* pattern in test_simulation.py."""
+
+    def test_siglent_sds_driver_interface(self):
+        """Verify SiglentSDS implement Oscilloscope interface."""
+        from instrumation.drivers.base import Oscilloscope
+
+        self.assertTrue(issubclass(SiglentSDS, Oscilloscope))
+        self.assertTrue(hasattr(SiglentSDS, 'preset'))
+        self.assertTrue(hasattr(SiglentSDS, 'run'))
+        self.assertTrue(hasattr(SiglentSDS, 'stop'))
+        self.assertTrue(hasattr(SiglentSDS, 'single'))
+        self.assertTrue(hasattr(SiglentSDS, 'get_waveform'))
+        self.assertTrue(hasattr(SiglentSDS, 'auto_scale'))
+        self.assertTrue(hasattr(SiglentSDS, 'set_trigger'))
+        self.assertTrue(hasattr(SiglentSDS, 'get_screenshot'))
+        self.assertTrue(hasattr(SiglentSDS, 'measure_frequency'))
+        self.assertTrue(hasattr(SiglentSDS, 'measure_duty_cycle'))
+        self.assertTrue(hasattr(SiglentSDS, 'measure_v_peak_to_peak'))
+        self.assertTrue(hasattr(SiglentSDS, 'shutdown_safety'))
+
+    def test_siglent_sds_driver_registration(self):
+        """Verify SiglentSDS is registered in the driver registry as SCOPE."""
+        from instrumation.factory import load_plugins
+        from instrumation.drivers.registry import DriverRegistry
+
+        load_plugins()
+
+        scope_drivers = DriverRegistry.get_drivers_by_type("SCOPE")
+        siglent_sds_registered = any(
+            "SiglentSDS" in cls.__name__ for cls in scope_drivers
+        )
+        self.assertTrue(siglent_sds_registered, "SiglentSDS should be registered as SCOPE driver")
 
 if __name__ == "__main__":
     unittest.main()
