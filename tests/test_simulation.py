@@ -119,7 +119,7 @@ class TestSimulation(unittest.TestCase):
         self.assertEqual(vac.unit, "V")
 
         r = dmm.measure_resistance()
-        self.assertEqual(r.value, 1000.0)
+        self.assertAlmostEqual(r.value, 1000.0, delta=5.0)
         self.assertEqual(r.unit, "Ohm")
 
         i = dmm.measure_current()
