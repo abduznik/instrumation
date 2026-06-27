@@ -352,6 +352,160 @@ class TestSimulation(unittest.TestCase):
 
         vna.disconnect()
 
+    def test_simulated_multimeter_configure_voltage_stubs(self):
+        """Issue #103: Verify configure_voltage_dc/ac print stubs on SimulatedMultimeter."""
+        import io
+        import sys
+        from instrumation.drivers.simulated import SimulatedMultimeter
+
+        dmm = SimulatedMultimeter("USB::SIM::DMM", latency=0)
+        dmm.connect()
+
+        captured_output = io.StringIO()
+        sys.stdout = captured_output
+        try:
+            dmm.configure_voltage_dc()
+            dmm.configure_voltage_ac()
+        finally:
+            sys.stdout = sys.__stdout__
+
+        output = captured_output.getvalue()
+        self.assertIn("[SIM] DMM Configured: DC Voltage", output)
+        self.assertIn("[SIM] DMM Configured: AC Voltage", output)
+
+        dmm.disconnect()
+
+    def test_simulated_keysight34461a_configure_voltage_stubs(self):
+        """Issue #103: Verify configure_voltage_dc/ac print stubs on SimulatedKeysight34461A."""
+        import io
+        import sys
+        from instrumation.drivers.simulated import SimulatedKeysight34461A
+
+        dmm = SimulatedKeysight34461A("USB::SIM::34461A")
+        dmm.connect()
+
+        captured_output = io.StringIO()
+        sys.stdout = captured_output
+        try:
+            dmm.configure_voltage_dc()
+            dmm.configure_voltage_ac()
+        finally:
+            sys.stdout = sys.__stdout__
+
+        output = captured_output.getvalue()
+        self.assertIn("[SIM] 34461A Configured: DC Voltage", output)
+        self.assertIn("[SIM] 34461A Configured: AC Voltage", output)
+
+        dmm.disconnect()
+
+    def test_anritsu_sa_driver_interface(self):
+        """Issue #102: Verify AnritsuSA driver implements SpectrumAnalyzer interface."""
+        from instrumation.drivers.anritsu import AnritsuSA
+        from instrumation.drivers.base import SpectrumAnalyzer
+
+        self.assertTrue(issubclass(AnritsuSA, SpectrumAnalyzer))
+        self.assertTrue(hasattr(AnritsuSA, 'preset'))
+        self.assertTrue(hasattr(AnritsuSA, 'peak_search'))
+        self.assertTrue(hasattr(AnritsuSA, 'get_marker_amplitude'))
+        self.assertTrue(hasattr(AnritsuSA, 'set_center_freq'))
+        self.assertTrue(hasattr(AnritsuSA, 'get_center_freq'))
+        self.assertTrue(hasattr(AnritsuSA, 'set_span'))
+        self.assertTrue(hasattr(AnritsuSA, 'get_span'))
+        self.assertTrue(hasattr(AnritsuSA, 'set_ref_level'))
+        self.assertTrue(hasattr(AnritsuSA, 'set_attenuation'))
+        self.assertTrue(hasattr(AnritsuSA, 'set_rbw'))
+        self.assertTrue(hasattr(AnritsuSA, 'set_vbw'))
+        self.assertTrue(hasattr(AnritsuSA, 'get_trace_data'))
+        self.assertTrue(hasattr(AnritsuSA, 'shutdown_safety'))
+
+    def test_anritsu_vna_driver_interface(self):
+        """Issue #102: Verify AnritsuVNA driver implements NetworkAnalyzer interface."""
+        from instrumation.drivers.anritsu import AnritsuVNA
+        from instrumation.drivers.base import NetworkAnalyzer
+
+        self.assertTrue(issubclass(AnritsuVNA, NetworkAnalyzer))
+        self.assertTrue(hasattr(AnritsuVNA, 'preset'))
+        self.assertTrue(hasattr(AnritsuVNA, 'set_start_frequency'))
+        self.assertTrue(hasattr(AnritsuVNA, 'set_stop_frequency'))
+        self.assertTrue(hasattr(AnritsuVNA, 'set_points'))
+        self.assertTrue(hasattr(AnritsuVNA, 'set_parameter'))
+        self.assertTrue(hasattr(AnritsuVNA, 'get_trace_data'))
+        self.assertTrue(hasattr(AnritsuVNA, 'get_complex_trace'))
+        self.assertTrue(hasattr(AnritsuVNA, 'get_smith_data'))
+
+    def test_anritsu_shockline_vna_driver_interface(self):
+        """Issue #102: Verify AnritsuShockLineVNA driver implements NetworkAnalyzer interface."""
+        from instrumation.drivers.anritsu import AnritsuShockLineVNA
+        from instrumation.drivers.base import NetworkAnalyzer
+
+        self.assertTrue(issubclass(AnritsuShockLineVNA, NetworkAnalyzer))
+        self.assertTrue(hasattr(AnritsuShockLineVNA, 'preset'))
+        self.assertTrue(hasattr(AnritsuShockLineVNA, 'set_start_frequency'))
+        self.assertTrue(hasattr(AnritsuShockLineVNA, 'set_stop_frequency'))
+        self.assertTrue(hasattr(AnritsuShockLineVNA, 'set_points'))
+        self.assertTrue(hasattr(AnritsuShockLineVNA, 'set_if_bandwidth'))
+        self.assertTrue(hasattr(AnritsuShockLineVNA, 'set_parameter'))
+        self.assertTrue(hasattr(AnritsuShockLineVNA, 'get_trace_data'))
+        self.assertTrue(hasattr(AnritsuShockLineVNA, 'get_complex_trace'))
+        self.assertTrue(hasattr(AnritsuShockLineVNA, 'get_smith_data'))
+        self.assertTrue(hasattr(AnritsuShockLineVNA, 'shutdown_safety'))
+
+    def test_anritsu_ms2035b_combo_driver_interface(self):
+        """Issue #102: Verify AnritsuMS2035B driver implements both SA and VNA interfaces."""
+        from instrumation.drivers.anritsu import AnritsuMS2035B
+        from instrumation.drivers.base import SpectrumAnalyzer, NetworkAnalyzer
+
+        self.assertTrue(issubclass(AnritsuMS2035B, SpectrumAnalyzer))
+        self.assertTrue(issubclass(AnritsuMS2035B, NetworkAnalyzer))
+
+        # SA methods
+        self.assertTrue(hasattr(AnritsuMS2035B, 'set_center_freq'))
+        self.assertTrue(hasattr(AnritsuMS2035B, 'get_center_freq'))
+        self.assertTrue(hasattr(AnritsuMS2035B, 'set_span'))
+        self.assertTrue(hasattr(AnritsuMS2035B, 'get_span'))
+        self.assertTrue(hasattr(AnritsuMS2035B, 'get_trace_data'))
+
+        # VNA methods
+        self.assertTrue(hasattr(AnritsuMS2035B, 'set_start_frequency'))
+        self.assertTrue(hasattr(AnritsuMS2035B, 'set_stop_frequency'))
+        self.assertTrue(hasattr(AnritsuMS2035B, 'set_points'))
+        self.assertTrue(hasattr(AnritsuMS2035B, 'set_parameter'))
+        self.assertTrue(hasattr(AnritsuMS2035B, 'get_complex_trace'))
+        self.assertTrue(hasattr(AnritsuMS2035B, 'get_smith_data'))
+
+    def test_anritsu_driver_registration(self):
+        """Issue #102: Verify Anritsu drivers are registered in the driver registry."""
+        from instrumation.factory import load_plugins
+        from instrumation.drivers.registry import DriverRegistry
+
+        # Load all drivers (including Anritsu)
+        load_plugins()
+
+        # AnritsuSA should be registered as SA
+        sa_drivers = DriverRegistry.get_drivers_by_type("SA")
+        anritsu_sa_registered = any(
+            "AnritsuSA" in cls.__name__ for cls in sa_drivers
+        )
+        self.assertTrue(anritsu_sa_registered, "AnritsuSA should be registered as SA driver")
+
+        # AnritsuVNA and AnritsuShockLineVNA should be registered as NA
+        na_drivers = DriverRegistry.get_drivers_by_type("NA")
+        anritsu_vna_registered = any(
+            "AnritsuVNA" in cls.__name__ for cls in na_drivers
+        )
+        anritsu_shockline_registered = any(
+            "AnritsuShockLineVNA" in cls.__name__ for cls in na_drivers
+        )
+        self.assertTrue(anritsu_vna_registered, "AnritsuVNA should be registered as NA driver")
+        self.assertTrue(anritsu_shockline_registered, "AnritsuShockLineVNA should be registered as NA driver")
+
+        # AnritsuMS2035B should be registered as COMBO_VNA_SA
+        combo_drivers = DriverRegistry.get_drivers_by_type("COMBO_VNA_SA")
+        anritsu_combo_registered = any(
+            "AnritsuMS2035B" in cls.__name__ for cls in combo_drivers
+        )
+        self.assertTrue(anritsu_combo_registered, "AnritsuMS2035B should be registered as COMBO_VNA_SA driver")
+
 
 if __name__ == "__main__":
     unittest.main()
