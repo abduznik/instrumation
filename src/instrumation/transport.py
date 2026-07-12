@@ -1,5 +1,6 @@
 import serial
 import time
+from typing import List, Optional
 
 class VisaDriver:
     """Generic wrapper for VISA instruments."""
@@ -72,3 +73,137 @@ class SerialDriver:
     def close(self):
         if self.ser:
             self.ser.close()
+
+
+# ── Transport utilities ────────────────────────────────────
+
+def detect_line_termination(instrument: VisaDriver, query: str = "*IDN?") -> str:
+    """Detect which line-termination character an instrument responds to.
+
+    Tries each common terminator (LF, CR, CRLF) against a safe SCPI query
+    and returns the first one that produces a valid response.
+
+    Steps:
+        1. Save the instrument's current read_termination setting.
+        2. For each candidate terminator in ["\\n", "\\r", "\\r\\n"]:
+           a. Set instrument.read_termination to the candidate.
+           b. Send the query (default "*IDN?").
+           c. If the response is non-empty and looks like a valid *IDN? reply
+              (contains at least one comma), return the candidate terminator.
+        3. If none work, restore the original termination and raise RuntimeError.
+        4. Restore the original termination before returning.
+
+    Args:
+        instrument: A connected VisaDriver or pyvisa Resource object with
+            .write(), .query(), and .read_termination attributes.
+        query: The SCPI query to test with. Defaults to "*IDN?".
+
+    Returns:
+        The working terminator string: "\\n", "\\r", or "\\r\\n".
+
+    Raises:
+        RuntimeError: If no candidate terminator produces a valid response.
+    """
+    raise NotImplementedError("See issue #113")
+
+
+def find_minimum_timeout(
+    instrument: VisaDriver,
+    query: str = "*IDN?",
+    candidates: Optional[List[int]] = None,
+) -> int:
+    """Find the smallest safe timeout value for an instrument.
+
+    Tries a list of candidate timeout values (in milliseconds) against a safe
+    SCPI query and returns the first one that completes without timing out.
+
+    Steps:
+        1. If candidates is None, use [100, 250, 500, 1000, 2500, 5000].
+        2. Save the instrument's current timeout setting.
+        3. Sort candidates ascending (smallest first).
+        4. For each candidate timeout:
+           a. Set instrument.timeout to the candidate.
+           b. Send the query.
+           c. If the response is non-empty, restore the original timeout and
+              return the candidate.
+           d. If a VisaIOError or timeout exception occurs, continue to the next.
+        5. If no candidate works, restore the original timeout and raise RuntimeError.
+
+    Args:
+        instrument: A connected VisaDriver or pyvisa Resource object with
+            .write(), .query(), and .timeout attributes.
+        query: The SCPI query to test with. Defaults to "*IDN?".
+        candidates: List of timeout values in ms to try. Defaults to
+            [100, 250, 500, 1000, 2500, 5000].
+
+    Returns:
+        The smallest timeout value (in ms) that worked.
+
+    Raises:
+        RuntimeError: If no candidate timeout produces a valid response.
+    """
+    raise NotImplementedError("See issue #114")
+
+
+def poll_for_mav(
+    instrument: VisaDriver,
+    timeout: float = 10.0,
+    poll_interval: float = 0.1,
+) -> None:
+    """Poll an instrument's status byte for the MAV (Message Available) bit.
+
+    Instead of reading immediately or sleeping blindly, this polls the Status
+    Byte Register (STB) until bit 4 (MAV) is set, indicating the instrument
+    has data ready to read.
+
+    Steps:
+        1. Record the start time.
+        2. Loop until timeout is exceeded:
+           a. Send "*STB?" or "STB?" to read the status byte.
+           b. Parse the response as an integer.
+           c. If bit 4 (value & 0x10) is set, return — data is ready.
+           d. Sleep for poll_interval seconds.
+        3. If the loop exits without MAV being set, raise InstrumentTimeout.
+
+    Args:
+        instrument: A connected VisaDriver or pyvisa Resource object.
+        timeout: Maximum seconds to wait for MAV. Defaults to 10.0.
+        poll_interval: Seconds between polls. Defaults to 0.1.
+
+    Raises:
+        InstrumentTimeout: If MAV is not set within the timeout period.
+    """
+    raise NotImplementedError("See issue #115")
+
+
+def poll_opc_with_backoff(
+    instrument: VisaDriver,
+    timeout: float = 30.0,
+    initial_delay: float = 0.1,
+    max_delay: float = 1.0,
+) -> None:
+    """Poll for operation-complete (*OPC?) with exponential backoff delay.
+
+    Sends *OPC? and waits for "1" as the response, but instead of polling at
+    a fixed interval, uses exponential backoff to reduce bus traffic during
+    long operations while still responding quickly to fast completions.
+
+    Steps:
+        1. Record the start time. Set current_delay = initial_delay.
+        2. Loop until timeout is exceeded:
+           a. Send "*OPC?" and read the response.
+           b. If the response stripped is "1", return — operation complete.
+           c. Sleep for current_delay seconds.
+           d. Multiply current_delay by 2, capped at max_delay.
+        3. If the loop exits without completion, raise InstrumentTimeout.
+
+    Args:
+        instrument: A connected VisaDriver or pyvisa Resource object.
+        timeout: Maximum seconds to wait. Defaults to 30.0.
+        initial_delay: Starting poll delay in seconds. Defaults to 0.1.
+        max_delay: Maximum delay between polls in seconds. Defaults to 1.0.
+
+    Raises:
+        InstrumentTimeout: If *OPC? does not return "1" within the timeout.
+    """
+    raise NotImplementedError("See issue #116")
