@@ -1,17 +1,17 @@
 import json
 import time
-from typing import List
+from typing import List, Dict, Any
 from .base import InstrumentDriver, SignalGenerator, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, Multimeter, PowerSupply, ElectronicLoad
 from ..results import MeasurementResult
 
 class SCPIPair:
     """Represents a single SCPI command/response transaction."""
-    def __init__(self, command: str, response: str, timestamp: float = None):
+    def __init__(self, command: str, response: str, timestamp: float = None) -> None:
         self.command = command
         self.response = response
         self.timestamp = timestamp or time.time()
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         return {
             "cmd": self.command,
             "res": self.response,
@@ -20,25 +20,25 @@ class SCPIPair:
 
 class GoldenMaster:
     """Handles saving and loading of SCPI transaction logs."""
-    def __init__(self, filename: str):
+    def __init__(self, filename: str) -> None:
         self.filename = filename
         self.transactions: List[SCPIPair] = []
 
-    def add(self, command: str, response: str):
+    def add(self, command: str, response: str) -> None:
         self.transactions.append(SCPIPair(command, response))
 
-    def save(self):
+    def save(self) -> None:
         with open(self.filename, 'w') as f:
             json.dump([t.to_dict() for t in self.transactions], f, indent=2)
 
-    def load(self):
+    def load(self) -> None:
         with open(self.filename, 'r') as f:
             data = json.load(f)
             self.transactions = [SCPIPair(d['cmd'], d['res'], d['ts']) for d in data]
 
 class RecordingWrapper:
     """Wraps an existing driver to record its SCPI traffic."""
-    def __init__(self, driver: InstrumentDriver, master: GoldenMaster):
+    def __init__(self, driver: InstrumentDriver, master: GoldenMaster) -> None:
         self.driver = driver
         self.master = master
         
@@ -49,7 +49,7 @@ class RecordingWrapper:
         driver.write = self.write
         driver.query = self.query
 
-    def write(self, command: str):
+    def write(self, command: str) -> None:
         self._original_write(command)
         self.master.add(command, "")
 
@@ -58,25 +58,25 @@ class RecordingWrapper:
         self.master.add(command, response)
         return response
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         """Proxy all other calls to the original driver."""
         return getattr(self.driver, name)
 
 class ReplayDriver(SignalGenerator, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, Multimeter, PowerSupply, ElectronicLoad):
     """An instrument driver that replays responses from a Golden Master file."""
-    def __init__(self, resource_address: str, master_file: str):
+    def __init__(self, resource_address: str, master_file: str) -> None:
         super().__init__(resource_address)
         self.master = GoldenMaster(master_file)
         self.master.load()
         self.ptr = 0
 
-    def connect(self):
+    def connect(self) -> None:
         print(f"[REPLAY] Loading master from {self.master.filename}")
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         print("[REPLAY] Finished replay session")
 
-    def write(self, command: str):
+    def write(self, command: str) -> None:
         if self.ptr < len(self.master.transactions):
             expected = self.master.transactions[self.ptr].command
             if command.strip().upper() == expected.strip().upper():
@@ -92,7 +92,7 @@ class ReplayDriver(SignalGenerator, SpectrumAnalyzer, NetworkAnalyzer, Oscillosc
                 return tx.response
         return "0"
 
-    def safe_send(self, command: str):
+    def safe_send(self, command: str) -> None:
         self.write(command)
         self.check_errors()
 
@@ -101,92 +101,92 @@ class ReplayDriver(SignalGenerator, SpectrumAnalyzer, NetworkAnalyzer, Oscillosc
         self.check_errors()
         return resp
 
-    def get_id(self): return self.query("*IDN?")
-    def preset(self, automation_optimized=True): pass
-    def clear_status(self): pass
-    def sync_config(self): pass
-    def wait_ready(self, timeout=30): pass
-    def shutdown_safety(self): pass
-    def check_errors(self): pass
+    def get_id(self) -> str: return self.query("*IDN?")
+    def preset(self, automation_optimized: bool = True) -> None: pass
+    def clear_status(self) -> None: pass
+    def sync_config(self) -> None: pass
+    def wait_ready(self, timeout: float = 30.0) -> None: pass
+    def shutdown_safety(self) -> None: pass
+    def check_errors(self) -> None: pass
 
     # --- Multimeter ---
-    def configure_voltage_ac(self): self.write(":CONF:VOLT:AC")
-    def configure_voltage_dc(self): self.write(":CONF:VOLT:DC")
-    def set_auto_range(self, state: bool): self.write(f":VOLT:RANG:AUTO {'ON' if state else 'OFF'}")
-    def measure_voltage(self, ac: bool = False): return MeasurementResult(float(self.query("MEAS:VOLT?")), "V")
-    def measure_resistance(self, four_wire: bool = False): return MeasurementResult(float(self.query("MEAS:RES?")), "Ohm")
-    def measure_current(self, ac: bool = False): return MeasurementResult(float(self.query("MEAS:CURR?")), "A")
-    def measure_frequency(self, channel: int = 1): return MeasurementResult(float(self.query("MEAS:FREQ?")), "Hz")
-    def measure_duty_cycle(self, channel: int = 1): return MeasurementResult(0.0, "%")
-    def measure_v_peak_to_peak(self, channel: int = 1): return MeasurementResult(0.0, "V")
+    def configure_voltage_ac(self) -> None: self.write(":CONF:VOLT:AC")
+    def configure_voltage_dc(self) -> None: self.write(":CONF:VOLT:DC")
+    def set_auto_range(self, state: bool) -> None: self.write(f":VOLT:RANG:AUTO {'ON' if state else 'OFF'}")
+    def measure_voltage(self, ac: bool = False) -> MeasurementResult: return MeasurementResult(float(self.query("MEAS:VOLT?")), "V")
+    def measure_resistance(self, four_wire: bool = False) -> MeasurementResult: return MeasurementResult(float(self.query("MEAS:RES?")), "Ohm")
+    def measure_current(self, ac: bool = False) -> MeasurementResult: return MeasurementResult(float(self.query("MEAS:CURR?")), "A")
+    def measure_frequency(self, channel: int = 1) -> MeasurementResult: return MeasurementResult(float(self.query("MEAS:FREQ?")), "Hz")
+    def measure_duty_cycle(self, channel: int = 1) -> MeasurementResult: return MeasurementResult(0.0, "%")
+    def measure_v_peak_to_peak(self, channel: int = 1) -> MeasurementResult: return MeasurementResult(0.0, "V")
 
     # --- PowerSupply / FunctionGenerator Overlap ---
-    def set_voltage(self, voltage: float): self.write(f":VOLT {voltage}")
+    def set_voltage(self, voltage: float) -> None: self.write(f":VOLT {voltage}")
     def get_voltage(self) -> float: return 0.0
-    def set_current_limit(self, current: float): self.write(f":CURR {current}")
+    def set_current_limit(self, current: float) -> None: self.write(f":CURR {current}")
     def get_current(self) -> MeasurementResult: return MeasurementResult(0.0, "A")
-    def set_output(self, state: bool): self.write(f":OUTP {'ON' if state else 'OFF'}")
+    def set_output(self, state: bool) -> None: self.write(f":OUTP {'ON' if state else 'OFF'}")
     def get_output(self) -> bool: return False
-    def set_ovp(self, voltage: float): self.write(f":VOLT:PROT {voltage}")
-    def set_ocp(self, current: float): self.write(f":CURR:PROT {current}")
+    def set_ovp(self, voltage: float) -> None: self.write(f":VOLT:PROT {voltage}")
+    def set_ocp(self, current: float) -> None: self.write(f":CURR:PROT {current}")
     def measure_voltage_actual(self) -> MeasurementResult: return self.measure_voltage()
-    def clear_protection(self): self.write(":OUTP:PROT:CLE")
+    def clear_protection(self) -> None: self.write(":OUTP:PROT:CLE")
 
     # --- SpectrumAnalyzer / NetworkAnalyzer Overlap ---
-    def peak_search(self): self.write(":CALC:MARK1:MAX")
-    def get_marker_amplitude(self): return MeasurementResult(float(self.query("CALC:MARK1:Y?")), "dBm")
-    def set_center_freq(self, hz: float): self.write(f":SENS:FREQ:CENT {hz}")
+    def peak_search(self) -> None: self.write(":CALC:MARK1:MAX")
+    def get_marker_amplitude(self) -> MeasurementResult: return MeasurementResult(float(self.query("CALC:MARK1:Y?")), "dBm")
+    def set_center_freq(self, hz: float) -> None: self.write(f":SENS:FREQ:CENT {hz}")
     def get_center_freq(self) -> float: return float(self.query(":SENS:FREQ:CENT?"))
-    def set_span(self, hz: float): self.write(f":SENS:FREQ:SPAN {hz}")
+    def set_span(self, hz: float) -> None: self.write(f":SENS:FREQ:SPAN {hz}")
     def get_span(self) -> float: return float(self.query(":SENS:FREQ:SPAN?"))
-    def set_rbw(self, hz: float): self.write(f":SENS:BAND {hz}")
-    def set_vbw(self, hz: float): self.write(f":SENS:BAND:VID {hz}")
+    def set_rbw(self, hz: float) -> None: self.write(f":SENS:BAND {hz}")
+    def set_vbw(self, hz: float) -> None: self.write(f":SENS:BAND:VID {hz}")
     def get_trace_data(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult: return MeasurementResult([0.0], "dB")
 
     # --- NetworkAnalyzer Specific ---
-    def set_start_frequency(self, freq_hz: float): self.write(f"SENS:FREQ:STAR {freq_hz}")
-    def set_stop_frequency(self, freq_hz: float): self.write(f"SENS:FREQ:STOP {freq_hz}")
-    def set_points(self, num_points: int): self.write(f"SENS:SWE:POIN {num_points}")
-    def set_parameter(self, parameter: str): self.write(f"CALC:PAR:MOD {parameter}")
-    def get_complex_trace(self, measurement_name: str = "CH1_S11_1"): return MeasurementResult([complex(0,0)], "IQ")
-    def get_smith_data(self, measurement_name: str = "CH1_S11_1"): return MeasurementResult([complex(50,0)], "Z")
+    def set_start_frequency(self, freq_hz: float) -> None: self.write(f"SENS:FREQ:STAR {freq_hz}")
+    def set_stop_frequency(self, freq_hz: float) -> None: self.write(f"SENS:FREQ:STOP {freq_hz}")
+    def set_points(self, num_points: int) -> None: self.write(f"SENS:SWE:POIN {num_points}")
+    def set_parameter(self, parameter: str) -> None: self.write(f"CALC:PAR:MOD {parameter}")
+    def get_complex_trace(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult: return MeasurementResult([complex(0,0)], "IQ")
+    def get_smith_data(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult: return MeasurementResult([complex(50,0)], "Z")
 
     # --- Oscilloscope ---
-    def run(self): self.write(":RUN")
-    def stop(self): self.write(":STOP")
-    def single(self): self.write(":SINGLE")
-    def get_waveform(self, channel: int): return MeasurementResult([0.0], "V")
-    def auto_scale(self): self.write(":AUT")
-    def set_trigger(self, source, level, slope): self.write(":TRIG")
+    def run(self) -> None: self.write(":RUN")
+    def stop(self) -> None: self.write(":STOP")
+    def single(self) -> None: self.write(":SINGLE")
+    def get_waveform(self, channel: int) -> MeasurementResult: return MeasurementResult([0.0], "V")
+    def auto_scale(self) -> None: self.write(":AUT")
+    def set_trigger(self, source: str, level: float, slope: str) -> None: self.write(":TRIG")
     def get_screenshot(self) -> bytes: return b""
 
     # --- SignalGenerator ---
-    def set_frequency(self, hz: float): self.write(f":FREQ {hz}")
-    def set_amplitude(self, dbm: float): self.write(f":POW {dbm}")
-    def set_mod_state(self, mod_type: str, state: bool): self.write(f":{mod_type}:STAT {'ON' if state else 'OFF'}")
-    def start_sweep(self, start: float, stop: float, points: int, dwell: float): self.write(":INIT")
-    def configure_list_sweep(self, freq_list: List[float], power_list: List[float]): self.write(":LIST:FREQ")
-    def set_reference_clock(self, source: str): self.write(f":ROSC:SOUR {source}")
-    def set_offset(self, volts: float): self.write(f":VOLT:OFFS {volts}")
-    def set_waveform(self, shape: str): self.write(f":FUNC {shape}")
+    def set_frequency(self, hz: float) -> None: self.write(f":FREQ {hz}")
+    def set_amplitude(self, dbm: float) -> None: self.write(f":POW {dbm}")
+    def set_mod_state(self, mod_type: str, state: bool) -> None: self.write(f":{mod_type}:STAT {'ON' if state else 'OFF'}")
+    def start_sweep(self, start: float, stop: float, points: int, dwell: float) -> None: self.write(":INIT")
+    def configure_list_sweep(self, freq_list: List[float], power_list: List[float]) -> None: self.write(":LIST:FREQ")
+    def set_reference_clock(self, source: str) -> None: self.write(f":ROSC:SOUR {source}")
+    def set_offset(self, volts: float) -> None: self.write(f":VOLT:OFFS {volts}")
+    def set_waveform(self, shape: str) -> None: self.write(f":FUNC {shape}")
 
     # --- ElectronicLoad ---
-    def set_mode(self, mode: str): self.write(f":SOUR:FUNC {mode}")
+    def set_mode(self, mode: str) -> None: self.write(f":SOUR:FUNC {mode}")
     def get_mode(self) -> str: return self.query(":SOUR:FUNC?")
-    def set_current(self, amps: float): self.write(f":SOUR:CURR {amps}")
+    def set_current(self, amps: float) -> None: self.write(f":SOUR:CURR {amps}")
     def get_current(self) -> float: return float(self.query(":SOUR:CURR?"))
-    def set_voltage(self, volts: float): self.write(f":SOUR:VOLT {volts}")
+    def set_voltage(self, volts: float) -> None: self.write(f":SOUR:VOLT {volts}")
     def get_voltage(self) -> float: return float(self.query(":SOUR:VOLT?"))
-    def set_resistance(self, ohms: float): self.write(f":SOUR:RES {ohms}")
+    def set_resistance(self, ohms: float) -> None: self.write(f":SOUR:RES {ohms}")
     def get_resistance(self) -> float: return float(self.query(":SOUR:RES?"))
-    def set_power(self, watts: float): self.write(f":SOUR:POW {watts}")
+    def set_power(self, watts: float) -> None: self.write(f":SOUR:POW {watts}")
     def get_power(self) -> float: return float(self.query(":SOUR:POW?"))
-    def set_input(self, state: bool): self.write(f":SOUR:INP:STAT {'ON' if state else 'OFF'}")
+    def set_input(self, state: bool) -> None: self.write(f":SOUR:INP:STAT {'ON' if state else 'OFF'}")
     def get_input(self) -> bool: return self.query(":SOUR:INP:STAT?") == "ON"
     def measure_voltage(self) -> MeasurementResult: return MeasurementResult(float(self.query("MEAS:VOLT?")), "V")
     def measure_current(self) -> MeasurementResult: return MeasurementResult(float(self.query("MEAS:CURR?")), "A")
     def measure_power(self) -> MeasurementResult: return MeasurementResult(float(self.query("MEAS:POW?")), "W")
-    def set_ovp(self, voltage: float): self.write(f":SOUR:VOLT:PROT {voltage}")
-    def set_ocp(self, current: float): self.write(f":SOUR:CURR:PROT {current}")
-    def set_opp(self, power: float): self.write(f":SOUR:POW:PROT {power}")
-    def clear_protection(self): self.write(":SOUR:PROT:CLE")
+    def set_ovp(self, voltage: float) -> None: self.write(f":SOUR:VOLT:PROT {voltage}")
+    def set_ocp(self, current: float) -> None: self.write(f":SOUR:CURR:PROT {current}")
+    def set_opp(self, power: float) -> None: self.write(f":SOUR:POW:PROT {power}")
+    def clear_protection(self) -> None: self.write(":SOUR:PROT:CLE")

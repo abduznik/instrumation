@@ -1,27 +1,27 @@
 import random
 import time
 import math
-from typing import Optional
+from typing import Optional, List, Tuple
 from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, FunctionGenerator, ElectronicLoad, FrequencyCounter
 from .registry import register_driver
 from ..results import MeasurementResult
 
 class SimulatedBaseDriver(InstrumentDriver):
-    def __init__(self, resource: str, latency: float = 0.01):
+    def __init__(self, resource: str, latency: float = 0.01) -> None:
         super().__init__(resource)
         self.latency = latency
 
-    def connect(self):
+    def connect(self) -> None:
         self.connected = True
         self.identity = {"manufacturer": "SIM", "model": "SIM_DRIVER", "serial": "123", "version": "1.0"}
 
-    def disconnect(self): self.connected = False
+    def disconnect(self) -> None: self.connected = False
     
-    def write(self, command: str):
+    def write(self, command: str) -> None:
         print(f"[SIM] Write: {command}")
         time.sleep(self.latency)
 
-    def safe_send(self, command: str):
+    def safe_send(self, command: str) -> None:
         print(f"[SIM] Safe Send: {command}")
         time.sleep(self.latency)
 
@@ -39,77 +39,77 @@ class SimulatedBaseDriver(InstrumentDriver):
     def query_ascii(self, command: str) -> str:
         return self.query(command)
 
-    def query_binary_values(self, command: str, datatype: str = 'f', is_big_endian: bool = False) -> list:
+    def query_binary_values(self, command: str, datatype: str = 'f', is_big_endian: bool = False) -> List[float]:
         print(f"[SIM] Binary Query: {command}")
         time.sleep(self.latency * 2) # Binary takes a bit longer to simulate transfer
         return [random.uniform(-100, 0) for _ in range(1001)]
 
-    def get_id(self): return "SIM_DRIVER"
-    def preset(self, automation_optimized=True): pass
-    def clear_status(self): pass
-    def sync_config(self): pass
-    def wait_ready(self, timeout=30): pass
-    def shutdown_safety(self): print("[SIM] Shutting down safely")
-    def check_errors(self): pass
-    def save_state(self, index): print(f"[SIM] Saving state to {index}")
-    def load_state(self, index): print(f"[SIM] Loading state from {index}")
-    def measure_frequency(self): return MeasurementResult(1000.0, "Hz")
-    def measure_duty_cycle(self): return MeasurementResult(50.0, "%")
-    def measure_v_peak_to_peak(self): return MeasurementResult(2.0, "V")
+    def get_id(self) -> str: return "SIM_DRIVER"
+    def preset(self, automation_optimized: bool = True) -> None: pass
+    def clear_status(self) -> None: pass
+    def sync_config(self) -> None: pass
+    def wait_ready(self, timeout: float = 30.0) -> None: pass
+    def shutdown_safety(self) -> None: print("[SIM] Shutting down safely")
+    def check_errors(self) -> None: pass
+    def save_state(self, index: int) -> None: print(f"[SIM] Saving state to {index}")
+    def load_state(self, index: int) -> None: print(f"[SIM] Loading state from {index}")
+    def measure_frequency(self) -> MeasurementResult: return MeasurementResult(1000.0, "Hz")
+    def measure_duty_cycle(self) -> MeasurementResult: return MeasurementResult(50.0, "%")
+    def measure_v_peak_to_peak(self) -> MeasurementResult: return MeasurementResult(2.0, "V")
 
 @register_driver("DMM")
 class SimulatedMultimeter(SimulatedBaseDriver, Multimeter):
-    def configure_voltage_dc(self):
+    def configure_voltage_dc(self) -> None:
         print("[SIM] DMM Configured: DC Voltage")
-    def configure_voltage_ac(self):
+    def configure_voltage_ac(self) -> None:
         print("[SIM] DMM Configured: AC Voltage")
-    def measure_voltage(self, ac=False): 
+    def measure_voltage(self, ac: bool = False) -> MeasurementResult: 
         time.sleep(self.latency)
         noise = random.gauss(0, 5.0 * 0.001)  # 0.1% of 5V
         return MeasurementResult(5.0 + noise, "V")
-    def measure_resistance(self, four_wire: bool = False): 
+    def measure_resistance(self, four_wire: bool = False) -> MeasurementResult: 
         time.sleep(self.latency)
         noise = random.gauss(0, 1000.0 * 0.01)  # 1% of 1kOhm
         return MeasurementResult(1000.0 + noise, "Ohm")
-    def measure_current(self, ac: bool = False):
+    def measure_current(self, ac: bool = False) -> MeasurementResult:
         time.sleep(self.latency)
         noise = random.gauss(0, 0.01 * 0.005)  # 0.5% of 10mA
         return MeasurementResult(0.01 + noise, "A")
-    def measure_temperature(self, probe_type="TC", probe="K"):
+    def measure_temperature(self, probe_type: str = "TC", probe: str = "K") -> MeasurementResult:
         return MeasurementResult(23.5, "C")
-    def measure_capacitance(self):
+    def measure_capacitance(self) -> MeasurementResult:
         return MeasurementResult(10e-6, "F")
-    def measure_diode(self):
+    def measure_diode(self) -> MeasurementResult:
         return MeasurementResult(0.6, "V")
-    def measure_period(self):
+    def measure_period(self) -> MeasurementResult:
         time.sleep(self.latency)
         return MeasurementResult(0.001, "s")
-    def set_auto_range(self, state): pass
+    def set_auto_range(self, state: bool) -> None: pass
 
 @register_driver("PSU")
 class SimulatedPowerSupply(SimulatedBaseDriver, PowerSupply):
-    def __init__(self, resource: str, latency: float = 0.01):
+    def __init__(self, resource: str, latency: float = 0.01) -> None:
         super().__init__(resource, latency)
         self._foldback_mode = "OFF"
         self._foldback_delay = 0.0
         self._autostart = False
 
-    def set_voltage(self, voltage: float): 
+    def set_voltage(self, voltage: float) -> None: 
         print(f"[SIM] Setting PSU Voltage: {voltage}")
         self._voltage = voltage
     def get_voltage(self) -> float: return getattr(self, "_voltage", 0.0)
-    def set_current_limit(self, current: float): pass
+    def set_current_limit(self, current: float) -> None: pass
     def get_current(self) -> MeasurementResult:
         time.sleep(self.latency)
         return MeasurementResult(0.0, "A")
     def get_current_limit(self) -> float: return 0.0
-    def set_output(self, state: bool):
+    def set_output(self, state: bool) -> None:
         print(f"[SIM] PSU Output: {'ON' if state else 'OFF'}")
         self._output = state
     def get_output(self) -> bool: return getattr(self, "_output", False)
-    def set_ovp(self, voltage: float):
+    def set_ovp(self, voltage: float) -> None:
         print(f"[SIM] PSU OVP: {voltage} V")
-    def set_ocp(self, current: float):
+    def set_ocp(self, current: float) -> None:
         print(f"[SIM] PSU OCP: {current} A")
     def measure_voltage_actual(self) -> MeasurementResult:
         base = getattr(self, "_voltage", 0.0)
@@ -118,34 +118,34 @@ class SimulatedPowerSupply(SimulatedBaseDriver, PowerSupply):
     def measure_current(self) -> MeasurementResult:
         noise = random.gauss(0, 0.001)  # 1mA noise floor
         return MeasurementResult(0.0 + noise, "A")
-    def clear_protection(self):
+    def clear_protection(self) -> None:
         print("[SIM] PSU Protection Cleared")
     def measure_power(self) -> MeasurementResult:
         return MeasurementResult(getattr(self, "_voltage", 0.0) * 0.5, "W")
-    def set_foldback_mode(self, mode: str):
+    def set_foldback_mode(self, mode: str) -> None:
         self._foldback_mode = mode
         print(f"[SIM] PSU Foldback Mode: {mode}")
-    def set_foldback_delay(self, seconds: float):
+    def set_foldback_delay(self, seconds: float) -> None:
         self._foldback_delay = seconds
         print(f"[SIM] PSU Foldback Delay: {seconds} s")
-    def set_autostart(self, state: bool):
+    def set_autostart(self, state: bool) -> None:
         self._autostart = state
         print(f"[SIM] PSU Autostart: {'ON' if state else 'OFF'}")
     def get_mode(self) -> str: return "CV"
 
 @register_driver("SA")
 class SimulatedSpectrumAnalyzer(SimulatedBaseDriver, SpectrumAnalyzer):
-    def __init__(self, resource: str, latency: float = 0.01):
+    def __init__(self, resource: str, latency: float = 0.01) -> None:
         super().__init__(resource, latency)
         self._center_freq = 2.4e9
         self._span = 100e6
         self._rbw = 1e3
         self._vbw = 1e3
-        self._sweep_data: list[tuple[float, float]] = []
+        self._sweep_data: List[Tuple[float, float]] = []
         self._ref_level = -10
         self._atn = 10
 
-    def _generate_sweep_data(self):
+    def _generate_sweep_data(self) -> None:
         num_points = 1001
         start_freq = self._center_freq - self._span / 2
         stop_freq = self._center_freq + self._span / 2
@@ -158,41 +158,41 @@ class SimulatedSpectrumAnalyzer(SimulatedBaseDriver, SpectrumAnalyzer):
         freq, _ = self._sweep_data[peak_idx]
         self._sweep_data[peak_idx] = (freq, random.uniform(-30, -10))
 
-    def peak_search(self):
+    def peak_search(self) -> None:
         if not self._sweep_data:
             self._generate_sweep_data()
         max_idx = max(range(len(self._sweep_data)), key=lambda i: self._sweep_data[i][1])
         freq, amp = self._sweep_data[max_idx]
         return MeasurementResult(freq, "Hz"), MeasurementResult(amp, "dBm")
 
-    def get_marker_amplitude(self): 
+    def get_marker_amplitude(self) -> MeasurementResult: 
         time.sleep(self.latency)
         noise = random.gauss(0, 0.1)  # 0.1 dBm noise
         return MeasurementResult(-20.0 + noise, "dBm")
-    def set_center_freq(self, hz):
+    def set_center_freq(self, hz: float) -> None:
         self._validate_frequency(hz)
         self._center_freq = hz
         self._sweep_data = []
         print(f"[SIM] Setting SA Center Freq: {hz}")
-    def set_ref_level(self, dbm):
+    def set_ref_level(self, dbm: float) -> None:
         self._ref_level = dbm
         print(f"[SIM] SA Ref Level: {dbm} dBm")
 
-    def set_attenuation(self, db):
+    def set_attenuation(self, db: float) -> None:
         self._atn = db
         print(f"[SIM] SA Attenuation: {db} dB")
     def get_center_freq(self) -> float: return self._center_freq
-    def set_span(self, hz):
+    def set_span(self, hz: float) -> None:
         self._span = hz
         self._sweep_data = []
     def get_span(self) -> float: return self._span
-    def set_rbw(self, hz):
+    def set_rbw(self, hz: float) -> None:
         self._rbw = hz
         print(f"[SIM] SA RBW: {hz}")
-    def set_vbw(self, hz):
+    def set_vbw(self, hz: float) -> None:
         self._vbw = hz
         print(f"[SIM] SA VBW: {hz}")
-    def get_trace_data(self):
+    def get_trace_data(self) -> MeasurementResult:
         if not self._sweep_data:
             self._generate_sweep_data()
         amps = [amp for _, amp in self._sweep_data]
@@ -201,33 +201,33 @@ class SimulatedSpectrumAnalyzer(SimulatedBaseDriver, SpectrumAnalyzer):
 @register_driver("NA")
 @register_driver("VNA")
 class SimulatedNetworkAnalyzer(SimulatedBaseDriver, NetworkAnalyzer):
-    def set_start_frequency(self, freq_hz):
+    def set_start_frequency(self, freq_hz: float) -> None:
         print(f"[SIM] VNA Start Frequency: {freq_hz} Hz")
-    def set_stop_frequency(self, freq_hz):
+    def set_stop_frequency(self, freq_hz: float) -> None:
         print(f"[SIM] VNA Stop Frequency: {freq_hz} Hz")
-    def set_center_frequency(self, freq_hz):
+    def set_center_frequency(self, freq_hz: float) -> None:
         print(f"[SIM] VNA Center Frequency: {freq_hz} Hz")
-    def set_span(self, span_hz):
+    def set_span(self, span_hz: float) -> None:
         print(f"[SIM] VNA Span: {span_hz} Hz")
-    def set_points(self, num_points):
+    def set_points(self, num_points: int) -> None:
         print(f"[SIM] VNA Points: {num_points}")
-    def set_if_bandwidth(self, hz: float):
+    def set_if_bandwidth(self, hz: float) -> None:
         print(f"[SIM] VNA IF Bandwidth: {hz} Hz")
-    def set_power_level(self, dbm: float):
+    def set_power_level(self, dbm: float) -> None:
         print(f"[SIM] VNA Power Level: {dbm} dBm")
-    def set_sweep_type(self, sweep_type: str):
+    def set_sweep_type(self, sweep_type: str) -> None:
         print(f"[SIM] VNA Sweep Type: {sweep_type}")
-    def set_averaging(self, state: bool, count: int = 10):
+    def set_averaging(self, state: bool, count: int = 10) -> None:
         print(f"[SIM] VNA Averaging: {'ON' if state else 'OFF'}, count={count}")
-    def set_continuous(self, state: bool):
+    def set_continuous(self, state: bool) -> None:
         print(f"[SIM] VNA Continuous: {'ON' if state else 'OFF'}")
-    def set_parameter(self, parameter: str):
+    def set_parameter(self, parameter: str) -> None:
         print(f"[SIM] VNA Setting Parameter: {parameter}")
-    def get_trace_data(self, measurement_name: str = "CH1_S11_1"): 
+    def get_trace_data(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult: 
         # Base random trace + Gaussian noise for realism
         data = [random.uniform(-40, -10) + random.gauss(0, 0.5) for _ in range(201)]
         return MeasurementResult(data, "dB")
-    def get_complex_trace(self, measurement_name: str = "CH1_S11_1"): 
+    def get_complex_trace(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult: 
         # Generate some random complex numbers with magnitude between 0.01 and 0.3
         data = [complex(random.uniform(-0.3, 0.3), random.uniform(-0.3, 0.3)) for _ in range(201)]
         return MeasurementResult(data, "IQ")
@@ -239,7 +239,7 @@ class SimulatedNetworkAnalyzer(SimulatedBaseDriver, NetworkAnalyzer):
         data = [complex(random.uniform(45, 55), random.uniform(-2, 2)) for _ in range(201)]
         return MeasurementResult(data, "Z")
 
-    def peak_search(self, marker: int = 1):
+    def peak_search(self, marker: int = 1) -> None:
         print(f"[SIM] VNA Peak Search: marker {marker}")
     def get_marker_x(self, marker: int = 1) -> float:
         print(f"[SIM] VNA Get Marker X: marker {marker}")
@@ -247,27 +247,27 @@ class SimulatedNetworkAnalyzer(SimulatedBaseDriver, NetworkAnalyzer):
     def get_marker_y(self, marker: int = 1) -> float:
         print(f"[SIM] VNA Get Marker Y: marker {marker}")
         return -10.0
-    def save_state(self, filename: str): pass
-    def load_state(self, filename: str): pass
-    def wait_for_sweep(self):
+    def save_state(self, filename: str) -> None: pass
+    def load_state(self, filename: str) -> None: pass
+    def wait_for_sweep(self) -> None:
         time.sleep(0.5) # Simulate sweep time
 
 @register_driver("SCOPE")
 class SimulatedOscilloscope(SimulatedBaseDriver, Oscilloscope):
-    def run(self):
+    def run(self) -> None:
         print("[SIM] Scope: Run")
-    def stop(self):
+    def stop(self) -> None:
         print("[SIM] Scope: Stop")
-    def single(self):
+    def single(self) -> None:
         print("[SIM] Scope: Single")
     def get_waveform(self, channel: int) -> MeasurementResult:
         data = [0.75 if math.sin(i * 0.1) >= 0 else -0.75 for i in range(1000)]
         return MeasurementResult(data, "V")
-    def auto_scale(self):
+    def auto_scale(self) -> None:
         print("[SIM] Scope: Auto Scale")
-    def set_trigger(self, source, level, slope):
+    def set_trigger(self, source: str, level: float, slope: str) -> None:
         print(f"[SIM] Scope Trigger: source={source}, level={level}, slope={slope}")
-    def get_screenshot(self): return b"SIM_SCREENSHOT"
+    def get_screenshot(self) -> bytes: return b"SIM_SCREENSHOT"
     def measure_frequency(self, channel: int = 1) -> MeasurementResult:
         print(f"[SIM] Scope Measure Frequency: channel {channel}")
         return MeasurementResult(1000.0, "Hz")
@@ -280,32 +280,32 @@ class SimulatedOscilloscope(SimulatedBaseDriver, Oscilloscope):
 
 @register_driver("SG")
 class SimulatedSignalGenerator(SimulatedBaseDriver, FunctionGenerator):
-    def __init__(self, resource: str):
+    def __init__(self, resource: str) -> None:
         super().__init__(resource)
         self.max_power_dbm = 25.0
         self.max_frequency = 50e9
 
-    def set_frequency(self, hz):
+    def set_frequency(self, hz: float) -> None:
         self._validate_frequency(hz)
         print(f"[SIM] Setting SG Frequency: {hz}")
-    def set_amplitude(self, dbm):
+    def set_amplitude(self, dbm: float) -> None:
         self._validate_power(dbm)
         print(f"[SIM] Setting SG Amplitude: {dbm}")
-    def set_output(self, state):
+    def set_output(self, state: bool) -> None:
         print(f"[SIM] SG Output: {'ON' if state else 'OFF'}")
-    def set_mod_state(self, mod_type, state):
+    def set_mod_state(self, mod_type: str, state: bool) -> None:
         print(f"[SIM] SG Mod State: {mod_type} -> {'ON' if state else 'OFF'}")
-    def start_sweep(self, start, stop, points, dwell):
+    def start_sweep(self, start: float, stop: float, points: int, dwell: float) -> None:
         print(f"[SIM] SG Start Sweep: {start}-{stop} Hz, {points} pts, {dwell}s dwell")
-    def configure_list_sweep(self, freq_list, power_list):
+    def configure_list_sweep(self, freq_list: List[float], power_list: List[float]) -> None:
         print(f"[SIM] SG Configure List Sweep: {len(freq_list)} points")
-    def set_reference_clock(self, source):
+    def set_reference_clock(self, source: str) -> None:
         print(f"[SIM] SG Reference Clock: {source}")
-    def set_voltage(self, vpp):
+    def set_voltage(self, vpp: float) -> None:
         print(f"[SIM] SG Voltage: {vpp} Vpp")
-    def set_offset(self, volts):
+    def set_offset(self, volts: float) -> None:
         print(f"[SIM] SG Offset: {volts} V")
-    def set_waveform(self, shape):
+    def set_waveform(self, shape: str) -> None:
         print(f"[SIM] Setting Waveform: {shape}")
 
 
@@ -314,7 +314,7 @@ class SimulatedSignalGenerator(SimulatedBaseDriver, FunctionGenerator):
 class SimulatedKeithley2400(SimulatedBaseDriver, Multimeter, PowerSupply):
     """Simulated Keithley 2400 SourceMeter."""
 
-    def __init__(self, resource: str):
+    def __init__(self, resource: str) -> None:
         super().__init__(resource)
         self._voltage = 0.0
         self._current = 0.0
@@ -322,39 +322,39 @@ class SimulatedKeithley2400(SimulatedBaseDriver, Multimeter, PowerSupply):
         self._output = False
         self._source_mode = "VOLT"
 
-    def connect(self):
+    def connect(self) -> None:
         super().connect()
         self.identity = {"manufacturer": "KEITHLEY", "model": "2400", "serial": "SIM-2400", "version": "1.0"}
 
-    def get_id(self): return "KEITHLEY,2400,SIM-2400,1.0"
+    def get_id(self) -> str: return "KEITHLEY,2400,SIM-2400,1.0"
 
     # ── PowerSupply ────────────────────────────────────────
-    def set_voltage(self, voltage):
+    def set_voltage(self, voltage: float) -> None:
         self._voltage = voltage
         print(f"[SIM] K2400 Source Voltage: {voltage} V")
     def get_voltage(self) -> float:
         return self._voltage
-    def set_current_limit(self, current):
+    def set_current_limit(self, current: float) -> None:
         self._current_limit = current
         print(f"[SIM] K2400 Compliance: {current} A")
-    def set_current(self, current):
+    def set_current(self, current: float) -> None:
         self._current = current
         self._source_mode = "CURR"
         print(f"[SIM] K2400 Source Current: {current} A")
     def get_current(self) -> MeasurementResult:
         return MeasurementResult(self._current if self._source_mode == "CURR" else 0.0, "A")
-    def set_output(self, state):
+    def set_output(self, state: bool) -> None:
         self._output = state
         print(f"[SIM] K2400 Output: {'ON' if state else 'OFF'}")
     def get_output(self) -> bool:
         return self._output
-    def set_ovp(self, voltage):
+    def set_ovp(self, voltage: float) -> None:
         print(f"[SIM] K2400 OVP: {voltage} V")
-    def set_ocp(self, current):
+    def set_ocp(self, current: float) -> None:
         print(f"[SIM] K2400 OCP: {current} A")
     def measure_voltage_actual(self) -> MeasurementResult:
         return MeasurementResult(self._voltage, "V")
-    def clear_protection(self):
+    def clear_protection(self) -> None:
         print("[SIM] K2400 Clear Protection")
     def measure_power(self) -> MeasurementResult:
         return MeasurementResult(self._voltage * 0.05, "W")
@@ -362,74 +362,74 @@ class SimulatedKeithley2400(SimulatedBaseDriver, Multimeter, PowerSupply):
         return "CV" if self._source_mode == "VOLT" else "CC"
 
     # ── Multimeter ─────────────────────────────────────────
-    def configure_voltage_dc(self): pass
-    def configure_voltage_ac(self):
+    def configure_voltage_dc(self) -> None: pass
+    def configure_voltage_ac(self) -> None:
         print("[SIM] K2400: AC voltage not supported, configuring DC voltage instead")
         self._source_mode = "VOLT"
-    def measure_voltage(self, ac=False):
+    def measure_voltage(self, ac: bool = False) -> MeasurementResult:
         base = self._voltage if self._voltage != 0.0 else 5.0
         noise = random.gauss(0, base * 0.001)  # 0.1% noise
         return MeasurementResult(base + noise, "V")
-    def measure_resistance(self, four_wire=False):
+    def measure_resistance(self, four_wire: bool = False) -> MeasurementResult:
         noise = random.gauss(0, 1000.0 * 0.005)  # 0.5% noise
         return MeasurementResult(1000.0 + noise, "Ohm")
-    def measure_current(self, ac=False):
+    def measure_current(self, ac: bool = False) -> MeasurementResult:
         noise = random.gauss(0, 0.01 * 0.005)  # 0.5% noise
         return MeasurementResult(0.01 + noise, "A")
-    def set_auto_range(self, state): pass
+    def set_auto_range(self, state: bool) -> None: pass
 
 
 @register_driver("DMM")
 class SimulatedKeysight34461A(SimulatedBaseDriver, Multimeter):
     """Simulated Keysight 34461A Truevolt DMM."""
 
-    def __init__(self, resource: str):
+    def __init__(self, resource: str) -> None:
         super().__init__(resource)
         self._auto_range = True
 
-    def connect(self):
+    def connect(self) -> None:
         super().connect()
         self.identity = {"manufacturer": "KEYSIGHT", "model": "34461A", "serial": "SIM-34461A", "version": "1.0"}
 
-    def get_id(self): return "KEYSIGHT,34461A,SIM-34461A,1.0"
+    def get_id(self) -> str: return "KEYSIGHT,34461A,SIM-34461A,1.0"
 
-    def configure_voltage_dc(self):
+    def configure_voltage_dc(self) -> None:
         print("[SIM] 34461A Configured: DC Voltage")
-    def configure_voltage_ac(self):
+    def configure_voltage_ac(self) -> None:
         print("[SIM] 34461A Configured: AC Voltage")
-    def measure_voltage(self, ac=False):
+    def measure_voltage(self, ac: bool = False) -> MeasurementResult:
         val = 4.95 if not ac else 4.90
         noise = random.gauss(0, val * 0.0005)  # 0.05% noise for precision DMM
         return MeasurementResult(val + noise, "V")
-    def measure_resistance(self, four_wire=False):
+    def measure_resistance(self, four_wire: bool = False) -> MeasurementResult:
         noise = random.gauss(0, 1000.0 * 0.002)  # 0.2% noise
         return MeasurementResult(1000.0 + noise, "Ohm")
-    def measure_current(self, ac=False):
+    def measure_current(self, ac: bool = False) -> MeasurementResult:
         val = 0.05 if not ac else 0.04
         noise = random.gauss(0, val * 0.001)  # 0.1% noise
         return MeasurementResult(val + noise, "A")
-    def set_auto_range(self, state):
+    def set_auto_range(self, state: bool) -> None:
         self._auto_range = state
-    def measure_frequency(self):
+    def measure_frequency(self) -> MeasurementResult:
         return MeasurementResult(1000.0, "Hz")
-    def measure_period(self):
+    def measure_period(self) -> MeasurementResult:
         return MeasurementResult(0.001, "s")
-    def measure_temperature(self, probe_type="TC", probe="K"):
+    def measure_temperature(self, probe_type: str = "TC", probe: str = "K") -> MeasurementResult:
         return MeasurementResult(23.5, "C")
-    def measure_capacitance(self):
+    def measure_capacitance(self) -> MeasurementResult:
         return MeasurementResult(10e-6, "F")
-    def measure_diode(self):
+    def measure_diode(self) -> MeasurementResult:
         return MeasurementResult(0.6, "V")
-    def measure_duty_cycle(self):
+    def measure_duty_cycle(self) -> MeasurementResult:
         return MeasurementResult(50.0, "%")
-    def measure_v_peak_to_peak(self):
+    def measure_v_peak_to_peak(self) -> MeasurementResult:
         return MeasurementResult(2.0, "V")
 
 
 @register_driver("LOAD")
 @register_driver("ELOAD")
 class SimulatedElectronicLoad(SimulatedBaseDriver, ElectronicLoad):
-    def __init__(self, resource: str):
+    def __init__(self, resource: str) -> None:
         super().__init__(resource)
         self.max_voltage = 150.0
         self.max_current = 30.0
@@ -446,19 +446,19 @@ class SimulatedElectronicLoad(SimulatedBaseDriver, ElectronicLoad):
         self._ovp_limit = 60.0
         self._ocp_limit = 30.0
         self._opp_limit = 150.0
-        self._protection_tripped = False
+        self._protection_tripped: Union[str, bool] = False
 
         self.source_voltage = 12.0
         self.source_resistance = 0.05
 
-    def connect(self):
+    def connect(self) -> None:
         super().connect()
         self.identity = {"manufacturer": "SIM", "model": "SIM_ELOAD_3000", "serial": "456", "version": "1.0"}
 
-    def get_id(self):
+    def get_id(self) -> str:
         return "SIM_ELOAD_3000"
 
-    def set_mode(self, mode: str):
+    def set_mode(self, mode: str) -> None:
         mode_upper = mode.upper()
         if mode_upper not in ["CC", "CV", "CR", "CP"]:
             raise ValueError(f"Invalid electronic load mode: {mode}")
@@ -468,7 +468,7 @@ class SimulatedElectronicLoad(SimulatedBaseDriver, ElectronicLoad):
     def get_mode(self) -> str:
         return self._mode
 
-    def set_current(self, amps: float):
+    def set_current(self, amps: float) -> None:
         if amps < 0 or amps > self.max_current:
             raise ValueError(f"Current {amps} A is out of instrument range (0 to {self.max_current} A)")
         self._target_current = amps
@@ -476,7 +476,7 @@ class SimulatedElectronicLoad(SimulatedBaseDriver, ElectronicLoad):
     def get_current(self) -> float:
         return self._target_current
 
-    def set_voltage(self, volts: float):
+    def set_voltage(self, volts: float) -> None:
         if volts < 0 or volts > self.max_voltage:
             raise ValueError(f"Voltage {volts} V is out of instrument range (0 to {self.max_voltage} V)")
         self._target_voltage = volts
@@ -484,7 +484,7 @@ class SimulatedElectronicLoad(SimulatedBaseDriver, ElectronicLoad):
     def get_voltage(self) -> float:
         return self._target_voltage
 
-    def set_resistance(self, ohms: float):
+    def set_resistance(self, ohms: float) -> None:
         if ohms <= 0 or ohms > 100000.0:
             raise ValueError(f"Resistance {ohms} Ohm is out of valid range")
         self._target_resistance = ohms
@@ -492,7 +492,7 @@ class SimulatedElectronicLoad(SimulatedBaseDriver, ElectronicLoad):
     def get_resistance(self) -> float:
         return self._target_resistance
 
-    def set_power(self, watts: float):
+    def set_power(self, watts: float) -> None:
         if watts < 0 or watts > self.max_power:
             raise ValueError(f"Power {watts} W is out of instrument range (0 to {self.max_power} W)")
         self._target_power = watts
@@ -500,7 +500,7 @@ class SimulatedElectronicLoad(SimulatedBaseDriver, ElectronicLoad):
     def get_power(self) -> float:
         return self._target_power
 
-    def set_input(self, state: bool):
+    def set_input(self, state: bool) -> None:
         if state and self._protection_tripped:
             raise RuntimeError(f"Cannot enable input: Protection tripped ({self._protection_tripped})")
         self._input_enabled = state
@@ -511,20 +511,20 @@ class SimulatedElectronicLoad(SimulatedBaseDriver, ElectronicLoad):
     def get_input(self) -> bool:
         return self._input_enabled
 
-    def set_ovp(self, voltage: float):
+    def set_ovp(self, voltage: float) -> None:
         self._ovp_limit = voltage
 
-    def set_ocp(self, current: float):
+    def set_ocp(self, current: float) -> None:
         self._ocp_limit = current
 
-    def set_opp(self, power: float):
+    def set_opp(self, power: float) -> None:
         self._opp_limit = power
 
-    def clear_protection(self):
+    def clear_protection(self) -> None:
         self._protection_tripped = False
         print("[SIM] Electronic Load protection cleared.")
 
-    def _update_physics(self) -> tuple:
+    def _update_physics(self) -> Tuple[float, float, float]:
         if not self._input_enabled or self._protection_tripped:
             return self.source_voltage, 0.0, 0.0
 
@@ -595,7 +595,7 @@ class SimulatedElectronicLoad(SimulatedBaseDriver, ElectronicLoad):
         noise = random.uniform(-0.001, 0.001) * p_act
         return MeasurementResult(p_act + noise, "W")
 
-    def shutdown_safety(self):
+    def shutdown_safety(self) -> None:
         self.set_input(False)
         self.sync_config()
 
@@ -603,18 +603,18 @@ class SimulatedElectronicLoad(SimulatedBaseDriver, ElectronicLoad):
 class SimulatedFrequencyCounter(SimulatedBaseDriver, FrequencyCounter):
     """Simulated Frequency Counter / Timer/Counter."""
 
-    def __init__(self, resource: str):
+    def __init__(self, resource: str) -> None:
         super().__init__(resource)
         self._impedance = 1e6
         self._trigger_level = 0.0
         self._coupling = "DC"
         self._auto_range = True
 
-    def connect(self):
+    def connect(self) -> None:
         super().connect()
         self.identity = {"manufacturer": "SIM", "model": "SIM_COUNTER", "serial": "999", "version": "1.0"}
 
-    def get_id(self): return "SIM_COUNTER"
+    def get_id(self) -> str: return "SIM_COUNTER"
 
     def measure_frequency(self, range: str = "AUTO") -> MeasurementResult:
         time.sleep(self.latency)
@@ -629,18 +629,18 @@ class SimulatedFrequencyCounter(SimulatedBaseDriver, FrequencyCounter):
         print(f"[SIM] Time Interval: {start_trigger} -> {stop_trigger}")
         return MeasurementResult(50e-9, "s")
 
-    def set_impedance(self, ohms: float):
+    def set_impedance(self, ohms: float) -> None:
         self._impedance = ohms
         print(f"[SIM] Counter Impedance: {ohms} Ohm")
 
-    def set_trigger_level(self, volts: float):
+    def set_trigger_level(self, volts: float) -> None:
         self._trigger_level = volts
         print(f"[SIM] Counter Trigger Level: {volts} V")
 
-    def set_coupling(self, dc_ac: str):
+    def set_coupling(self, dc_ac: str) -> None:
         self._coupling = dc_ac.upper()
         print(f"[SIM] Counter Coupling: {self._coupling}")
 
-    def set_auto_range(self, state: bool):
+    def set_auto_range(self, state: bool) -> None:
         self._auto_range = state
         print(f"[SIM] Counter Auto Range: {'ON' if state else 'OFF'}")

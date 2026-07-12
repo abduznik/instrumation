@@ -7,14 +7,14 @@ from ..results import MeasurementResult
 class Keithley2000(RealDriver, Multimeter):
     """Driver for Keithley 2000 Series Digital Multimeters."""
 
-    def preset(self, automation_optimized: bool = True):
+    def preset(self, automation_optimized: bool = True) -> None:
         self.write("*RST")
         self.wait_ready()
 
-    def configure_voltage_dc(self):
+    def configure_voltage_dc(self) -> None:
         self.safe_send(":CONF:VOLT:DC")
 
-    def configure_voltage_ac(self):
+    def configure_voltage_ac(self) -> None:
         self.safe_send(":CONF:VOLT:AC")
 
     def measure_voltage(self, ac: bool = False) -> MeasurementResult:
@@ -34,7 +34,7 @@ class Keithley2000(RealDriver, Multimeter):
         val = self.query_ascii(":READ?")
         return MeasurementResult(float(val.split(',')[0]), "A")
 
-    def set_auto_range(self, state: bool):
+    def set_auto_range(self, state: bool) -> None:
         val = "ON" if state else "OFF"
         self.safe_send(f":VOLT:RANG:AUTO {val}")
 
@@ -50,7 +50,7 @@ class Keithley2000(RealDriver, Multimeter):
         self._unsupported_feature("Vpp")
         return MeasurementResult(0.0, "V")
 
-    def shutdown_safety(self):
+    def shutdown_safety(self) -> None:
         self.set_auto_range(True)
         self.sync_config()
 
@@ -63,20 +63,20 @@ class Keithley2400(Keithley2000, PowerSupply):
     making it a true Source Measure Unit.
     """
 
-    def __init__(self, resource: str):
+    def __init__(self, resource: str) -> None:
         super().__init__(resource)
         self.max_voltage = 210.0
         self.max_power_dbm = -999
         self._source_mode = "VOLT"
 
-    def preset(self, automation_optimized: bool = True):
+    def preset(self, automation_optimized: bool = True) -> None:
         self.write("*RST")
         self.safe_send(":SOUR:CLE:AUTO ON")
         self.wait_ready()
 
     # ── Source functions (PowerSupply) ─────────────────────────
 
-    def set_voltage(self, voltage: float):
+    def set_voltage(self, voltage: float) -> None:
         self._validate_frequency(voltage)
         self._source_mode = "VOLT"
         self.safe_send(f":SOUR:VOLT {voltage}")
@@ -84,40 +84,40 @@ class Keithley2400(Keithley2000, PowerSupply):
     def get_voltage(self) -> float:
         return float(self.query_ascii(":SOUR:VOLT?"))
 
-    def set_current_limit(self, current: float):
+    def set_current_limit(self, current: float) -> None:
         self._source_mode = "VOLT"
         self.safe_send(f":SOUR:CURR {current}")
 
-    def set_current(self, current: float):
+    def set_current(self, current: float) -> None:
         self._source_mode = "CURR"
         self.safe_send(f":SOUR:CURR {current}")
 
     def get_current(self) -> MeasurementResult:
         return MeasurementResult(float(self.query_ascii(":SENS:CURR:DC?")), "A")
 
-    def set_output(self, state: bool):
+    def set_output(self, state: bool) -> None:
         self.safe_send(f":OUTP {'ON' if state else 'OFF'}")
 
     def get_output(self) -> bool:
         val = self.query_ascii(":OUTP?").strip()
         return val == "1"
 
-    def set_ovp(self, voltage: float):
+    def set_ovp(self, voltage: float) -> None:
         self.safe_send(f":SOUR:VOLT:PROT {voltage}")
 
-    def set_ocp(self, current: float):
+    def set_ocp(self, current: float) -> None:
         self.safe_send(f":SOUR:CURR:PROT {current}")
 
     def measure_voltage_actual(self) -> MeasurementResult:
         return self.measure_voltage()
 
-    def clear_protection(self):
+    def clear_protection(self) -> None:
         self.safe_send(":SOUR:CLE:IMM")
 
-    def set_voltage_range(self, voltage_range: float):
+    def set_voltage_range(self, voltage_range: float) -> None:
         self.safe_send(f":SOUR:VOLT:RANG {voltage_range}")
 
-    def set_current_range(self, current_range: float):
+    def set_current_range(self, current_range: float) -> None:
         self.safe_send(f":SOUR:CURR:RANG {current_range}")
 
     def get_mode(self) -> str:
@@ -135,10 +135,10 @@ class Keithley2400(Keithley2000, PowerSupply):
 
     # ── Measure functions (Multimeter) ─────────────────────────
 
-    def configure_voltage_dc(self):
+    def configure_voltage_dc(self) -> None:
         self.safe_send(':SENS:FUNC "VOLT:DC"')
 
-    def configure_voltage_ac(self):
+    def configure_voltage_ac(self) -> None:
         self._unsupported_feature("AC Voltage on 2400")
         self.safe_send(':SENS:FUNC "VOLT:DC"')
 
@@ -166,11 +166,11 @@ class Keithley2400(Keithley2000, PowerSupply):
         val = self.query_ascii(":READ?")
         return MeasurementResult(float(val.split(',')[1]), "A")
 
-    def set_auto_range(self, state: bool):
+    def set_auto_range(self, state: bool) -> None:
         val = "ON" if state else "OFF"
         self.safe_send(f":SOUR:VOLT:RANG:AUTO {val}")
 
-    def shutdown_safety(self):
+    def shutdown_safety(self) -> None:
         self.set_output(False)
         self.safe_send(":SOUR:VOLT 0")
         self.safe_send(":SOUR:CURR 0")

@@ -7,13 +7,13 @@ from ..results import MeasurementResult
 class SiglentSDS(RealDriver, Oscilloscope):
     """Refined Driver for Siglent SDS Series Oscilloscopes."""
 
-    def preset(self, automation_optimized: bool = True):
+    def preset(self, automation_optimized: bool = True) -> None:
         self.write("*RST")
         self.wait_ready()
 
-    def run(self): self.write("ARM")
-    def stop(self): self.write("STOP")
-    def single(self): self.write("SING")
+    def run(self) -> None: self.write("ARM")
+    def stop(self) -> None: self.write("STOP")
+    def single(self) -> None: self.write("SING")
 
     def get_waveform(self, channel: int) -> MeasurementResult:
         # Siglent requires reading raw bytes to handle its specific header
@@ -29,10 +29,10 @@ class SiglentSDS(RealDriver, Oscilloscope):
             return MeasurementResult([float(b) for b in data_bytes], "V")
         return MeasurementResult([], "V")
 
-    def auto_scale(self):
+    def auto_scale(self) -> None:
         self.safe_send("AUTOSCALE")
 
-    def set_trigger(self, source: str, level: float, slope: str):
+    def set_trigger(self, source: str, level: float, slope: str) -> None:
         self.safe_send(f"TRSE EDGE,SR,{source},HT,OFF")
         self.safe_send(f"{source}:TRLV {level}V")
         self.safe_send(f"{source}:TRSL {slope.upper()}")
@@ -64,7 +64,7 @@ class SiglentSDS(RealDriver, Oscilloscope):
         val = self._measure_pava(channel, "PKPK")
         return MeasurementResult(val, "V")
 
-    def shutdown_safety(self):
+    def shutdown_safety(self) -> None:
         self.stop()
         self.sync_config()
 
@@ -73,11 +73,11 @@ class SiglentSDS(RealDriver, Oscilloscope):
 class SiglentSDL1000X(RealDriver, ElectronicLoad):
     """Driver for Siglent SDL1000X series DC Electronic Loads."""
 
-    def preset(self, automation_optimized: bool = True):
+    def preset(self, automation_optimized: bool = True) -> None:
         self.write("*RST")
         self.wait_ready()
 
-    def set_mode(self, mode: str):
+    def set_mode(self, mode: str) -> None:
         # Siglent SDL modes: CC, CV, CR, CP
         mode_upper = mode.upper()
         if mode_upper not in ["CC", "CV", "CR", "CP"]:
@@ -87,31 +87,31 @@ class SiglentSDL1000X(RealDriver, ElectronicLoad):
     def get_mode(self) -> str:
         return self.query_ascii(":SOUR:FUNC?").strip()
 
-    def set_current(self, amps: float):
+    def set_current(self, amps: float) -> None:
         self.safe_send(f":SOUR:CURR:LEV:IMM {amps}")
 
     def get_current(self) -> float:
         return float(self.query_ascii(":SOUR:CURR:LEV:IMM?"))
 
-    def set_voltage(self, volts: float):
+    def set_voltage(self, volts: float) -> None:
         self.safe_send(f":SOUR:VOLT:LEV:IMM {volts}")
 
     def get_voltage(self) -> float:
         return float(self.query_ascii(":SOUR:VOLT:LEV:IMM?"))
 
-    def set_resistance(self, ohms: float):
+    def set_resistance(self, ohms: float) -> None:
         self.safe_send(f":SOUR:RES:LEV:IMM {ohms}")
 
     def get_resistance(self) -> float:
         return float(self.query_ascii(":SOUR:RES:LEV:IMM?"))
 
-    def set_power(self, watts: float):
+    def set_power(self, watts: float) -> None:
         self.safe_send(f":SOUR:POW:LEV:IMM {watts}")
 
     def get_power(self) -> float:
         return float(self.query_ascii(":SOUR:POW:LEV:IMM?"))
 
-    def set_input(self, state: bool):
+    def set_input(self, state: bool) -> None:
         self.safe_send(f":SOUR:INP:STAT {'ON' if state else 'OFF'}")
 
     def get_input(self) -> bool:
@@ -129,18 +129,18 @@ class SiglentSDL1000X(RealDriver, ElectronicLoad):
         val = self.query_ascii(":MEAS:POW?")
         return MeasurementResult(float(val), "W")
 
-    def set_ovp(self, voltage: float):
+    def set_ovp(self, voltage: float) -> None:
         self.safe_send(f":SOUR:VOLT:PROT {voltage}")
 
-    def set_ocp(self, current: float):
+    def set_ocp(self, current: float) -> None:
         self.safe_send(f":SOUR:CURR:PROT {current}")
 
-    def set_opp(self, power: float):
+    def set_opp(self, power: float) -> None:
         self.safe_send(f":SOUR:POW:PROT {power}")
 
-    def clear_protection(self):
+    def clear_protection(self) -> None:
         self.safe_send(":SOUR:PROT:CLE")
 
-    def shutdown_safety(self):
+    def shutdown_safety(self) -> None:
         self.set_input(False)
         self.sync_config()

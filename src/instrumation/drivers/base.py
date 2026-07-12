@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import List, Union, Dict
+from typing import List, Union, Dict, Any, Optional
 import asyncio
 from ..results import MeasurementResult
 from ..exceptions import OverloadError, ConfigurationError
 
 class InstrumentDriver(ABC):
     """Abstract Base Class for all instrument drivers following the 'Abstract Hardware' spec."""
-    def __init__(self, resource: str):
+    def __init__(self, resource: str) -> None:
         self.resource = resource
         self.connected = False
         self.is_simulated = False
@@ -22,13 +22,13 @@ class InstrumentDriver(ABC):
         self.max_power_dbm = 0.0
         self.max_voltage = 0.0
 
-    def __getattr__(self, name: str):
+    def __getattr__(self, name: str) -> Any:
         """Dynamic async wrapper for all driver methods."""
         if name.startswith("async_"):
             sync_name = name[6:]
             if hasattr(self, sync_name):
                 sync_method = getattr(self, sync_name)
-                async def wrapper(*args, **kwargs):
+                async def wrapper(*args: Any, **kwargs: Any) -> Any:
                     return await asyncio.to_thread(sync_method, *args, **kwargs)
                 return wrapper
         raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
@@ -39,25 +39,25 @@ class InstrumentDriver(ABC):
         return self.resource
 
     @abstractmethod
-    def connect(self):
+    def connect(self) -> None:
         """Establishes connection and performs identity/option discovery."""
         pass
 
     @abstractmethod
-    def disconnect(self):
+    def disconnect(self) -> None:
         """Safely tears down connection."""
         pass
 
-    def close(self):
+    def close(self) -> None:
         self.disconnect()
 
     @abstractmethod
-    def write(self, command: str): pass
+    def write(self, command: str) -> None: pass
 
     @abstractmethod
     def query(self, command: str) -> str: pass
 
-    def safe_send(self, command: str):
+    def safe_send(self, command: str) -> None:
         """Sends command and immediately checks SYST:ERR?."""
         raise NotImplementedError()
 
@@ -74,38 +74,38 @@ class InstrumentDriver(ABC):
 
     # --- Global Logic & Synchronization ---
     @abstractmethod
-    def preset(self, automation_optimized: bool = True): pass
+    def preset(self, automation_optimized: bool = True) -> None: pass
 
     @abstractmethod
-    def clear_status(self):
+    def clear_status(self) -> None:
         """Executes *CLS."""
         pass
 
     @abstractmethod
-    def sync_config(self):
+    def sync_config(self) -> None:
         """Executes *CLS and *WAI for a clean slate."""
         pass
 
     @abstractmethod
-    def wait_ready(self, timeout: float = 30.0):
+    def wait_ready(self, timeout: float = 30.0) -> None:
         """Standard polling loop for *OPC?."""
         pass
 
     @abstractmethod
-    def shutdown_safety(self):
+    def shutdown_safety(self) -> None:
         """Emergency shutdown protocol (Outputs OFF, Power/Volt 0)."""
         pass
 
     @abstractmethod
-    def check_errors(self):
+    def check_errors(self) -> None:
         """Queries SYST:ERR? and updates local error_stack."""
         pass
 
-    def save_state(self, index: Union[int, str]):
+    def save_state(self, index: Union[int, str]) -> None:
         """Saves current state to memory."""
         self._unsupported_feature("save_state")
 
-    def load_state(self, index: Union[int, str]):
+    def load_state(self, index: Union[int, str]) -> None:
         """Recalls state from memory."""
         self._unsupported_feature("load_state")
 
@@ -126,14 +126,14 @@ class InstrumentDriver(ABC):
         self._validate_power(dbm)
         return f"{dbm:.2f} DBM"
 
-    def _unsupported_feature(self, feature_name: str):
+    def _unsupported_feature(self, feature_name: str) -> None:
         print(f"Warning: Feature '{feature_name}' is not supported by {self.identity.get('model', 'Instrument')}")
 
-    def _validate_frequency(self, hz: float):
+    def _validate_frequency(self, hz: float) -> None:
         if hz < self.min_frequency or hz > self.max_frequency:
             raise ConfigurationError(f"Frequency {hz} Hz out of safety range")
 
-    def _validate_power(self, dbm: float):
+    def _validate_power(self, dbm: float) -> None:
         if dbm > self.max_power_dbm:
             raise OverloadError(f"Power {dbm} dBm exceeds safety limit")
 
@@ -145,11 +145,11 @@ class InstrumentDriver(ABC):
     @abstractmethod
     def measure_v_peak_to_peak(self) -> MeasurementResult: pass
 
-    def __enter__(self):
+    def __enter__(self) -> "InstrumentDriver":
         self.connect()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Any) -> None:
         try:
             self.shutdown_safety()
         except Exception:
@@ -158,7 +158,7 @@ class InstrumentDriver(ABC):
 
 class ElectronicLoad(InstrumentDriver):
     @abstractmethod
-    def set_mode(self, mode: str):
+    def set_mode(self, mode: str) -> None:
         """Sets the operating mode, typically CC, CV, CR, or CP."""
         pass
 
@@ -168,7 +168,7 @@ class ElectronicLoad(InstrumentDriver):
         pass
 
     @abstractmethod
-    def set_current(self, amps: float):
+    def set_current(self, amps: float) -> None:
         """Sets the constant current value in CC mode."""
         pass
 
@@ -178,7 +178,7 @@ class ElectronicLoad(InstrumentDriver):
         pass
 
     @abstractmethod
-    def set_voltage(self, volts: float):
+    def set_voltage(self, volts: float) -> None:
         """Sets the constant voltage value in CV mode."""
         pass
 
@@ -188,7 +188,7 @@ class ElectronicLoad(InstrumentDriver):
         pass
 
     @abstractmethod
-    def set_resistance(self, ohms: float):
+    def set_resistance(self, ohms: float) -> None:
         """Sets the constant resistance value in CR mode."""
         pass
 
@@ -198,7 +198,7 @@ class ElectronicLoad(InstrumentDriver):
         pass
 
     @abstractmethod
-    def set_power(self, watts: float):
+    def set_power(self, watts: float) -> None:
         """Sets the constant power value in CP mode."""
         pass
 
@@ -208,7 +208,7 @@ class ElectronicLoad(InstrumentDriver):
         pass
 
     @abstractmethod
-    def set_input(self, state: bool):
+    def set_input(self, state: bool) -> None:
         """Turns the load input ON (True) or OFF (False)."""
         pass
 
@@ -233,22 +233,22 @@ class ElectronicLoad(InstrumentDriver):
         pass
 
     @abstractmethod
-    def set_ovp(self, voltage: float):
+    def set_ovp(self, voltage: float) -> None:
         """Sets the over-voltage protection limit."""
         pass
 
     @abstractmethod
-    def set_ocp(self, current: float):
+    def set_ocp(self, current: float) -> None:
         """Sets the over-current protection limit."""
         pass
 
     @abstractmethod
-    def set_opp(self, power: float):
+    def set_opp(self, power: float) -> None:
         """Sets the over-power protection limit."""
         pass
 
     @abstractmethod
-    def clear_protection(self):
+    def clear_protection(self) -> None:
         """Clears any tripped protection status."""
         pass
 
@@ -271,30 +271,30 @@ class FrequencyCounter(InstrumentDriver):
         pass
 
     @abstractmethod
-    def set_impedance(self, ohms: float):
+    def set_impedance(self, ohms: float) -> None:
         """Sets input impedance (50 or 1e6)."""
         pass
 
     @abstractmethod
-    def set_trigger_level(self, volts: float):
+    def set_trigger_level(self, volts: float) -> None:
         """Sets the trigger level voltage."""
         pass
 
     @abstractmethod
-    def set_coupling(self, dc_ac: str):
+    def set_coupling(self, dc_ac: str) -> None:
         """Sets input coupling — 'DC' or 'AC'."""
         pass
 
     @abstractmethod
-    def set_auto_range(self, state: bool):
+    def set_auto_range(self, state: bool) -> None:
         """Enables or disables auto-ranging."""
         pass
 
 class Multimeter(InstrumentDriver):
     @abstractmethod
-    def configure_voltage_dc(self): pass
+    def configure_voltage_dc(self) -> None: pass
     @abstractmethod
-    def configure_voltage_ac(self): pass
+    def configure_voltage_ac(self) -> None: pass
     @abstractmethod
     def measure_voltage(self, ac: bool = False) -> MeasurementResult: pass
     @abstractmethod
@@ -302,34 +302,34 @@ class Multimeter(InstrumentDriver):
     @abstractmethod
     def measure_current(self, ac: bool = False) -> MeasurementResult: pass
     @abstractmethod
-    def set_auto_range(self, state: bool): pass
+    def set_auto_range(self, state: bool) -> None: pass
 
 class PowerSupply(InstrumentDriver):
     @abstractmethod
-    def set_voltage(self, voltage: float): pass
+    def set_voltage(self, voltage: float) -> None: pass
     @abstractmethod
     def get_voltage(self) -> float: pass
     @abstractmethod
-    def set_current_limit(self, current: float): pass
-    def set_current(self, current: float):
+    def set_current_limit(self, current: float) -> None: pass
+    def set_current(self, current: float) -> None:
         """Generalized alias for set_current_limit."""
         self.set_current_limit(current)
     @abstractmethod
     def get_current(self) -> MeasurementResult: pass
     @abstractmethod
-    def set_output(self, state: bool): pass
+    def set_output(self, state: bool) -> None: pass
     @abstractmethod
     def get_output(self) -> bool: pass
     @abstractmethod
-    def set_ovp(self, voltage: float): pass
+    def set_ovp(self, voltage: float) -> None: pass
     @abstractmethod
-    def set_ocp(self, current: float): pass
+    def set_ocp(self, current: float) -> None: pass
     @abstractmethod
     def measure_voltage_actual(self) -> MeasurementResult: pass
     @abstractmethod
     def measure_current(self) -> MeasurementResult: pass
 
-    def set_voltage_limit(self, voltage: float):
+    def set_voltage_limit(self, voltage: float) -> None:
         """Generalized alias for Over-Voltage Protection (OVP)."""
         self.set_ovp(voltage)
 
@@ -338,22 +338,22 @@ class PowerSupply(InstrumentDriver):
         return self.measure_voltage_actual()
 
     @abstractmethod
-    def clear_protection(self): pass
+    def clear_protection(self) -> None: pass
 
     def measure_power(self) -> MeasurementResult:
         """Queries the actual measured output power (Watts)."""
         self._unsupported_feature("measure_power")
         return MeasurementResult(0.0, "W")
 
-    def set_foldback_mode(self, mode: str):
+    def set_foldback_mode(self, mode: str) -> None:
         """Sets the foldback protection mode (OFF, CC, or CV)."""
         self._unsupported_feature("set_foldback_mode")
 
-    def set_foldback_delay(self, seconds: float):
+    def set_foldback_delay(self, seconds: float) -> None:
         """Sets the delay for foldback protection."""
         self._unsupported_feature("set_foldback_delay")
 
-    def set_autostart(self, state: bool):
+    def set_autostart(self, state: bool) -> None:
         """Sets the Power-ON state (SAFE/OFF or AUTO/ON)."""
         self._unsupported_feature("set_autostart")
 
@@ -364,21 +364,21 @@ class PowerSupply(InstrumentDriver):
 
 class SpectrumAnalyzer(InstrumentDriver):
     @abstractmethod
-    def peak_search(self): pass
+    def peak_search(self) -> None: pass
     @abstractmethod
     def get_marker_amplitude(self) -> MeasurementResult: pass
     @abstractmethod
-    def set_center_freq(self, hz: float): pass
+    def set_center_freq(self, hz: float) -> None: pass
     @abstractmethod
     def get_center_freq(self) -> float: pass
     @abstractmethod
-    def set_span(self, hz: float): pass
+    def set_span(self, hz: float) -> None: pass
     @abstractmethod
     def get_span(self) -> float: pass
     @abstractmethod
-    def set_rbw(self, hz: float): pass
+    def set_rbw(self, hz: float) -> None: pass
     @abstractmethod
-    def set_vbw(self, hz: float): pass
+    def set_vbw(self, hz: float) -> None: pass
     @abstractmethod
     def get_trace_data(self) -> MeasurementResult: pass
 
@@ -389,40 +389,40 @@ class SpectrumAnalyzer(InstrumentDriver):
 
 class NetworkAnalyzer(InstrumentDriver):
     @abstractmethod
-    def set_start_frequency(self, freq_hz: float): pass
+    def set_start_frequency(self, freq_hz: float) -> None: pass
     @abstractmethod
-    def set_stop_frequency(self, freq_hz: float): pass
+    def set_stop_frequency(self, freq_hz: float) -> None: pass
     
-    def set_center_freq(self, freq_hz: float): 
+    def set_center_freq(self, freq_hz: float) -> None: 
         self._unsupported_feature("set_center_freq")
 
-    def set_center_frequency(self, freq_hz: float):
+    def set_center_frequency(self, freq_hz: float) -> None:
         """Alias for set_center_freq."""
         self.set_center_freq(freq_hz)
     
-    def set_span(self, span_hz: float): 
+    def set_span(self, span_hz: float) -> None: 
         self._unsupported_feature("set_span")
     
     @abstractmethod
-    def set_points(self, num_points: int): pass
+    def set_points(self, num_points: int) -> None: pass
     
-    def set_if_bandwidth(self, hz: float): 
+    def set_if_bandwidth(self, hz: float) -> None: 
         self._unsupported_feature("set_if_bandwidth")
     
-    def set_power_level(self, dbm: float): 
+    def set_power_level(self, dbm: float) -> None: 
         self._unsupported_feature("set_power_level")
     
-    def set_sweep_type(self, sweep_type: str): 
+    def set_sweep_type(self, sweep_type: str) -> None: 
         self._unsupported_feature("set_sweep_type")
     
-    def set_averaging(self, state: bool, count: int = 10): 
+    def set_averaging(self, state: bool, count: int = 10) -> None: 
         self._unsupported_feature("set_averaging")
     
-    def set_continuous(self, state: bool): 
+    def set_continuous(self, state: bool) -> None: 
         self._unsupported_feature("set_continuous")
     
     @abstractmethod
-    def set_parameter(self, parameter: str): pass  # e.g., "S11", "S21"
+    def set_parameter(self, parameter: str) -> None: pass  # e.g., "S11", "S21"
     
     @abstractmethod
     def get_trace_data(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult: pass
@@ -433,7 +433,7 @@ class NetworkAnalyzer(InstrumentDriver):
     @abstractmethod
     def get_smith_data(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult: pass
     
-    def peak_search(self, marker: int = 1): 
+    def peak_search(self, marker: int = 1) -> None: 
         self._unsupported_feature("peak_search")
     
     def get_marker_x(self, marker: int = 1) -> float: 
@@ -444,29 +444,29 @@ class NetworkAnalyzer(InstrumentDriver):
         self._unsupported_feature("get_marker_y")
         return 0.0
     
-    def save_state(self, filename: str): 
+    def save_state(self, filename: str) -> None: 
         self._unsupported_feature("save_state")
     
-    def load_state(self, filename: str): 
+    def load_state(self, filename: str) -> None: 
         self._unsupported_feature("load_state")
 
-    def wait_for_sweep(self):
+    def wait_for_sweep(self) -> None:
         """Wait for the current sweep to complete."""
         self._unsupported_feature("wait_for_sweep")
 
 class Oscilloscope(InstrumentDriver):
     @abstractmethod
-    def run(self): pass
+    def run(self) -> None: pass
     @abstractmethod
-    def stop(self): pass
+    def stop(self) -> None: pass
     @abstractmethod
-    def single(self): pass
+    def single(self) -> None: pass
     @abstractmethod
     def get_waveform(self, channel: int) -> MeasurementResult: pass
     @abstractmethod
-    def auto_scale(self): pass
+    def auto_scale(self) -> None: pass
     @abstractmethod
-    def set_trigger(self, source: str, level: float, slope: str): pass
+    def set_trigger(self, source: str, level: float, slope: str) -> None: pass
     @abstractmethod
     def get_screenshot(self) -> bytes: pass
     @abstractmethod
@@ -478,25 +478,25 @@ class Oscilloscope(InstrumentDriver):
 
 class SignalGenerator(InstrumentDriver):
     @abstractmethod
-    def set_frequency(self, hz: float): pass
+    def set_frequency(self, hz: float) -> None: pass
     @abstractmethod
-    def set_amplitude(self, dbm: float): pass
+    def set_amplitude(self, dbm: float) -> None: pass
     @abstractmethod
-    def set_output(self, state: bool): pass
+    def set_output(self, state: bool) -> None: pass
     @abstractmethod
-    def set_mod_state(self, mod_type: str, state: bool): pass
+    def set_mod_state(self, mod_type: str, state: bool) -> None: pass
     @abstractmethod
-    def start_sweep(self, start: float, stop: float, points: int, dwell: float): pass
+    def start_sweep(self, start: float, stop: float, points: int, dwell: float) -> None: pass
     @abstractmethod
-    def configure_list_sweep(self, freq_list: List[float], power_list: List[float]): pass
+    def configure_list_sweep(self, freq_list: List[float], power_list: List[float]) -> None: pass
     @abstractmethod
-    def set_reference_clock(self, source: str): pass
+    def set_reference_clock(self, source: str) -> None: pass
 
 class FunctionGenerator(SignalGenerator):
     """Specific for AFGs which use Volts/Waveforms instead of just dBm."""
     @abstractmethod
-    def set_voltage(self, vpp: float): pass
+    def set_voltage(self, vpp: float) -> None: pass
     @abstractmethod
-    def set_offset(self, volts: float): pass
+    def set_offset(self, volts: float) -> None: pass
     @abstractmethod
-    def set_waveform(self, shape: str): pass # SIN, SQU, PULS, RAMP, NOIS, DC
+    def set_waveform(self, shape: str) -> None: pass # SIN, SQU, PULS, RAMP, NOIS, DC

@@ -1,5 +1,6 @@
 import pyvisa
 import time
+from typing import List, Tuple
 from .base import InstrumentDriver
 from ..results import MeasurementResult
 from ..exceptions import ConnectionLost, ConfigurationError, InstrumentTimeout
@@ -7,12 +8,12 @@ from ..exceptions import ConnectionLost, ConfigurationError, InstrumentTimeout
 class RealDriver(InstrumentDriver):
     """Refined RealDriver with Auto-Handshake Engine."""
     @staticmethod
-    def scan():
+    def scan() -> Tuple[str, ...]:
         """Scans for available instruments."""
         from ..factory import get_rm
         return get_rm().list_resources()
 
-    def __init__(self, resource: str, rm: pyvisa.ResourceManager = None):
+    def __init__(self, resource: str, rm: pyvisa.ResourceManager = None) -> None:
         super().__init__(resource)
         from ..factory import get_rm
         if rm:
@@ -24,9 +25,9 @@ class RealDriver(InstrumentDriver):
                 self.rm = None
         self.inst = None
         self.is_simulated = False
-        self.bridge_config = {} # e.g. {"type": "prologix", "gpib_address": 1}
+        self.bridge_config: dict = {} # e.g. {"type": "prologix", "gpib_address": 1}
 
-    def connect(self):
+    def connect(self) -> None:
         """Connects, runs sync_config, and discovers identity/options."""
         try:
             self.inst = self.rm.open_resource(self.resource)
@@ -40,7 +41,7 @@ class RealDriver(InstrumentDriver):
         except pyvisa.VisaIOError as e:
             raise ConnectionLost(f"Failed to connect to {self.resource}: {e}")
 
-    def _discover_identity(self):
+    def _discover_identity(self) -> None:
         idn = self.query("*IDN?").split(',')
         if len(idn) >= 4:
             self.identity = {
@@ -50,18 +51,18 @@ class RealDriver(InstrumentDriver):
                 "version": idn[3].strip()
             }
 
-    def _discover_options(self):
+    def _discover_options(self) -> None:
         try:
             self.options = self.query("*OPT?").split(',')
         except Exception:
             self.options = []
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         if self.inst:
             self.inst.close()
         self.connected = False
 
-    def write(self, command: str):
+    def write(self, command: str) -> None:
         if not self.inst:
             raise ConnectionLost("Not connected.")
         
@@ -72,7 +73,7 @@ class RealDriver(InstrumentDriver):
         
         self.inst.write(command)
 
-    def safe_send(self, command: str):
+    def safe_send(self, command: str) -> None:
         """Sends command and automatically runs SYST:ERR?."""
         self.write(command)
         self.check_errors()
@@ -95,21 +96,21 @@ class RealDriver(InstrumentDriver):
         self.check_errors()
         return resp
 
-    def query_binary_values(self, command: str, datatype: str = 'f', is_big_endian: bool = False) -> list:
+    def query_binary_values(self, command: str, datatype: str = 'f', is_big_endian: bool = False) -> List[float]:
         if not self.inst:
             raise ConnectionLost("Not connected.")
         return self.inst.query_binary_values(command, datatype=datatype, is_big_endian=is_big_endian)
 
     # --- Global Logic & Sync ---
-    def clear_status(self):
+    def clear_status(self) -> None:
         self.write("*CLS")
 
-    def sync_config(self):
+    def sync_config(self) -> None:
         """Ensures device isn't busy with previous tasks."""
         self.write("*CLS")
         self.write("*WAI")
 
-    def wait_ready(self, timeout: float = 30.0):
+    def wait_ready(self, timeout: float = 30.0) -> None:
         """Deterministic polling for *OPC?."""
         start_time = time.time()
         while time.time() - start_time < timeout:
@@ -122,7 +123,7 @@ class RealDriver(InstrumentDriver):
             time.sleep(0.1)
         raise InstrumentTimeout(f"Timeout waiting for *OPC? on {self.resource}")
 
-    def check_errors(self):
+    def check_errors(self) -> None:
         """Queries SYST:ERR? and updates local error_stack."""
         # Avoid breaking unit tests using mocks
         if "Mock" in type(self.inst).__name__:
@@ -137,14 +138,14 @@ class RealDriver(InstrumentDriver):
     def get_id(self) -> str:
         return self.query("*IDN?")
 
-    def preset(self, automation_optimized: bool = True):
+    def preset(self, automation_optimized: bool = True) -> None:
         self.write("*RST")
         self.sync_config()
 
-    def shutdown_safety(self):
+    def shutdown_safety(self) -> None:
         """Default safety: Clear and Wait."""
         self.sync_config()
         
-    def measure_frequency(self): return MeasurementResult(0.0, "Hz")
-    def measure_duty_cycle(self): return MeasurementResult(0.0, "%")
-    def measure_v_peak_to_peak(self): return MeasurementResult(0.0, "V")
+    def measure_frequency(self) -> MeasurementResult: return MeasurementResult(0.0, "Hz")
+    def measure_duty_cycle(self) -> MeasurementResult: return MeasurementResult(0.0, "%")
+    def measure_v_peak_to_peak(self) -> MeasurementResult: return MeasurementResult(0.0, "V")

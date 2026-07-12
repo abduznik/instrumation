@@ -13,6 +13,19 @@ from .simulated import (
     SimulatedFrequencyCounter,
 )
 from .keysight import Keysight53230A
+from .async_driver import (
+    AsyncInstrumentDriver,
+    AsyncMultimeter,
+    AsyncPowerSupply,
+    AsyncSpectrumAnalyzer,
+    AsyncNetworkAnalyzer,
+    AsyncOscilloscope,
+    AsyncSignalGenerator,
+    AsyncFunctionGenerator,
+    AsyncElectronicLoad,
+    AsyncFrequencyCounter,
+    wrap_async,
+)
 
 __all__ = [
     "ReplayDriver",
@@ -28,5 +41,16 @@ __all__ = [
     "SimulatedElectronicLoad",
     "SimulatedFrequencyCounter",
     "Keysight53230A",
+    "AsyncInstrumentDriver",
+    "AsyncMultimeter",
+    "AsyncPowerSupply",
+    "AsyncSpectrumAnalyzer",
+    "AsyncNetworkAnalyzer",
+    "AsyncOscilloscope",
+    "AsyncSignalGenerator",
+    "AsyncFunctionGenerator",
+    "AsyncElectronicLoad",
+    "AsyncFrequencyCounter",
+    "wrap_async",
 ]
 

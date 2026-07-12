@@ -8,13 +8,13 @@ from ..results import MeasurementResult
 class TektronixTDS(RealDriver, Oscilloscope):
     """Refined Driver for Tektronix TDS Series Oscilloscopes."""
 
-    def preset(self, automation_optimized: bool = True):
+    def preset(self, automation_optimized: bool = True) -> None:
         self.write("*RST")
         self.wait_ready()
 
-    def run(self): self.write(":ACQUIRE:STATE ON")
-    def stop(self): self.write(":ACQUIRE:STATE OFF")
-    def single(self):
+    def run(self) -> None: self.write(":ACQUIRE:STATE ON")
+    def stop(self) -> None: self.write(":ACQUIRE:STATE OFF")
+    def single(self) -> None:
         self.write(":ACQUIRE:STOPAFTER SEQUENCE")
         self.write(":ACQUIRE:STATE ON")
 
@@ -35,12 +35,12 @@ class TektronixTDS(RealDriver, Oscilloscope):
         scaled_data = [(x - yoff) * ymult + yzero for x in raw_counts]
         return MeasurementResult(scaled_data, "V")
 
-    def auto_scale(self):
+    def auto_scale(self) -> None:
         """Standard Tektronix autoset command."""
         self.write("AUTOSET EXECUTE")
         self.wait_ready()
 
-    def set_trigger(self, source: str, level: float, slope: str):
+    def set_trigger(self, source: str, level: float, slope: str) -> None:
         self.safe_send(f"TRIG:MAIN:EDGE:SOURCE {source}")
         self.safe_send(f"TRIG:MAIN:LEVEL {level}")
         self.safe_send(f"TRIG:MAIN:EDGE:SLOPE {slope.upper()}")
@@ -67,7 +67,7 @@ class TektronixTDS(RealDriver, Oscilloscope):
         val = self._measure_imm(channel, "PKPK")
         return MeasurementResult(val, "V")
 
-    def shutdown_safety(self):
+    def shutdown_safety(self) -> None:
         self.stop()
         self.sync_config()
 
@@ -75,30 +75,30 @@ class TektronixTDS(RealDriver, Oscilloscope):
 class TektronixAFG(RealDriver, FunctionGenerator):
     """Driver for Tektronix AFG3000 Series Arbitrary Function Generators."""
 
-    def __init__(self, resource: str, channel: int = 1):
+    def __init__(self, resource: str, channel: int = 1) -> None:
         super().__init__(resource)
         self.channel = channel
         self.ch_prefix = f"SOURce{channel}"
 
-    def preset(self, automation_optimized: bool = True):
+    def preset(self, automation_optimized: bool = True) -> None:
         self.write("*RST")
         self.wait_ready()
 
-    def set_frequency(self, hz: float):
+    def set_frequency(self, hz: float) -> None:
         self.write(f"{self.ch_prefix}:FREQuency:FIXed {hz}")
 
-    def set_amplitude(self, dbm: float):
+    def set_amplitude(self, dbm: float) -> None:
         """AFGs typically use Voltage. Converting dBm to Vpp (approx 50 Ohm)."""
         vpp = 2 * (10 ** ((dbm - 10) / 20))
         self.set_voltage(vpp)
 
-    def set_voltage(self, vpp: float):
+    def set_voltage(self, vpp: float) -> None:
         self.write(f"{self.ch_prefix}:VOLTage:AMPLitude {vpp}")
 
-    def set_offset(self, volts: float):
+    def set_offset(self, volts: float) -> None:
         self.write(f"{self.ch_prefix}:VOLTage:LEVel:IMMediate:OFFSet {volts}")
 
-    def set_waveform(self, shape: str):
+    def set_waveform(self, shape: str) -> None:
         # SINusoid, SQUare, PULSe, RAMP, PRNoise, DC
         full_names = {
             "SIN": "SINUSOID",
@@ -111,25 +111,25 @@ class TektronixAFG(RealDriver, FunctionGenerator):
         name = full_names.get(shape.upper(), shape.upper())
         self.write(f"{self.ch_prefix}:FUNCtion:SHAPe {name}")
 
-    def set_output(self, state: bool):
+    def set_output(self, state: bool) -> None:
         self.write(f"OUTPut{self.channel}:STATe {'ON' if state else 'OFF'}")
 
-    def set_mod_state(self, mod_type: str, state: bool):
+    def set_mod_state(self, mod_type: str, state: bool) -> None:
         # Basic AM/FM/PM/FSK/PWM
         self.write(f"{self.ch_prefix}:{mod_type.upper()}:STATe {'ON' if state else 'OFF'}")
 
-    def start_sweep(self, start: float, stop: float, points: int, dwell: float):
+    def start_sweep(self, start: float, stop: float, points: int, dwell: float) -> None:
         self.write(f"{self.ch_prefix}:SWEep:STARt {start}")
         self.write(f"{self.ch_prefix}:SWEep:STOP {stop}")
         self.write(f"{self.ch_prefix}:SWEep:TIME {dwell * points}")
         self.write(f"{self.ch_prefix}:SWEep:STATe ON")
 
-    def configure_list_sweep(self, freq_list: List[float], power_list: List[float]):
+    def configure_list_sweep(self, freq_list: List[float], power_list: List[float]) -> None:
         self._unsupported_feature("List Sweep (Use ARB mode instead)")
 
-    def set_reference_clock(self, source: str):
+    def set_reference_clock(self, source: str) -> None:
         self.write(f"SOURce:ROSCillator:SOURce {source.upper()}")
 
-    def shutdown_safety(self):
+    def shutdown_safety(self) -> None:
         self.set_output(False)
         self.sync_config()

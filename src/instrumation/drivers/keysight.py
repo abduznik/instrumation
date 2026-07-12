@@ -8,16 +8,16 @@ from typing import List
 class KeysightMXA(RealDriver, SpectrumAnalyzer):
     """Driver for Keysight MXA Series Spectrum Analyzers."""
     
-    def preset(self, automation_optimized: bool = True):
+    def preset(self, automation_optimized: bool = True) -> None:
         self.write("*RST")
         if automation_optimized:
             self.write(":DISP:ENAB OFF")
         self.wait_ready()
-    def shutdown_safety(self):
+    def shutdown_safety(self) -> None:
         self.write(":DISP:ENAB ON")
         self.sync_config()
 
-    def peak_search(self):
+    def peak_search(self) -> None:
         self.write(":CALC:MARK1:STAT ON")
         self.write(":CALC:MARK1:TRAC 1")
         self.safe_send(":CALC:MARK1:MAX") 
@@ -27,32 +27,32 @@ class KeysightMXA(RealDriver, SpectrumAnalyzer):
         val = self.query_ascii(":CALC:MARK1:Y?")
         return MeasurementResult(float(val), "dBm")
 
-    def set_center_freq(self, hz: float):
+    def set_center_freq(self, hz: float) -> None:
         self._validate_frequency(hz)
         self.write(f":SENS:FREQ:CENT {hz}")
 
     def get_center_freq(self) -> float:
         return float(self.query(":SENS:FREQ:CENT?"))
 
-    def set_span(self, hz: float):
+    def set_span(self, hz: float) -> None:
         self.write(f":SENS:FREQ:SPAN {hz}")
 
     def get_span(self) -> float:
         return float(self.query(":SENS:FREQ:SPAN?"))
 
-    def set_sweep_points(self, points: int):
+    def set_sweep_points(self, points: int) -> None:
         self.write(f":SENS:SWE:POIN {points}")
 
-    def set_ref_level(self, dbm: float):
+    def set_ref_level(self, dbm: float) -> None:
         self.write(f":DISP:WIND:TRAC:Y:RLEV {dbm}")
 
-    def set_attenuation(self, db: float):
+    def set_attenuation(self, db: float) -> None:
         self.write(f":SENS:POW:ATT {db}")
 
-    def set_rbw(self, hz: float):
+    def set_rbw(self, hz: float) -> None:
         self.safe_send(f":SENS:BAND {hz}")
 
-    def set_vbw(self, hz: float):
+    def set_vbw(self, hz: float) -> None:
         self.safe_send(f":SENS:BAND:VID {hz}")
 
     def get_trace_data(self) -> MeasurementResult:
@@ -72,12 +72,12 @@ class KeysightMXA(RealDriver, SpectrumAnalyzer):
 @register_driver("SA")
 class KeysightPXA(KeysightMXA):
     """Driver for Keysight PXA Series Spectrum Analyzers (N9030A/B)."""
-    def __init__(self, resource: str):
+    def __init__(self, resource: str) -> None:
         super().__init__(resource)
         # PXA typically has higher performance and frequency range
         self.max_frequency = 50e9 
 
-    def set_center_freq(self, hz: float):
+    def set_center_freq(self, hz: float) -> None:
         # Explicitly override to ensure PXA's 50GHz limit is validated
         self._validate_frequency(hz)
         super().set_center_freq(hz)
@@ -86,11 +86,11 @@ class KeysightPXA(KeysightMXA):
 @register_driver("VNA")
 class KeysightPNA(RealDriver, NetworkAnalyzer):
     """Driver for Keysight PNA Series (including E836x, N52xx)."""
-    def connect(self):
+    def connect(self) -> None:
         super().connect()
         self._discover_capabilities()
 
-    def _discover_capabilities(self):
+    def _discover_capabilities(self) -> None:
         """Query the PNA for its actual frequency limits."""
         try:
             # SENS:FREQ:STAR? MIN and STOP? MAX are standard on PNAs
@@ -104,7 +104,7 @@ class KeysightPNA(RealDriver, NetworkAnalyzer):
             self.min_frequency = 10e6
             self.max_frequency = 67e9
 
-    def preset(self, automation_optimized: bool = True):
+    def preset(self, automation_optimized: bool = True) -> None:
         # 1. Solution 1: The "Manual Stretch"
         old_timeout = self.inst.timeout
         self.inst.timeout = 120000 # 120 seconds for full hardware re-alignment
@@ -129,47 +129,47 @@ class KeysightPNA(RealDriver, NetworkAnalyzer):
             self.write("DISP:ENAB OFF")
             self.inst.query("*OPC?") # Fence — ensure display is settled before returning
 
-    def set_start_frequency(self, freq_hz: float):
+    def set_start_frequency(self, freq_hz: float) -> None:
         self.safe_send(f"SENS:FREQ:STAR {freq_hz}")
 
-    def set_stop_frequency(self, freq_hz: float):
+    def set_stop_frequency(self, freq_hz: float) -> None:
         self.safe_send(f"SENS:FREQ:STOP {freq_hz}")
 
-    def set_center_frequency(self, freq_hz: float):
+    def set_center_frequency(self, freq_hz: float) -> None:
         self.safe_send(f"SENS:FREQ:CENT {freq_hz}")
 
-    def set_span(self, span_hz: float):
+    def set_span(self, span_hz: float) -> None:
         self.safe_send(f"SENS:FREQ:SPAN {span_hz}")
 
-    def set_points(self, num_points: int):
+    def set_points(self, num_points: int) -> None:
         self.safe_send(f"SENS:SWE:POIN {num_points}")
 
-    def set_if_bandwidth(self, hz: float):
+    def set_if_bandwidth(self, hz: float) -> None:
         self.safe_send(f"SENS:BAND {hz}")
 
-    def set_power_level(self, dbm: float):
+    def set_power_level(self, dbm: float) -> None:
         self.safe_send(f"SOUR:POW {dbm}")
 
-    def set_sweep_type(self, sweep_type: str):
+    def set_sweep_type(self, sweep_type: str) -> None:
         # Valid: LINear | LOGarithmic | SEGMent | POWer | CW
         self.safe_send(f"SENS:SWE:TYPE {sweep_type}")
 
-    def set_averaging(self, state: bool, count: int = 10):
+    def set_averaging(self, state: bool, count: int = 10) -> None:
         self.safe_send(f"SENS:AVER {'ON' if state else 'OFF'}")
         self.safe_send(f"SENS:AVER:COUN {count}")
 
-    def clear_averaging(self):
+    def clear_averaging(self) -> None:
         self.write("SENS:AVER:CLE")
 
-    def set_continuous(self, state: bool):
+    def set_continuous(self, state: bool) -> None:
         self.write(f"INIT:CONT {'ON' if state else 'OFF'}")
 
-    def set_parameter(self, parameter: str, measurement_name: str = "CH1_S11_1"):
+    def set_parameter(self, parameter: str, measurement_name: str = "CH1_S11_1") -> None:
         """Sets the S-parameter for the specified measurement."""
         self.safe_send(f"CALC:PAR:SEL '{measurement_name}'")
         self.safe_send(f"CALC:PAR:MOD {parameter}")
 
-    def create_measurement(self, name: str, parameter: str, window: int = 1, trace: int = 1):
+    def create_measurement(self, name: str, parameter: str, window: int = 1, trace: int = 1) -> None:
         """Creates a new measurement and feeds it to a display window."""
         # Display must be enabled to manipulate windows on PNA-L A.10 firmware
         self.safe_send("DISP:ENAB ON")
@@ -182,7 +182,7 @@ class KeysightPNA(RealDriver, NetworkAnalyzer):
         # Feed it to the window/trace slot
         self.safe_send(f"DISP:WIND{window}:TRAC{trace}:FEED '{name}'")
 
-    def delete_all_measurements(self):
+    def delete_all_measurements(self) -> None:
         """Deletes all currently defined measurements with robust timeout handling."""
         self.write("DISP:ENAB ON")
         self.write("INIT:CONT OFF") # Stop sweep to avoid hanging on DEL:ALL
@@ -256,7 +256,7 @@ class KeysightPNA(RealDriver, NetworkAnalyzer):
         data = [complex(raw_data[i], raw_data[i+1]) for i in range(0, len(raw_data), 2)]
         return MeasurementResult(data, "Z")
 
-    def peak_search(self, marker: int = 1):
+    def peak_search(self, marker: int = 1) -> None:
         self.write(f"CALC:MARK{marker}:STAT ON")
         self.write(f"CALC:MARK{marker}:FUNC:SEL MAX")
         self.write(f"CALC:MARK{marker}:FUNC:EXEC")
@@ -269,17 +269,17 @@ class KeysightPNA(RealDriver, NetworkAnalyzer):
         val = self.query(f"CALC:MARK{marker}:Y?")
         return float(val.split(',')[0])
 
-    def save_state(self, filename: str):
+    def save_state(self, filename: str) -> None:
         if not filename.endswith(".state"):
             filename += ".state"
         self.write(f"MMEM:STOR:STAT '{filename}'")
 
-    def load_state(self, filename: str):
+    def load_state(self, filename: str) -> None:
         if not filename.endswith(".state"):
             filename += ".state"
         self.write(f"MMEM:LOAD:STAT '{filename}'")
 
-    def wait_for_sweep(self):
+    def wait_for_sweep(self) -> None:
         """Wait for the current sweep to complete."""
         self.query("*OPC?")
 
@@ -287,7 +287,7 @@ class KeysightPNA(RealDriver, NetworkAnalyzer):
     def measure_duty_cycle(self) -> MeasurementResult: return MeasurementResult(0.0, "%")
     def measure_v_peak_to_peak(self) -> MeasurementResult: return MeasurementResult(0.0, "V")
     
-    def shutdown_safety(self):
+    def shutdown_safety(self) -> None:
         """Restore display and ensure sync."""
         self.write("DISP:ENAB ON")
         self.sync_config()
@@ -296,18 +296,18 @@ class KeysightPNA(RealDriver, NetworkAnalyzer):
 class KeysightSG(RealDriver, SignalGenerator):
     """Driver for Keysight Signal Generators (EXG/MXG)."""
     
-    def __init__(self, resource: str):
+    def __init__(self, resource: str) -> None:
         super().__init__(resource)
         # Defaults, will be updated in connect()
         self.min_frequency = 9e3
         self.max_frequency = 6e9
         self.max_power_dbm = 10.0
 
-    def connect(self):
+    def connect(self) -> None:
         super().connect()
         self._discover_capabilities()
 
-    def _discover_capabilities(self):
+    def _discover_capabilities(self) -> None:
         """Query the Signal Generator for its actual limits."""
         try:
             self.min_frequency = float(self.query(":FREQ? MIN"))
@@ -316,7 +316,7 @@ class KeysightSG(RealDriver, SignalGenerator):
         except Exception:
             pass
 
-    def preset(self, automation_optimized: bool = True):
+    def preset(self, automation_optimized: bool = True) -> None:
         self.write("*RST")
         if automation_optimized:
             self.write(":DISP:STAT OFF")
@@ -324,20 +324,20 @@ class KeysightSG(RealDriver, SignalGenerator):
         self.set_amplitude(-130.0)
         self.set_output(False)
 
-    def shutdown_safety(self):
+    def shutdown_safety(self) -> None:
         """Emergency Shutdown: RF OFF and -130 dBm, then restore Display."""
         self.set_output(False)
         self.set_amplitude(-130.0)
         self.write(":DISP:STAT ON")
         self.sync_config()
 
-    def set_frequency(self, hz: float):
+    def set_frequency(self, hz: float) -> None:
         self.safe_send(f":FREQ {self.format_frequency(hz)}")
 
-    def set_amplitude(self, dbm: float):
+    def set_amplitude(self, dbm: float) -> None:
         self.safe_send(f":POW {self.format_power(dbm)}")
 
-    def set_output(self, state: bool):
+    def set_output(self, state: bool) -> None:
         self.write(f":OUTP {'ON' if state else 'OFF'}")
 
     def get_frequency(self) -> float:
@@ -346,7 +346,7 @@ class KeysightSG(RealDriver, SignalGenerator):
     def get_amplitude(self) -> float:
         return float(self.query(":POW?"))
 
-    def set_mod_state(self, mod_type: str, state: bool):
+    def set_mod_state(self, mod_type: str, state: bool) -> None:
         mod_upper = mod_type.upper()
         state_str = 'ON' if state else 'OFF'
         if mod_upper == 'AM':
@@ -358,7 +358,7 @@ class KeysightSG(RealDriver, SignalGenerator):
         else:
             self._unsupported_feature(f"{mod_type} Modulation")
 
-    def start_sweep(self, start: float, stop: float, points: int, dwell: float):
+    def start_sweep(self, start: float, stop: float, points: int, dwell: float) -> None:
         self.safe_send(f":FREQ:STAR {self.format_frequency(start)}")
         self.safe_send(f":FREQ:STOP {self.format_frequency(stop)}")
         self.safe_send(f":SWE:POIN {points}")
@@ -369,13 +369,13 @@ class KeysightSG(RealDriver, SignalGenerator):
         self.write(":INIT")
         self.wait_ready()
 
-    def configure_list_sweep(self, freq_list: List[float], power_list: List[float]):
+    def configure_list_sweep(self, freq_list: List[float], power_list: List[float]) -> None:
         freq_str = ",".join([str(f) for f in freq_list])
         pow_str = ",".join([str(p) for p in power_list])
         self.safe_send(f":LIST:FREQ {freq_str}")
         self.safe_send(f":LIST:POW {pow_str}")
 
-    def set_reference_clock(self, source: str):
+    def set_reference_clock(self, source: str) -> None:
         self.safe_send(f":ROSC:SOUR {source}")
 
     def measure_frequency(self) -> MeasurementResult: return MeasurementResult(0.0, "Hz")
@@ -391,14 +391,14 @@ class KeysightFieldFox(RealDriver, SpectrumAnalyzer, NetworkAnalyzer):
 
     MODES = {"SA": "SA", "VNA": "NA", "CAT": "CAT", "PM": "POW"}
 
-    def _set_mode(self, mode_key: str):
+    def _set_mode(self, mode_key: str) -> None:
         target = self.MODES.get(mode_key.upper(), mode_key)
         current = self.query(":INST:SEL?").strip().strip('"')
         if current != target:
             self.write(f":INST:SEL {target}")
             self.wait_ready()
 
-    def preset(self, automation_optimized: bool = True):
+    def preset(self, automation_optimized: bool = True) -> None:
         self.write("*RST")
         self.wait_ready()
 
@@ -408,7 +408,7 @@ class KeysightFieldFox(RealDriver, SpectrumAnalyzer, NetworkAnalyzer):
         self._set_mode("SA")
         return float(self.query(":SENS:FREQ:CENT?"))
 
-    def set_center_freq(self, hz: float):
+    def set_center_freq(self, hz: float) -> None:
         # Works for both SA and VNA modes on FieldFox
         self.write(f":SENS:FREQ:CENT {hz}")
 
@@ -431,46 +431,46 @@ class KeysightFieldFox(RealDriver, SpectrumAnalyzer, NetworkAnalyzer):
             return MeasurementResult(list(data), "dB")
 
     # VNA Interface
-    def set_start_frequency(self, freq_hz: float):
+    def set_start_frequency(self, freq_hz: float) -> None:
         self._set_mode("VNA")
         self.write(f":SENS:FREQ:STAR {freq_hz}")
 
-    def set_stop_frequency(self, freq_hz: float):
+    def set_stop_frequency(self, freq_hz: float) -> None:
         self._set_mode("VNA")
         self.write(f":SENS:FREQ:STOP {freq_hz}")
 
-    def set_center_frequency(self, freq_hz: float):
+    def set_center_frequency(self, freq_hz: float) -> None:
         self._set_mode("VNA")
         self.write(f":SENS:FREQ:CENT {freq_hz}")
 
-    def set_span(self, hz: float):
+    def set_span(self, hz: float) -> None:
         self.write(f":SENS:FREQ:SPAN {hz}")
 
-    def set_points(self, num_points: int):
+    def set_points(self, num_points: int) -> None:
         self._set_mode("VNA")
         self.write(f":SENS:SWE:POIN {num_points}")
 
-    def set_if_bandwidth(self, hz: float):
+    def set_if_bandwidth(self, hz: float) -> None:
         self._set_mode("VNA")
         self.write(f":SENS:BAND {hz}")
 
-    def set_power_level(self, dbm: float):
+    def set_power_level(self, dbm: float) -> None:
         self._set_mode("VNA")
         self.write(f":SOUR:POW {dbm}")
 
-    def set_sweep_type(self, sweep_type: str):
+    def set_sweep_type(self, sweep_type: str) -> None:
         self._set_mode("VNA")
         self.write(f":SENS:SWE:TYPE {sweep_type}")
 
-    def set_averaging(self, state: bool, count: int = 10):
+    def set_averaging(self, state: bool, count: int = 10) -> None:
         self._set_mode("VNA")
         self.write(f":SENS:AVER {'ON' if state else 'OFF'}")
         self.write(f":SENS:AVER:COUN {count}")
 
-    def set_continuous(self, state: bool):
+    def set_continuous(self, state: bool) -> None:
         self.write(f":INIT:CONT {'ON' if state else 'OFF'}")
 
-    def set_parameter(self, parameter: str):
+    def set_parameter(self, parameter: str) -> None:
         self._set_mode("VNA")
         self.write(f":CALC:PAR:DEF {parameter}") # FieldFox uses slightly different syntax sometimes
 
@@ -489,7 +489,7 @@ class KeysightFieldFox(RealDriver, SpectrumAnalyzer, NetworkAnalyzer):
         data = [complex(raw_data[i], raw_data[i+1]) for i in range(0, len(raw_data), 2)]
         return MeasurementResult(data, "Z")
 
-    def peak_search(self, marker: int = 1):
+    def peak_search(self, marker: int = 1) -> None:
         self.write(f":CALC:MARK{marker}:MAX")
 
     def get_marker_x(self, marker: int = 1) -> float:
@@ -498,26 +498,26 @@ class KeysightFieldFox(RealDriver, SpectrumAnalyzer, NetworkAnalyzer):
     def get_marker_y(self, marker: int = 1) -> float:
         return float(self.query(f":CALC:MARK{marker}:Y?"))
 
-    def save_state(self, filename: str):
+    def save_state(self, filename: str) -> None:
         self.write(f"MMEM:STOR:STAT '{filename}'")
 
-    def load_state(self, filename: str):
+    def load_state(self, filename: str) -> None:
         self.write(f"MMEM:LOAD:STAT '{filename}'")
 
-    def shutdown_safety(self):
+    def shutdown_safety(self) -> None:
         self.sync_config()
 
 @register_driver("SCOPE")
 class KeysightInfiniiVision(RealDriver, Oscilloscope):
     """Driver for Keysight InfiniiVision Series Oscilloscopes (DSOX/MSOX)."""
 
-    def preset(self, automation_optimized: bool = True):
+    def preset(self, automation_optimized: bool = True) -> None:
         self.write("*RST")
         self.wait_ready()
 
-    def run(self): self.write(":RUN")
-    def stop(self): self.write(":STOP")
-    def single(self): self.write(":SINGLE")
+    def run(self) -> None: self.write(":RUN")
+    def stop(self) -> None: self.write(":STOP")
+    def single(self) -> None: self.write(":SINGLE")
 
     def get_waveform(self, channel: int) -> MeasurementResult:
         self.write(f":WAVeform:SOURce CHANnel{channel}")
@@ -539,11 +539,11 @@ class KeysightInfiniiVision(RealDriver, Oscilloscope):
         data = [((val - y_ref) * y_inc) + y_origin for val in raw_data]
         return MeasurementResult(data, "V")
 
-    def auto_scale(self):
+    def auto_scale(self) -> None:
         self.write(":AUToscale")
         self.wait_ready()
 
-    def set_trigger(self, source: str, level: float, slope: str):
+    def set_trigger(self, source: str, level: float, slope: str) -> None:
         self.write(":TRIGger:MODE EDGE")
         self.write(f":TRIGger:EDGE:SOURce {source.upper()}")
         self.write(f":TRIGger:EDGE:LEVel {level}")
@@ -565,7 +565,7 @@ class KeysightInfiniiVision(RealDriver, Oscilloscope):
         val = self.query(f":MEASure:VPP? CHANnel{channel}")
         return MeasurementResult(float(val), "V")
 
-    def shutdown_safety(self):
+    def shutdown_safety(self) -> None:
         self.sync_config()
 
 
@@ -577,14 +577,14 @@ class Keysight34461A(RealDriver, Multimeter):
     Frequency, Period, Temperature, Capacitance, and Diode test.
     """
 
-    def preset(self, automation_optimized: bool = True):
+    def preset(self, automation_optimized: bool = True) -> None:
         self.write("*RST")
         self.wait_ready()
 
-    def configure_voltage_dc(self):
+    def configure_voltage_dc(self) -> None:
         self.safe_send(":CONF:VOLT:DC")
 
-    def configure_voltage_ac(self):
+    def configure_voltage_ac(self) -> None:
         self.safe_send(":CONF:VOLT:AC")
 
     def measure_voltage(self, ac: bool = False) -> MeasurementResult:
@@ -606,7 +606,7 @@ class Keysight34461A(RealDriver, Multimeter):
             val = self.query_ascii(":MEAS:CURR:DC?")
         return MeasurementResult(float(val), "A")
 
-    def set_auto_range(self, state: bool):
+    def set_auto_range(self, state: bool) -> None:
         val = "ON" if state else "OFF"
         self.safe_send(f":VOLT:RANG:AUTO {val}")
 
@@ -638,7 +638,7 @@ class Keysight34461A(RealDriver, Multimeter):
         self._unsupported_feature("Vpp")
         return MeasurementResult(0.0, "V")
 
-    def shutdown_safety(self):
+    def shutdown_safety(self) -> None:
         self.set_auto_range(True)
         self.sync_config()
 
@@ -657,7 +657,7 @@ class Keysight53230A(RealDriver, FrequencyCounter):
         - :INP{ch}:RANG:AUTO {ON|OFF}         — auto range
     """
 
-    def __init__(self, resource: str):
+    def __init__(self, resource: str) -> None:
         super().__init__(resource)
         self.min_frequency = 0.0
         self.max_frequency = 20e9  # 53230A option 030
@@ -667,13 +667,13 @@ class Keysight53230A(RealDriver, FrequencyCounter):
         ch = channel if channel else self._active_channel
         return f"INP{ch}"
 
-    def preset(self, automation_optimized: bool = True):
+    def preset(self, automation_optimized: bool = True) -> None:
         self.write("*RST")
         self.wait_ready()
         if automation_optimized:
             self.write(":DISP:ENAB OFF")
 
-    def shutdown_safety(self):
+    def shutdown_safety(self) -> None:
         self.write(":DISP:ENAB ON")
         self.sync_config()
 
@@ -705,19 +705,19 @@ class Keysight53230A(RealDriver, FrequencyCounter):
 
     # ── Configuration ─────────────────────────────────────
 
-    def set_impedance(self, ohms: float, channel: int = 1):
+    def set_impedance(self, ohms: float, channel: int = 1) -> None:
         ch = f"INP{channel}"
         self.safe_send(f":{ch}:IMP {ohms}")
 
-    def set_trigger_level(self, volts: float, channel: int = 1):
+    def set_trigger_level(self, volts: float, channel: int = 1) -> None:
         ch = f"INP{channel}"
         self.safe_send(f":{ch}:LEV {volts}")
 
-    def set_coupling(self, dc_ac: str, channel: int = 1):
+    def set_coupling(self, dc_ac: str, channel: int = 1) -> None:
         ch = f"INP{channel}"
         self.safe_send(f":{ch}:COUP {dc_ac.upper()}")
 
-    def set_auto_range(self, state: bool, channel: int = 1):
+    def set_auto_range(self, state: bool, channel: int = 1) -> None:
         ch = f"INP{channel}"
         val = "ON" if state else "OFF"
         self.safe_send(f":{ch}:RANG:AUTO {val}")

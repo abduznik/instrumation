@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Type, List, Optional
+from typing import Callable, Dict, Type, List, Optional
 from .base import InstrumentDriver
 
 logger = logging.getLogger(__name__)
@@ -11,13 +11,13 @@ class DriverRegistry:
     _drivers: Dict[str, List[Type[InstrumentDriver]]] = {}
 
     @classmethod
-    def register(cls, driver_type: str):
+    def register(cls, driver_type: str) -> Callable[[Type[InstrumentDriver]], Type[InstrumentDriver]]:
         """Decorator to register a driver class.
         
         Args:
             driver_type (str): The category of the driver (e.g., 'DMM', 'SA').
         """
-        def decorator(driver_cls: Type[InstrumentDriver]):
+        def decorator(driver_cls: Type[InstrumentDriver]) -> Type[InstrumentDriver]:
             if driver_type not in cls._drivers:
                 cls._drivers[driver_type] = []
             

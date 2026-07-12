@@ -11,13 +11,13 @@ class PrologixDriver(RealDriver):
     This acts as a bridge to communicate with GPIB instruments via a Serial port.
     """
 
-    def __init__(self, resource_address: str, gpib_address: int = 1):
+    def __init__(self, resource_address: str, gpib_address: int = 1) -> None:
         # Prologix is a serial device, usually /dev/cu.usbserial...
         super().__init__(resource_address)
         self.gpib_address = gpib_address
         self.timeout = 2.0
 
-    def connect(self):
+    def connect(self) -> None:
         """Connects to the Serial bridge and configures it as a Controller."""
         super().connect()
         # Initial Prologix configuration
@@ -27,7 +27,7 @@ class PrologixDriver(RealDriver):
         self.write(f"++addr {self.gpib_address}") # Set target GPIB address
         logger.info(f"Prologix Bridge initialized on {self.resource} for GPIB Address {self.gpib_address}")
 
-    def set_gpib_address(self, address: int):
+    def set_gpib_address(self, address: int) -> None:
         """Changes the target instrument address."""
         self.gpib_address = address
         self.write(f"++addr {address}")
@@ -39,7 +39,7 @@ class PrologixDriver(RealDriver):
         self.write("++read eoi")
         return self.read().strip()
 
-    def write(self, command: str):
+    def write(self, command: str) -> None:
         """Sends a raw command to the bridge."""
         if not command.endswith("\n") and not command.startswith("++"):
              command += "\n"

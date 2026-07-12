@@ -7,39 +7,39 @@ from ..results import MeasurementResult
 class AnritsuSA(RealDriver, SpectrumAnalyzer):
     """Generic Driver for Anritsu Spectrum Analyzers."""
     
-    def preset(self, automation_optimized: bool = True):
+    def preset(self, automation_optimized: bool = True) -> None:
         self.write("*RST")
         self.wait_ready()
 
-    def peak_search(self):
+    def peak_search(self) -> None:
         self.safe_send(":CALC:MARK1:MAX") 
 
     def get_marker_amplitude(self) -> MeasurementResult:
         val = self.query_ascii(":CALC:MARK1:Y?")
         return MeasurementResult(float(val), "dBm")
 
-    def set_center_freq(self, hz: float):
+    def set_center_freq(self, hz: float) -> None:
         self.safe_send(f":FREQ:CENT {self.format_frequency(hz)}")
 
     def get_center_freq(self) -> float:
         return float(self.query(":FREQ:CENT?"))
 
-    def set_span(self, hz: float):
+    def set_span(self, hz: float) -> None:
         self.safe_send(f":FREQ:SPAN {self.format_frequency(hz)}")
 
     def get_span(self) -> float:
         return float(self.query(":FREQ:SPAN?"))
 
-    def set_ref_level(self, dbm: float):
+    def set_ref_level(self, dbm: float) -> None:
         self.write(f":DISP:WIND:TRAC:Y:RLEV {dbm}")
 
-    def set_attenuation(self, db: float):
+    def set_attenuation(self, db: float) -> None:
         self.write(f":SENS:POW:ATT {db}")
 
-    def set_rbw(self, hz: float):
+    def set_rbw(self, hz: float) -> None:
         self.safe_send(f":BAND {self.format_frequency(hz)}")
 
-    def set_vbw(self, hz: float):
+    def set_vbw(self, hz: float) -> None:
         self.safe_send(f":BAND:VID {self.format_frequency(hz)}")
 
     def get_trace_data(self) -> MeasurementResult:
@@ -48,27 +48,27 @@ class AnritsuSA(RealDriver, SpectrumAnalyzer):
         data = self.query_binary_values(":TRAC:DATA? TRACE1", datatype='f', is_big_endian=False)
         return MeasurementResult(list(data), "dBm")
 
-    def shutdown_safety(self):
+    def shutdown_safety(self) -> None:
         self.sync_config()
 
 @register_driver("NA")
 class AnritsuVNA(RealDriver, NetworkAnalyzer):
     """Generic Driver for Anritsu Vector Network Analyzers (Handheld/Legacy)."""
     
-    def preset(self, automation_optimized: bool = True):
+    def preset(self, automation_optimized: bool = True) -> None:
         self.write("*RST")
         self.wait_ready()
 
-    def set_start_frequency(self, freq_hz: float):
+    def set_start_frequency(self, freq_hz: float) -> None:
         self.safe_send(f":SENS:FREQ:STAR {freq_hz}")
 
-    def set_stop_frequency(self, freq_hz: float):
+    def set_stop_frequency(self, freq_hz: float) -> None:
         self.safe_send(f":SENS:FREQ:STOP {freq_hz}")
 
-    def set_points(self, num_points: int):
+    def set_points(self, num_points: int) -> None:
         self.safe_send(f":SENS:SWE:POIN {num_points}")
 
-    def set_parameter(self, parameter: str):
+    def set_parameter(self, parameter: str) -> None:
         self.safe_send(f":CALC:PAR:SEL '{parameter}'")
 
     def get_trace_data(self, measurement_name: str = "S11") -> MeasurementResult:
@@ -92,36 +92,36 @@ class AnritsuVNA(RealDriver, NetworkAnalyzer):
 class AnritsuShockLineVNA(RealDriver, NetworkAnalyzer):
     """Driver for Anritsu ShockLine MS46522B/MS46524B VNAs."""
 
-    def connect(self):
+    def connect(self) -> None:
         super().connect()
         self._discover_capabilities()
 
-    def _discover_capabilities(self):
+    def _discover_capabilities(self) -> None:
         try:
             self.min_frequency = float(self.query(":SENS1:FREQ:STAR? MIN"))
             self.max_frequency = float(self.query(":SENS1:FREQ:STOP? MAX"))
         except Exception:
             pass
 
-    def preset(self, automation_optimized: bool = True):
+    def preset(self, automation_optimized: bool = True) -> None:
         self.write("*RST")
         self.wait_ready()
         if automation_optimized:
             self.write(":SYSTem:DISPlay:UPDate OFF")
 
-    def set_start_frequency(self, freq_hz: float):
+    def set_start_frequency(self, freq_hz: float) -> None:
         self.write(f":SENSe1:FREQuency:STARt {freq_hz}")
 
-    def set_stop_frequency(self, freq_hz: float):
+    def set_stop_frequency(self, freq_hz: float) -> None:
         self.write(f":SENSe1:FREQuency:STOP {freq_hz}")
 
-    def set_points(self, num_points: int):
+    def set_points(self, num_points: int) -> None:
         self.write(f":SENSe1:SWEep:POINts {num_points}")
 
-    def set_if_bandwidth(self, hz: float):
+    def set_if_bandwidth(self, hz: float) -> None:
         self.write(f":SENSe1:BANDwidth:RESolution {hz}")
 
-    def set_parameter(self, parameter: str):
+    def set_parameter(self, parameter: str) -> None:
         self.write(f":CALCulate1:PARameter:SELect '{parameter}'")
 
     def get_trace_data(self, measurement_name: str = "S21") -> MeasurementResult:
@@ -151,7 +151,7 @@ class AnritsuShockLineVNA(RealDriver, NetworkAnalyzer):
         self._unsupported_feature("get_smith_data")
         return MeasurementResult([], "Z")
 
-    def shutdown_safety(self):
+    def shutdown_safety(self) -> None:
         self.write(":SYSTem:DISPlay:UPDate ON")
         self.sync_config()
 
@@ -162,14 +162,14 @@ class AnritsuMS2035B(RealDriver, SpectrumAnalyzer, NetworkAnalyzer):
     VNA_MODE = "VNA"
     SA_MODE  = "SPA" # Spectrum Analyzer mode is usually SPA in handhelds
 
-    def _set_mode(self, mode: str):
+    def _set_mode(self, mode: str) -> None:
         current = self.query(":INSTrument:SELect?").strip().strip('"')
         if current != mode:
             self.write(f":INSTrument:SELect {mode}")
             self.wait_ready()
 
     # SA interface
-    def set_center_freq(self, hz: float):
+    def set_center_freq(self, hz: float) -> None:
         self._set_mode(self.SA_MODE)
         self.safe_send(f":FREQ:CENT {hz}")
 
@@ -177,7 +177,7 @@ class AnritsuMS2035B(RealDriver, SpectrumAnalyzer, NetworkAnalyzer):
         self._set_mode(self.SA_MODE)
         return float(self.query(":FREQ:CENT?"))
 
-    def set_span(self, hz: float):
+    def set_span(self, hz: float) -> None:
         self._set_mode(self.SA_MODE)
         self.safe_send(f":FREQ:SPAN {hz}")
 
@@ -207,19 +207,19 @@ class AnritsuMS2035B(RealDriver, SpectrumAnalyzer, NetworkAnalyzer):
         data = [complex(raw_data[i], raw_data[i+1]) for i in range(0, len(raw_data), 2)]
         return MeasurementResult(data, "IQ")
 
-    def set_start_frequency(self, freq_hz: float):
+    def set_start_frequency(self, freq_hz: float) -> None:
         self._set_mode(self.VNA_MODE)
         self.write(f":SENS:FREQ:STAR {freq_hz}")
 
-    def set_stop_frequency(self, freq_hz: float):
+    def set_stop_frequency(self, freq_hz: float) -> None:
         self._set_mode(self.VNA_MODE)
         self.write(f":SENS:FREQ:STOP {freq_hz}")
 
-    def set_points(self, num_points: int):
+    def set_points(self, num_points: int) -> None:
         self._set_mode(self.VNA_MODE)
         self.write(f":SENS:SWE:POIN {num_points}")
 
-    def set_parameter(self, parameter: str):
+    def set_parameter(self, parameter: str) -> None:
         self._set_mode(self.VNA_MODE)
         self.write(f":CALC:PAR:SEL '{parameter}'")
 
@@ -227,6 +227,6 @@ class AnritsuMS2035B(RealDriver, SpectrumAnalyzer, NetworkAnalyzer):
         self._unsupported_feature("get_smith_data")
         return MeasurementResult([], "Z")
 
-    def preset(self, automation_optimized: bool = True):
+    def preset(self, automation_optimized: bool = True) -> None:
         self.write("*RST")
         self.wait_ready()

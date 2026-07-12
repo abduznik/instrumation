@@ -7,39 +7,39 @@ from ..results import MeasurementResult
 class RigolDSA(RealDriver, SpectrumAnalyzer):
     """Driver for Rigol DSA Series Spectrum Analyzers."""
     
-    def preset(self, automation_optimized: bool = True):
+    def preset(self, automation_optimized: bool = True) -> None:
         self.write("*RST")
         self.wait_ready()
 
-    def peak_search(self):
+    def peak_search(self) -> None:
         self.safe_send(":CALC:MARK:MAX") 
 
     def get_marker_amplitude(self) -> MeasurementResult:
         val = self.query_ascii(":CALC:MARK:Y?") 
         return MeasurementResult(float(val), "dBm")
 
-    def set_center_freq(self, hz: float):
+    def set_center_freq(self, hz: float) -> None:
         self.safe_send(f":SENS:FREQ:CENT {self.format_frequency(hz)}")
 
     def get_center_freq(self) -> float:
         return float(self.query(":SENS:FREQ:CENT?"))
 
-    def set_span(self, hz: float):
+    def set_span(self, hz: float) -> None:
         self.safe_send(f":SENS:FREQ:SPAN {hz}")
 
     def get_span(self) -> float:
         return float(self.query(":SENS:FREQ:SPAN?"))
 
-    def set_rbw(self, hz: float):
+    def set_rbw(self, hz: float) -> None:
         self.safe_send(f":SENS:BAND:RES {hz}")
 
-    def set_vbw(self, hz: float):
+    def set_vbw(self, hz: float) -> None:
         self.safe_send(f":SENS:BAND:VID {hz}")
 
-    def set_ref_level(self, dbm: float):
+    def set_ref_level(self, dbm: float) -> None:
         self.write(f":DISP:WIND:TRAC:Y:RLEV {dbm}")
 
-    def set_attenuation(self, db: float):
+    def set_attenuation(self, db: float) -> None:
         self.write(f":SENS:POW:ATT {db}")
 
     def get_trace_data(self) -> MeasurementResult:
@@ -56,5 +56,5 @@ class RigolDSA(RealDriver, SpectrumAnalyzer):
     def measure_v_peak_to_peak(self) -> MeasurementResult:
         return MeasurementResult(0.0, "V")
 
-    def shutdown_safety(self):
+    def shutdown_safety(self) -> None:
         self.sync_config()

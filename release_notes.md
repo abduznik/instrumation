@@ -1,3 +1,21 @@
+## Key Features in v0.5.0
+
+### Type Hints (Issue #108)
+- **Complete type annotations across all driver files**: Added return type annotations and parameter type hints to every method in `base.py` and all 14 driver modules (`anritsu.py`, `keithley.py`, `keysight.py`, `prologix.py`, `real.py`, `registry.py`, `replay.py`, `rigol.py`, `rs.py`, `siglent.py`, `simulated.py`, `tdk.py`, `tektronix.py`).
+- **500+ methods annotated**: Covers `InstrumentDriver`, `Multimeter`, `PowerSupply`, `SpectrumAnalyzer`, `NetworkAnalyzer`, `Oscilloscope`, `SignalGenerator`, `FunctionGenerator`, `ElectronicLoad`, and `FrequencyCounter` base classes plus all concrete implementations.
+- **Benefits**: Full IDE autocomplete, mypy compatibility, and self-documenting API.
+
+### Async / Await Support (Issue #107)
+- **`AsyncInstrumentDriver`** and type-specific wrappers (`AsyncMultimeter`, `AsyncPowerSupply`, `AsyncSpectrumAnalyzer`, `AsyncNetworkAnalyzer`, `AsyncOscilloscope`, `AsyncSignalGenerator`, `AsyncFunctionGenerator`, `AsyncElectronicLoad`, `AsyncFrequencyCounter`): Explicit async versions of all instrument methods using `asyncio.to_thread`.
+- **`wrap_async(driver)` factory**: Automatically picks the most specific async wrapper based on the driver's type hierarchy.
+- **`async with` context manager**: `AsyncInstrumentDriver` supports async context management for clean connect/disconnect.
+- **Parallel measurements**: Run measurements across multiple instruments concurrently with `asyncio.gather()` for faster test execution.
+- **Backward compatible**: The existing `driver.async_*()` dynamic wrapper via `__getattr__` continues to work.
+
+### Regression Test Suite
+- **`tests/test_regression.py`**: 43 regression tests covering driver basics, MeasurementResult contract, safety guardrails, simulated physics, type hint completeness, async wrapper behavior, factory correctness, and registry integrity.
+- **242 total tests** (up from 199 in v0.4.2), all passing.
+
 ## Key Features in v0.4.1
 
 ### Unit Tests: Rohde & Schwarz Drivers

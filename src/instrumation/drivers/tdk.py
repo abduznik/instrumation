@@ -9,7 +9,7 @@ from ..exceptions import InstrumentError
 class TDKLambdaZPlus(RealDriver, PowerSupply):
     """Driver for TDK-Lambda Z+ Series Power Supplies."""
 
-    def connect(self):
+    def connect(self) -> None:
         """Overrides connect to send INST:NSEL command before identity check."""
         try:
             # 1. Establish raw connection
@@ -32,7 +32,7 @@ class TDKLambdaZPlus(RealDriver, PowerSupply):
             self.connected = False
             raise InstrumentError(f"Failed to connect to TDK-Lambda at {self.resource}: {e}")
 
-    def _discover_capabilities(self):
+    def _discover_capabilities(self) -> None:
         """Query the Z+ for its actual voltage and current limits."""
         try:
             self.max_voltage = float(self.query(":VOLT? MAX"))
@@ -43,11 +43,11 @@ class TDKLambdaZPlus(RealDriver, PowerSupply):
             pass
 
 
-    def preset(self, automation_optimized: bool = True):
+    def preset(self, automation_optimized: bool = True) -> None:
         self.write("*RST")
         self.sync_config()
 
-    def set_voltage(self, voltage: float):
+    def set_voltage(self, voltage: float) -> None:
         self.safe_send(f":VOLT {voltage}")
 
     def get_voltage(self) -> float:
@@ -67,35 +67,35 @@ class TDKLambdaZPlus(RealDriver, PowerSupply):
         val = self.query_ascii(":MEAS:CURR?")
         return MeasurementResult(float(val), "A")
 
-    def set_output(self, state: bool):
+    def set_output(self, state: bool) -> None:
         self.write(f":OUTP {'ON' if state else 'OFF'}")
 
     def get_output(self) -> bool:
         state = self.query_ascii(":OUTP?")
         return state == "1" or state.upper() == "ON"
 
-    def set_ovp(self, voltage: float):
+    def set_ovp(self, voltage: float) -> None:
         self.write(f":VOLT:PROT {voltage}")
 
     def get_ovp(self) -> float:
         return float(self.query(":VOLT:PROT?"))
 
-    def set_current(self, current: float):
+    def set_current(self, current: float) -> None:
         """Sets the current setpoint (CC limit)."""
         self.write(f":CURR {current}")
 
-    def set_current_limit(self, current: float):
+    def set_current_limit(self, current: float) -> None:
         """Alias for set_current."""
         self.set_current(current)
 
-    def set_ocp(self, current: float):
+    def set_ocp(self, current: float) -> None:
         """Sets the Over-Current Protection trip point."""
         self.write(f":CURR:PROT {current}")
 
     def get_ocp(self) -> float:
         return float(self.query(":CURR:PROT?"))
 
-    def clear_protection(self):
+    def clear_protection(self) -> None:
         """Clears hardware protection latches (OVP/OCP)."""
         self.write(":OUTP:PROT:CLE")
 
@@ -113,18 +113,18 @@ class TDKLambdaZPlus(RealDriver, PowerSupply):
         val = self.query_ascii(":MEAS:POW?")
         return MeasurementResult(float(val), "W")
 
-    def set_foldback_mode(self, mode: str):
+    def set_foldback_mode(self, mode: str) -> None:
         """Sets the foldback protection mode (OFF, CC, or CV)."""
         mode = mode.upper()
         if mode not in ["OFF", "CC", "CV"]:
             raise ValueError("Foldback mode must be OFF, CC, or CV")
         self.write(f":OUTP:PROT:FOLD {mode}")
 
-    def set_foldback_delay(self, seconds: float):
+    def set_foldback_delay(self, seconds: float) -> None:
         """Sets the delay for foldback protection (0-100 seconds)."""
         self.write(f":OUTP:PROT:DEL {seconds}")
 
-    def set_autostart(self, state: bool):
+    def set_autostart(self, state: bool) -> None:
         """Sets the Power-ON state (SAFE/OFF or AUTO/ON)."""
         self.write(f":OUTP:PON {'ON' if state else 'OFF'}")
 
@@ -132,20 +132,20 @@ class TDKLambdaZPlus(RealDriver, PowerSupply):
         """Returns the current operation mode (CV, CC, or OFF)."""
         return self.query_ascii(":OUTP:MODE?").strip()
 
-    def set_remote_state(self, state: str):
+    def set_remote_state(self, state: str) -> None:
         """Sets the remote state (LOC, REM, or LLO)."""
         state = state.upper()
         if state not in ["LOC", "REM", "LLO"]:
             raise ValueError("State must be LOC, REM, or LLO")
         self.write(f":SYST:REM {state}")
 
-    def save_state(self, index: int):
+    def save_state(self, index: int) -> None:
         """Saves current state to memory (1-4)."""
         if not (1 <= index <= 4):
             raise ValueError("Index must be 1-4")
         self.write(f"*SAV {index}")
 
-    def load_state(self, index: int):
+    def load_state(self, index: int) -> None:
         """Recalls state from memory (1-4)."""
         if not (1 <= index <= 4):
             raise ValueError("Index must be 1-4")
@@ -155,7 +155,7 @@ class TDKLambdaZPlus(RealDriver, PowerSupply):
     def measure_duty_cycle(self) -> MeasurementResult: return MeasurementResult(0.0, "%")
     def measure_v_peak_to_peak(self) -> MeasurementResult: return MeasurementResult(0.0, "V")
 
-    def shutdown_safety(self):
+    def shutdown_safety(self) -> None:
         """Safety first: Disable output and zero voltage."""
         self.set_output(False)
         self.set_voltage(0.0)
