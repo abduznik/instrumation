@@ -1,7 +1,7 @@
 import random
 import time
 import math
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Union
 from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, FunctionGenerator, ElectronicLoad, FrequencyCounter
 from .registry import register_driver
 from ..results import MeasurementResult
