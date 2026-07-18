@@ -22,7 +22,7 @@ A high-level Hardware Abstraction Layer (HAL) for RF test stations. Stop wrestli
 
 RF test bench automation is painful. Every instrument brand has its own quirks, SCPI dialects vary, and testing your scripts requires physical hardware on your desk. Instrumation fixes all three:
 
-- **One API for everything** — same code works on Keysight, Rigol, and any other supported brand
+- **One API for everything** — same code works on Keysight, Rigol, Siglent, Tektronix, R&S, Anritsu, Keithley, and TDK-Lambda
 - **Digital Twin mode** — develop and debug offline with simulated instruments that emit realistic Gaussian noise
 - **Smart auto-detection** — scans connected devices and loads the right driver automatically, no manual config
 
@@ -36,6 +36,7 @@ Instrumation has been validated against real lab hardware. See our experiment re
 - [📡 PXA N9030A Spectrum Analyzer](https://abduznik.github.io/instrumation/experiments/pxa_validation/) — 32-bit binary trace transfers at high speed
 - [🎛️ MXG N5183B Signal Generator](https://abduznik.github.io/instrumation/experiments/mxg_validation/) — Pulse modulation and frequency sweeps
 - [📊 PNA N5232A Network Analyzer](https://abduznik.github.io/instrumation/experiments/vna_validation/) — S-parameter measurements and Smith charts
+- [📈 Rigol DS1054Z Oscilloscope](https://abduznik.github.io/instrumation/experiments/rigol_ds1054z/) — 4-channel calibrated waveform readout and edge trigger
 
 ---
 

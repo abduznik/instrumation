@@ -23,6 +23,7 @@ Instrumation has been validated against real lab equipment. Check out our experi
 - [📡 PXA N9030A Validation](experiments/pxa_validation.md) — High-speed 32-bit binary trace transfers
 - [🎛️ MXG N5183B Validation](experiments/mxg_validation.md) — Pulse modulation and frequency sweeps
 - [📊 PNA N5232A Validation](experiments/vna_validation.md) — S-parameter measurements and Smith charts
+- [📈 Rigol DS1054Z Integration](experiments/rigol_ds1054z.md) — 4-channel scope with calibrated waveform readout
 
 ---
 

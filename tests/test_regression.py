@@ -1,4 +1,4 @@
-"""Regression tests for instrumation v0.5.0.
+"""Regression tests for instrumation v0.5.1.
 
 These tests guard against known behaviors and edge cases that have been
 fixed or introduced across releases. If a regression test fails, something
@@ -414,3 +414,140 @@ class TestRegistry:
         from instrumation.drivers.registry import DriverRegistry
         drivers = DriverRegistry.get_drivers_by_type("LOAD")
         assert len(drivers) > 0
+
+
+# ── v0.5.1: Rigol DS1054Z regression ─────────────────────
+
+class TestRigolDS1054Z:
+    """Regression: RigolDS1054Z driver must implement Oscilloscope interface
+    correctly, parse Rigol preamble format, and convert raw ADC codes to
+    calibrated voltage values."""
+
+    def _make_driver(self):
+        from unittest.mock import MagicMock, patch
+        with patch('pyvisa.ResourceManager'):
+            from instrumation.drivers.rigol import RigolDS1054Z
+            drv = RigolDS1054Z("USB0::0x1AB1::0x04CE::DS1054Z::INSTR")
+            drv.inst = MagicMock()
+            drv.inst.query.return_value = "+0,\"No error\""
+            drv.connected = True
+            return drv
+
+    def test_driver_is_oscilloscope(self):
+        from instrumation.drivers.rigol import RigolDS1054Z
+        from instrumation.drivers.base import Oscilloscope
+        assert issubclass(RigolDS1054Z, Oscilloscope)
+
+    def test_driver_registered_as_scope(self):
+        from instrumation.drivers.registry import DriverRegistry
+        from instrumation.factory import load_plugins
+        load_plugins()
+        scopes = DriverRegistry.get_drivers_by_type("SCOPE")
+        assert any("RigolDS1054Z" in cls.__name__ for cls in scopes)
+
+    def test_channel_config_round_trip(self):
+        drv = self._make_driver()
+        drv.set_channel_coupling(1, "DC")
+        drv.inst.query.return_value = "DC"
+        assert drv.get_channel_coupling(1) == "DC"
+
+        drv.set_channel_scale(2, 0.1)
+        drv.inst.query.return_value = "0.1"
+        assert drv.get_channel_scale(2) == pytest.approx(0.1)
+
+        drv.set_channel_offset(3, -2.5)
+        drv.inst.query.return_value = "-2.5"
+        assert drv.get_channel_offset(3) == pytest.approx(-2.5)
+
+    def test_timebase_scale_round_trip(self):
+        drv = self._make_driver()
+        drv.set_timebase_scale(1e-3)
+        drv.inst.query.return_value = "0.001"
+        assert drv.get_timebase_scale() == pytest.approx(1e-3)
+
+    def test_waveform_preamble_parse_fields(self):
+        drv = self._make_driver()
+        drv.inst.query.return_value = "0,0,1000,1,2e-9,0.0,0,0.01,0.0,128"
+        pre = drv.get_waveform_preamble()
+        assert pre["format"] == 0
+        assert pre["points"] == 1000
+        assert pre["x_increment"] == pytest.approx(2e-9)
+        assert pre["y_increment"] == pytest.approx(0.01)
+        assert pre["y_origin"] == pytest.approx(0.0)
+        assert pre["y_reference"] == 128
+
+    def test_waveform_voltage_conversion(self):
+        """Raw ADC codes must convert to real voltages correctly."""
+        drv = self._make_driver()
+        drv.inst.query.return_value = "0,0,4,1,1e-7,0.0,0,0.01,0.0,128"
+        drv.inst.query_binary_values.return_value = [128, 228, 28, 128]
+        result = drv.get_waveform(1)
+
+        time_arr, volt_arr = result.value
+        assert len(volt_arr) == 4
+        assert result.unit == "V"
+        assert result.channel == 1
+        # 128 -> 0.0V, 228 -> 1.0V, 28 -> -1.0V
+        assert volt_arr[0] == pytest.approx(0.0)
+        assert volt_arr[1] == pytest.approx(1.0)
+        assert volt_arr[2] == pytest.approx(-1.0)
+
+    def test_waveform_time_axis_origin(self):
+        drv = self._make_driver()
+        drv.inst.query.return_value = "0,0,3,1,1e-6,-5e-6,0,0.01,0.0,128"
+        drv.inst.query_binary_values.return_value = [128, 128, 128]
+        result = drv.get_waveform(2)
+        time_arr, _ = result.value
+        assert time_arr[0] == pytest.approx(-5e-6)
+
+    def test_channel_validation_rejects_out_of_range(self):
+        drv = self._make_driver()
+        with pytest.raises(ValueError):
+            drv.set_channel_display(0, True)
+        with pytest.raises(ValueError):
+            drv.set_channel_display(5, True)
+
+    def test_acquire_averages_rejects_non_power_of_two(self):
+        drv = self._make_driver()
+        with pytest.raises(ValueError):
+            drv.set_acquire_averages(50)
+
+    def test_acquire_averages_rejects_out_of_range(self):
+        drv = self._make_driver()
+        with pytest.raises(ValueError):
+            drv.set_acquire_averages(2048)
+
+    def test_edge_trigger_slope_validation(self):
+        drv = self._make_driver()
+        with pytest.raises(ValueError):
+            drv.set_edge_trigger_slope("INVALID")
+
+    def test_trigger_sweep_validation(self):
+        drv = self._make_driver()
+        with pytest.raises(ValueError):
+            drv.set_trigger_sweep("BOGUS")
+
+    def test_waveform_mode_validation(self):
+        drv = self._make_driver()
+        with pytest.raises(ValueError):
+            drv.set_waveform_mode("INVALID")
+
+    def test_waveform_format_validation(self):
+        drv = self._make_driver()
+        with pytest.raises(ValueError):
+            drv.set_waveform_format("FLOAT")
+
+    def test_context_manager_safety(self):
+        from unittest.mock import MagicMock, patch
+        with patch('pyvisa.ResourceManager'):
+            from instrumation.drivers.rigol import RigolDS1054Z
+            drv = RigolDS1054Z("USB0::0x1AB1::0x04CE::DS1054Z::INSTR")
+            drv.inst = MagicMock()
+            drv.inst.query.return_value = "1"
+        with patch.object(drv, 'connect'), \
+             patch.object(drv, 'disconnect') as mock_dis, \
+             patch.object(drv, 'shutdown_safety') as mock_safe:
+            with drv:
+                pass
+            mock_safe.assert_called_once()
+            mock_dis.assert_called_once()

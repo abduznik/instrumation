@@ -7,8 +7,14 @@ This page provides the automatically generated documentation for the core classe
 ::: instrumation.drivers.base.Multimeter
 ::: instrumation.drivers.base.PowerSupply
 ::: instrumation.drivers.base.SpectrumAnalyzer
+::: instrumation.drivers.base.NetworkAnalyzer
+::: instrumation.drivers.base.Oscilloscope
 ::: instrumation.drivers.base.SignalGenerator
+::: instrumation.drivers.base.ElectronicLoad
 ::: instrumation.drivers.base.FrequencyCounter
+
+## Oscilloscopes
+::: instrumation.drivers.rigol.RigolDS1054Z
 
 ## Results
 ::: instrumation.results.MeasurementResult

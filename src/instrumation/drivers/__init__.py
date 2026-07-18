@@ -13,6 +13,7 @@ from .simulated import (
     SimulatedFrequencyCounter,
 )
 from .keysight import Keysight53230A
+from .rigol import RigolDS1054Z
 from .async_driver import (
     AsyncInstrumentDriver,
     AsyncMultimeter,
@@ -41,6 +42,7 @@ __all__ = [
     "SimulatedElectronicLoad",
     "SimulatedFrequencyCounter",
     "Keysight53230A",
+    "RigolDS1054Z",
     "AsyncInstrumentDriver",
     "AsyncMultimeter",
     "AsyncPowerSupply",

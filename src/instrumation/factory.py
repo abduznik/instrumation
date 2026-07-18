@@ -255,6 +255,15 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
     elif "SIGLENT" in idn:
         from .drivers.siglent import SiglentSDS
         final_drv = SiglentSDS(resource_address)
+    elif "RIGOL" in idn:
+        if any(m in idn for m in ["DS1054Z", "DS1104Z", "DS1074Z", "DS1102Z",
+                                   "MSO1054Z", "MSO1104Z", "MSO1074Z",
+                                   "DS1000Z", "MSO1000Z"]):
+            from .drivers.rigol import RigolDS1054Z
+            final_drv = RigolDS1054Z(resource_address)
+        else:
+            from .drivers.rigol import RigolDSA
+            final_drv = RigolDSA(resource_address)
     elif "KEITHLEY" in idn:
         if "2400" in idn:
             from .drivers.keithley import Keithley2400
