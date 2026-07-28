@@ -1,3 +1,39 @@
+## Key Features in v0.6.0
+
+### New Feature: batch_query (Issue #119)
+- **Efficient multi-query utility**: New `batch_query()` function sends multiple SCPI queries to an instrument in a single call and returns a dictionary mapping each query to its response.
+- **Graceful error handling**: By default, failed queries are logged as error messages and processing continues. Use `stop_on_error=True` to raise on first failure.
+- **Whitespace stripping**: Responses are automatically stripped for clean downstream parsing.
+- **Example**:
+  ```python
+  from instrumation.transport import batch_query
+  results = batch_query(dmm, ["*IDN?", "MEAS:VOLT:DC?", "*STB?"])
+  for cmd, resp in results.items():
+      print(f"{cmd} -> {resp}")
+  ```
+
+### Transport Utilities (Issues #113–#116)
+- **`detect_line_termination()`**: Auto-detects the correct line termination character (LF, CR, or CRLF) for an instrument by trying each against a safe SCPI query.
+- **`find_minimum_timeout()`**: Finds the smallest safe timeout value for an instrument by testing ascending candidates.
+- **`poll_for_mav()`**: Polls the Status Byte Register for the MAV (Message Available) bit before reading, ensuring data is ready.
+- **`poll_opc_with_backoff()`**: Polls for operation-complete with exponential backoff to reduce bus traffic during long operations.
+
+### Scanner Utilities (Issue #117)
+- **`find_duplicate_addresses()`**: Detects bus conflicts by identifying addresses that appear multiple times in a scan result with differing descriptions.
+
+### Documentation
+- New `docs/user_guide/transport_utils.md` — comprehensive guide for all transport and scanner utilities
+- Updated API reference to include all new functions
+
+### Tests
+- 27 unit tests for transport utilities (up from 15)
+- 5 regression tests for batch_query
+- All 90 tests passing
+
+### Other
+- Version bumped to 0.6.0
+- Added ROADMAP.md for v0.7.0 planning
+
 ## Key Features in v0.5.0
 
 ### Type Hints (Issue #108)
