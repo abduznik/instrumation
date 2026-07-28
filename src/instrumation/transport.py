@@ -265,3 +265,50 @@ def poll_opc_with_backoff(
         current_delay = min(current_delay * 2, max_delay)
 
     raise InstrumentTimeout(f"Operation did not complete within {timeout}s timeout")
+
+
+def batch_query(
+    instrument: VisaDriver,
+    queries: List[str],
+    stop_on_error: bool = False,
+) -> dict:
+    """Send multiple SCPI queries and return a dictionary of results.
+
+    This is useful for fetching multiple instrument settings or readings in
+    a single call, reducing round-trips and improving efficiency on slow
+    connections. Failed queries are logged with their error messages rather
+    than raising immediately (unless stop_on_error=True).
+
+    Steps:
+        1. Initialize an empty results dictionary.
+        2. For each query in the list:
+           a. Send the query via instrument.query().
+           b. Store the stripped response in results[query].
+           c. If the query fails and stop_on_error is True, raise the exception.
+           d. If stop_on_error is False, store the error message as the value.
+        3. Return the results dictionary.
+
+    Args:
+        instrument: A connected VisaDriver or pyvisa Resource object.
+        queries: List of SCPI query strings to send.
+        stop_on_error: If True, raise on first error. If False (default),
+            store error messages and continue with remaining queries.
+
+    Returns:
+        A dictionary mapping each query string to its response (or error message).
+
+    Example:
+        >>> results = batch_query(dmm, ["*IDN?", "MEAS:VOLT:DC?", "*STB?"])
+        >>> for cmd, resp in results.items():
+        ...     print(f"{cmd} -> {resp}")
+    """
+    results = {}
+    for query in queries:
+        try:
+            response = instrument.query(query)
+            results[query] = response.strip() if isinstance(response, str) else response
+        except Exception as e:
+            if stop_on_error:
+                raise
+            results[query] = f"ERROR: {e}"
+    return results

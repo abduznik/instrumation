@@ -22,3 +22,13 @@ This page provides the automatically generated documentation for the core classe
 ## Factory
 ::: instrumation.factory.get_instrument
 ::: instrumation.factory.load_plugins
+
+## Transport Utilities
+::: instrumation.transport.detect_line_termination
+::: instrumation.transport.find_minimum_timeout
+::: instrumation.transport.poll_for_mav
+::: instrumation.transport.poll_opc_with_backoff
+::: instrumation.transport.batch_query
+
+## Scanner Utilities
+::: instrumation.scanner.find_duplicate_addresses

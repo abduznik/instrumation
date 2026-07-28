@@ -1,4 +1,4 @@
-"""Regression tests for instrumation v0.5.1.
+"""Regression tests for instrumation v0.6.0.
 
 These tests guard against known behaviors and edge cases that have been
 fixed or introduced across releases. If a regression test fails, something
@@ -11,6 +11,7 @@ import os
 import time
 
 import pytest
+from unittest.mock import MagicMock
 
 from instrumation.factory import get_instrument
 from instrumation.results import MeasurementResult
@@ -551,3 +552,60 @@ class TestRigolDS1054Z:
                 pass
             mock_safe.assert_called_once()
             mock_dis.assert_called_once()
+
+
+# ── v0.6.0: batch_query regression ────────────────────────
+
+class TestBatchQueryRegression:
+    """Regression: batch_query must reliably fetch multiple instrument settings."""
+
+    def test_batch_query_returns_all_keys(self):
+        """batch_query must return a response for every query sent."""
+        from instrumation.transport import batch_query
+        mock_inst = MagicMock()
+        mock_inst.query.side_effect = ["SIM,DMM,1.0", "3.3", "0x10"]
+
+        result = batch_query(mock_inst, ["*IDN?", "MEAS:VOLT?", "*STB?"])
+        assert set(result.keys()) == {"*IDN?", "MEAS:VOLT?", "*STB?"}
+
+    def test_batch_query_strips_whitespace(self):
+        """Responses must be stripped for clean downstream parsing."""
+        from instrumation.transport import batch_query
+        mock_inst = MagicMock()
+        mock_inst.query.return_value = "  42.5  \n"
+
+        result = batch_query(mock_inst, ["READ?"])
+        assert result["READ?"] == "42.5"
+
+    def test_batch_query_survives_partial_failure(self):
+        """A single failed query must not abort the entire batch."""
+        from instrumation.transport import batch_query
+        mock_inst = MagicMock()
+        mock_inst.query.side_effect = [
+            "Keysight,DMM",
+            Exception("bus error"),
+            "5.0",
+        ]
+
+        result = batch_query(mock_inst, ["*IDN?", "BROKEN?", "VOLT?"])
+        assert result["*IDN?"] == "Keysight,DMM"
+        assert "ERROR" in result["BROKEN?"]
+        assert result["VOLT?"] == "5.0"
+
+    def test_batch_query_stop_on_error_raises(self):
+        """stop_on_error=True must propagate the first exception."""
+        from instrumation.transport import batch_query
+        mock_inst = MagicMock()
+        mock_inst.query.side_effect = Exception("fatal")
+
+        with pytest.raises(Exception, match="fatal"):
+            batch_query(mock_inst, ["CMD?"], stop_on_error=True)
+
+    def test_batch_query_empty_list_returns_empty_dict(self):
+        """An empty query list must not call the instrument at all."""
+        from instrumation.transport import batch_query
+        mock_inst = MagicMock()
+
+        result = batch_query(mock_inst, [])
+        assert result == {}
+        mock_inst.query.assert_not_called()

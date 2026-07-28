@@ -10,6 +10,7 @@ from instrumation.transport import (
     find_minimum_timeout,
     poll_for_mav,
     poll_opc_with_backoff,
+    batch_query,
 )
 from instrumation.scanner import find_duplicate_addresses
 from instrumation.exceptions import InstrumentTimeout
@@ -238,3 +239,75 @@ class TestFindDuplicateAddresses:
         addresses = [r["address"] for r in result]
         assert "GPIB::1" in addresses
         assert "GPIB::2" in addresses
+
+
+# ── batch_query ─────────────────────────────────────────────
+
+class TestBatchQuery:
+    """Tests for batch_query()."""
+
+    def test_returns_dict_with_all_queries(self):
+        """Should return a dict with one entry per query."""
+        mock_inst = MagicMock()
+        mock_inst.query.side_effect = ["SIM,SIM_DMM,1.0", "3.3", "0"]
+
+        result = batch_query(mock_inst, ["*IDN?", "MEAS:VOLT:DC?", "*STB?"])
+        assert len(result) == 3
+        assert "*IDN?" in result
+        assert "MEAS:VOLT:DC?" in result
+        assert "*STB?" in result
+
+    def test_returns_stripped_responses(self):
+        """Responses should be stripped of whitespace."""
+        mock_inst = MagicMock()
+        mock_inst.query.return_value = "  3.3V  \n"
+
+        result = batch_query(mock_inst, ["MEAS:VOLT:DC?"])
+        assert result["MEAS:VOLT:DC?"] == "3.3V"
+
+    def test_continues_on_error_by_default(self):
+        """Should continue processing remaining queries when one fails."""
+        mock_inst = MagicMock()
+        mock_inst.query.side_effect = [
+            "SIM,SIM_DMM,1.0",
+            Exception("Timeout"),
+            "0",
+        ]
+
+        result = batch_query(mock_inst, ["*IDN?", "FAIL?", "*STB?"])
+        assert result["*IDN?"] == "SIM,SIM_DMM,1.0"
+        assert "ERROR:" in result["FAIL?"]
+        assert result["*STB?"] == "0"
+
+    def test_stops_on_error_when_enabled(self):
+        """Should raise immediately when stop_on_error=True and a query fails."""
+        mock_inst = MagicMock()
+        mock_inst.query.side_effect = [
+            "SIM,SIM_DMM,1.0",
+            Exception("Timeout"),
+        ]
+
+        with pytest.raises(Exception, match="Timeout"):
+            batch_query(mock_inst, ["*IDN?", "FAIL?"], stop_on_error=True)
+
+    def test_empty_query_list(self):
+        """Should return empty dict for empty query list."""
+        mock_inst = MagicMock()
+        result = batch_query(mock_inst, [])
+        assert result == {}
+
+    def test_single_query(self):
+        """Should work with a single query."""
+        mock_inst = MagicMock()
+        mock_inst.query.return_value = "1.234"
+
+        result = batch_query(mock_inst, ["MEAS:VOLT?"])
+        assert result == {"MEAS:VOLT?": "1.234"}
+
+    def test_preserves_query_order_in_keys(self):
+        """Dictionary keys should match the input query order."""
+        mock_inst = MagicMock()
+        mock_inst.query.side_effect = ["A", "B", "C"]
+
+        result = batch_query(mock_inst, ["CMD_C", "CMD_A", "CMD_B"])
+        assert list(result.keys()) == ["CMD_C", "CMD_A", "CMD_B"]
