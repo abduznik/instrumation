@@ -67,4 +67,20 @@ def find_duplicate_addresses(devices: List[Dict[str, str]]) -> List[Dict[str, st
         >>> for c in conflicts:
         ...     print(f"CONFLICT on {c['address']}: {c['identities']}")
     """
-    raise NotImplementedError("See issue #117")
+    from collections import defaultdict
+
+    addr_to_descs = defaultdict(list)
+    for device in devices:
+        addr_to_descs[device["id"]].append(device["desc"])
+
+    conflicts = []
+    for addr, descs in addr_to_descs.items():
+        unique_descs = list(set(descs))
+        if len(unique_descs) > 1:
+            conflicts.append({
+                "address": addr,
+                "identities": unique_descs,
+                "count": len(descs),
+            })
+
+    return conflicts

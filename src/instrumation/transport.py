@@ -104,7 +104,20 @@ def detect_line_termination(instrument: VisaDriver, query: str = "*IDN?") -> str
     Raises:
         RuntimeError: If no candidate terminator produces a valid response.
     """
-    raise NotImplementedError("See issue #113")
+    original_termination = instrument.read_termination
+
+    for candidate in ["\n", "\r", "\r\n"]:
+        instrument.read_termination = candidate
+        try:
+            response = instrument.query(query)
+            if response and "," in response:
+                instrument.read_termination = original_termination
+                return candidate
+        except Exception:
+            continue
+
+    instrument.read_termination = original_termination
+    raise RuntimeError(f"No terminator produced a valid response for query: {query}")
 
 
 def find_minimum_timeout(
@@ -142,7 +155,24 @@ def find_minimum_timeout(
     Raises:
         RuntimeError: If no candidate timeout produces a valid response.
     """
-    raise NotImplementedError("See issue #114")
+    if candidates is None:
+        candidates = [100, 250, 500, 1000, 2500, 5000]
+
+    original_timeout = instrument.timeout
+    candidates_sorted = sorted(candidates)
+
+    for candidate in candidates_sorted:
+        instrument.timeout = candidate
+        try:
+            response = instrument.query(query)
+            if response:
+                instrument.timeout = original_timeout
+                return candidate
+        except (TimeoutError, Exception):
+            continue
+
+    instrument.timeout = original_timeout
+    raise RuntimeError(f"No timeout candidate worked for query: {query}")
 
 
 def poll_for_mav(
@@ -173,7 +203,20 @@ def poll_for_mav(
     Raises:
         InstrumentTimeout: If MAV is not set within the timeout period.
     """
-    raise NotImplementedError("See issue #115")
+    from .exceptions import InstrumentTimeout
+
+    start = time.time()
+    while time.time() - start < timeout:
+        try:
+            response = instrument.query("*STB?")
+            value = int(response)
+            if value & 0x10:
+                return
+        except (ValueError, Exception):
+            pass
+        time.sleep(poll_interval)
+
+    raise InstrumentTimeout(f"MAV bit not set within {timeout}s timeout")
 
 
 def poll_opc_with_backoff(
@@ -206,4 +249,19 @@ def poll_opc_with_backoff(
     Raises:
         InstrumentTimeout: If *OPC? does not return "1" within the timeout.
     """
-    raise NotImplementedError("See issue #116")
+    from .exceptions import InstrumentTimeout
+
+    start = time.time()
+    current_delay = initial_delay
+
+    while time.time() - start < timeout:
+        try:
+            response = instrument.query("*OPC?")
+            if response.strip() == "1":
+                return
+        except Exception:
+            pass
+        time.sleep(current_delay)
+        current_delay = min(current_delay * 2, max_delay)
+
+    raise InstrumentTimeout(f"Operation did not complete within {timeout}s timeout")
