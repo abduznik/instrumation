@@ -2,6 +2,7 @@ import pyvisa
 import logging
 import os
 import time
+from pathlib import Path
 from .drivers.real import RealDriver
 from .drivers.registry import DriverRegistry
 from .drivers.base import Oscilloscope, SpectrumAnalyzer, SignalGenerator, FunctionGenerator, PowerSupply, Multimeter, NetworkAnalyzer, ElectronicLoad, FrequencyCounter
@@ -92,15 +93,21 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
     if resource_address == "AUTO":
         import json
         from concurrent.futures import ThreadPoolExecutor, as_completed
-        cache_file = ".visa_cache.json"
-        
+        cache_file = Path(".visa_cache.json")
+
         # 1. Load Cache & LAN (The Fast Resources)
         cached_resources = []
-        if os.path.exists(cache_file):
+        if cache_file.exists():
             try:
-                with open(cache_file, "r") as f:
-                    cached_resources = json.load(f)
+                cached_resources = json.loads(cache_file.read_text())
             except (IOError, OSError, json.JSONDecodeError):
+                pass
+        else:
+            # Create an empty cache file on first run so AUTO doesn't
+            # always fall through to the slow full VISA scan.
+            try:
+                cache_file.write_text("[]")
+            except (IOError, OSError):
                 pass
         
         lan_resources = _discover_lan_resources()
@@ -144,8 +151,7 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
             try:
                 # Move successful resource to the front of the cache
                 new_cache = [res] + [r for r in cached_resources if r != res]
-                with open(cache_file, "w") as f:
-                    json.dump(new_cache[:10], f) # Keep top 10 for speed
+                cache_file.write_text(json.dumps(new_cache[:10]))  # Keep top 10 for speed
             except (IOError, OSError):
                 pass
 
@@ -290,14 +296,15 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
     # Update cache with successful manual connection to enable future AUTO discovery
     if resource_address != "AUTO":
         try:
-            cache_file = ".visa_cache.json"
+            cache_path = Path(".visa_cache.json")
             cached_resources = []
-            if os.path.exists(cache_file):
-                with open(cache_file, "r") as f:
-                    cached_resources = json.load(f)
+            if cache_path.exists():
+                try:
+                    cached_resources = json.loads(cache_path.read_text())
+                except (IOError, OSError, json.JSONDecodeError):
+                    pass
             new_cache = [resource_address] + [r for r in cached_resources if r != resource_address]
-            with open(cache_file, "w") as f:
-                json.dump(new_cache[:10], f)
+            cache_path.write_text(json.dumps(new_cache[:10]))
         except Exception:
             pass
 
