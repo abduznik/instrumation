@@ -226,6 +226,19 @@ class TestFindDuplicateAddresses:
         assert set(result[0].keys()) == {"address", "identities", "count"}
         assert result[0]["count"] == 3
 
+    def test_handles_empty_input(self):
+        """Empty list input -> empty list."""
+        assert find_duplicate_addresses([]) == []
+
+    def test_handles_none_input(self):
+        """None input -> empty list."""
+        assert find_duplicate_addresses(None) == []
+
+    def test_handles_single_device(self):
+        """Single device -> empty list."""
+        devices = [{"type": "visa", "id": "USB::1", "desc": "DMM"}]
+        assert find_duplicate_addresses(devices) == []
+
     def test_handles_multiple_conflicts(self):
         """Should detect multiple independent address conflicts."""
         devices = [

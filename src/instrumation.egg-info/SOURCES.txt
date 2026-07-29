@@ -21,6 +21,7 @@ src/instrumation.egg-info/requires.txt
 src/instrumation.egg-info/top_level.txt
 src/instrumation/drivers/__init__.py
 src/instrumation/drivers/anritsu.py
+src/instrumation/drivers/async_driver.py
 src/instrumation/drivers/base.py
 src/instrumation/drivers/keithley.py
 src/instrumation/drivers/keysight.py
@@ -39,6 +40,7 @@ tests/test_async.py
 tests/test_broadcaster.py
 tests/test_cli.py
 tests/test_context_manager.py
+tests/test_counter.py
 tests/test_electronic_load.py
 tests/test_exceptions.py
 tests/test_factory.py
@@ -48,7 +50,10 @@ tests/test_keysight.py
 tests/test_measurement_results.py
 tests/test_plugins.py
 tests/test_pna.py
+tests/test_prologix.py
+tests/test_regression.py
 tests/test_rigol.py
+tests/test_rs.py
 tests/test_siglent.py
 tests/test_simulated_scpi.py
 tests/test_simulation.py
@@ -56,3 +61,4 @@ tests/test_station.py
 tests/test_tdk.py
 tests/test_tektronix.py
 tests/test_tektronix_afg.py
+tests/test_transport_utils.py

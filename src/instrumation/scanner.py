@@ -69,6 +69,9 @@ def find_duplicate_addresses(devices: List[Dict[str, str]]) -> List[Dict[str, st
     """
     from collections import defaultdict
 
+    if not devices:
+        return []
+
     addr_to_descs = defaultdict(list)
     for device in devices:
         addr_to_descs[device["id"]].append(device["desc"])

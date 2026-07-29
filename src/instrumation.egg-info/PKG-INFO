@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: instrumation
-Version: 0.3.1
+Version: 0.6.0
 Summary: A high-level Hardware Abstraction Layer (HAL) for RF test stations with Digital Twin support.
 Author-email: abduznik <abduznik@users.noreply.github.com>
 License: MIT
@@ -27,12 +27,19 @@ Requires-Dist: mkdocs-material; extra == "docs"
 Requires-Dist: mkdocstrings[python]; extra == "docs"
 Dynamic: license-file
 
+## Support This Project
+
+> **All projects made with passion** 💙
+
+[![Sponsor me](https://img.shields.io/badge/❤️%20Sponsor-GitHub-red?style=for-the-badge)](https://github.com/sponsors/abduznik)
+
 # Instrumation
 
 [![PyPI version](https://img.shields.io/pypi/v/instrumation)](https://pypi.org/project/instrumation/)
 [![License](https://img.shields.io/pypi/l/instrumation)](https://pypi.org/project/instrumation/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/instrumation)](https://pypi.org/project/instrumation/)
 [![Stars](https://img.shields.io/github/stars/abduznik/instrumation?style=flat)](https://github.com/abduznik/instrumation/stargazers)
+[![Downloads](https://static.pepy.tech/personalized-badge/instrumation?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/instrumation)
 
 ![Example](assets/example.gif)
 
@@ -44,13 +51,63 @@ A high-level Hardware Abstraction Layer (HAL) for RF test stations. Stop wrestli
 
 RF test bench automation is painful. Every instrument brand has its own quirks, SCPI dialects vary, and testing your scripts requires physical hardware on your desk. Instrumation fixes all three:
 
-- **One API for everything** — same code works on Keysight, Rigol, and any other supported brand
+- **One API for everything** — same code works on Keysight, Rigol, Siglent, Tektronix, R&S, Anritsu, Keithley, and TDK-Lambda
 - **Digital Twin mode** — develop and debug offline with simulated instruments that emit realistic Gaussian noise
 - **Smart auto-detection** — scans connected devices and loads the right driver automatically, no manual config
 
 ---
 
---- 
+## Real Hardware Validation
+
+Instrumation has been validated against real lab hardware. See our experiment reports:
+
+- [🔬 AFG ↔ DSOX Loopback Validation](https://abduznik.github.io/instrumation/experiments/afg_dso_loopback/) — Plug-and-play AUTO discovery with Tektronix AFG3022C + Keysight DSOX2002A
+- [📡 PXA N9030A Spectrum Analyzer](https://abduznik.github.io/instrumation/experiments/pxa_validation/) — 32-bit binary trace transfers at high speed
+- [🎛️ MXG N5183B Signal Generator](https://abduznik.github.io/instrumation/experiments/mxg_validation/) — Pulse modulation and frequency sweeps
+- [📊 PNA N5232A Network Analyzer](https://abduznik.github.io/instrumation/experiments/vna_validation/) — S-parameter measurements and Smith charts
+- [📈 Rigol DS1054Z Oscilloscope](https://abduznik.github.io/instrumation/experiments/rigol_ds1054z/) — 4-channel calibrated waveform readout and edge trigger
+
+---
+
+## PyVISA vs Instrumation: See the Difference
+
+Programming a signal generator the traditional way vs. with Instrumation:
+
+| Aspect | PyVISA (raw SCPI) | Instrumation |
+| :--- | :--- | :--- |
+| **Discovery** | Manual — find the resource string, manage `ResourceManager` | **Auto** — just pass `"AUTO"` and the HAL scans USB + LAN for you |
+| **Connection** | `rm.open_resource("TCPIP0::192.168.1.100::...")` — hardcoded address | `connect_instrument("AUTO", "SG")` — type-aware routing |
+| **Configuration** | `sg.write(":FREQ:CW 2.4e9")` — raw SCPI strings, no validation | `sg.set_frequency(2.4e9)` — typed method with bounds checking |
+| **Cleanup** | Manual `sg.close()` — easy to forget | Context manager — automatic `with` block cleanup |
+| **Offline Dev** | Requires real hardware connected | Digital Twin — set `INSTRUMATION_MODE=SIM` and develop anywhere |
+| **Portability** | Vendor-specific SCPI — rewrite for each brand | **One API** — works on Keysight, Rigol, Tektronix, Siglent, R&S, Anritsu |
+
+### Side-by-Side Code
+
+```python
+# ─── PyVISA: 8 lines of boilerplate ───
+import pyvisa
+rm = pyvisa.ResourceManager()
+# Manually find the right resource...
+sg = rm.open_resource("TCPIP0::192.168.1.100::inst0::INSTR")
+sg.write("*RST")
+sg.write(":FREQ:CW 2.4e9")
+sg.write(":POW:AMPL -10")
+sg.write(":OUTP ON")
+sg.close()
+
+# ─── Instrumation: 5 lines, zero config ───
+from instrumation import connect_instrument
+
+with connect_instrument("AUTO", "SG") as sg:
+    sg.set_frequency(2.4e9)
+    sg.set_amplitude(-10)
+    sg.set_output(True)
+```
+
+No resource manager. No SCPI strings. No hardcoded addresses. Just your test logic.
+
+---
 
 ## Live Data Streaming 
 
@@ -211,6 +268,43 @@ pip install pytest flake8
 # Run tests (simulation mode)
 export INSTRUMATION_MODE=SIM  # Linux/macOS
 pytest
+```
+
+---
+
+## Related Projects
+
+### [instrumation-report](https://github.com/abduznik/instrumation-report)
+
+A lightweight Python library for generating structured UUT (Unit Under Test) test reports from measurement data. Works standalone or alongside Instrumation.
+
+**Features:**
+- HTML, Excel, and PDF report output
+- Automatic pass/fail evaluation with configurable conditions
+- Structured sections and test tables
+- Easy integration with Instrumation measurements
+
+```bash
+pip install instrumation-report
+```
+
+```python
+from instrumation_report import Report, Section, TestTable, Measurement
+
+report = Report(header=ReportHeader(
+    title="RF Subsystem Validation",
+    engineer="Yan",
+    uut_serial="SN-2024-001",
+))
+
+section = Section(number="1", title="Voltage Tests")
+table = TestTable(title="Power Supply Checks", sub_number="1.1")
+table.add(Measurement("3.3V Rail", 3.31, "V", condition=(3.2, 3.4)))
+section.add_table(table)
+report.add_section(section)
+
+report.generate_html("report.html")
+report.generate_excel("report.xlsx")
 ```
 
 ---
