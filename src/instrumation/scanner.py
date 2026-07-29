@@ -59,7 +59,8 @@ def find_duplicate_addresses(devices: List[Dict[str, str]]) -> List[Dict[str, st
 
     Returns:
         A list of dicts, each with keys "address" (str), "identities" (list
-        of str), and "count" (int).  Empty list if no duplicates found.
+        of str), and "count" (int).  Empty list if no duplicates found, and
+        also for empty or ``None`` input.
 
     Example:
         >>> devices = scan()
@@ -67,6 +68,9 @@ def find_duplicate_addresses(devices: List[Dict[str, str]]) -> List[Dict[str, st
         >>> for c in conflicts:
         ...     print(f"CONFLICT on {c['address']}: {c['identities']}")
     """
+    if not devices:
+        return []
+
     from collections import defaultdict
 
     addr_to_descs = defaultdict(list)
