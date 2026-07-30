@@ -50,3 +50,10 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"
+
+[tool.ruff]
+line-length = 127
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
