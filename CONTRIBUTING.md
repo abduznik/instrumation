@@ -76,20 +76,13 @@ pytest -v
 
 ## Code Style
 
-This project uses **flake8** for linting with the following configuration:
-
-- **Line length limit**: 127 characters
-- **Max complexity**: 10 (cyclomatic complexity)
-- The CI checks for Python syntax errors and undefined names as hard failures (`E9`, `F63`, `F7`, `F82`)
+This project uses **ruff** for linting. It checks for Python syntax errors, undefined names, and style issues.
 
 To check your code locally before pushing:
 
 ```bash
-# Check for syntax errors and undefined names (will fail CI if violated)
-flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-
-# Full lint check (warnings, not blocking)
-flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+# Run ruff to check for errors and style issues
+ruff check .
 ```
 
 ## Pre-commit Checklist

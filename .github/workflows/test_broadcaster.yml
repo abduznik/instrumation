@@ -27,11 +27,10 @@ jobs:
           pip install pytest pytest-asyncio
           pip install -e .
 
-      - name: Lint DataBroadcaster (syntax + undefined names)
+      - name: Lint with ruff
         run: |
-          pip install flake8
-          flake8 src/instrumation/utils.py --count --select=E9,F63,F7,F82 --show-source --statistics
-          flake8 tests/test_broadcaster.py --count --select=E9,F63,F7,F82 --show-source --statistics
+          pip install ruff
+          ruff check src/instrumation/utils.py tests/test_broadcaster.py
 
       - name: Run DataBroadcaster tests
         run: |
