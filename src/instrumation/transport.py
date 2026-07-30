@@ -1,9 +1,48 @@
+"""Low-level transport wrappers and SCPI handshake helpers.
+
+Provides thin connection wrappers for the two physical transports the library
+speaks -- VISA (:class:`VisaDriver`) and raw serial (:class:`SerialDriver`) --
+plus helpers for the handshake problems that come up when talking to real
+instruments: guessing line terminations, finding a workable timeout, and
+waiting for an operation to finish without blind sleeps.
+
+Both wrapper classes are deliberately forgiving: a failed connection leaves the
+object usable but inert rather than raising. See the individual docstrings for
+what that means for callers.
+"""
+
 import serial
 import time
 from typing import List, Optional
 
 class VisaDriver:
-    """Generic wrapper for VISA instruments."""
+    """Generic wrapper for VISA instruments.
+
+    Opens a VISA resource on construction and clears its status register.
+
+    Parameters
+    ----------
+    address : str
+        VISA resource string, for example ``"TCPIP::192.168.1.5::INSTR"``.
+    timeout : int, optional
+        Read timeout in milliseconds, applied to the opened resource.
+        Defaults to ``5000``.
+
+    Notes
+    -----
+    Construction never raises. If the resource cannot be opened, the error is
+    printed and :attr:`inst` is set to ``None``, leaving an object whose methods
+    are all no-ops. Check ``driver.inst is not None`` before relying on it.
+
+    Attributes
+    ----------
+    rm : pyvisa.ResourceManager
+        The shared resource manager from :func:`~instrumation.factory.get_rm`.
+    address : str
+        The resource address this driver was constructed with.
+    inst : pyvisa.Resource or None
+        The open resource, or ``None`` if the connection failed.
+    """
     def __init__(self, address, timeout=5000):
         from .factory import get_rm
         self.rm = get_rm()
@@ -17,6 +56,27 @@ class VisaDriver:
             self.inst = None
 
     def query_value(self, command):
+        """Send a query and return the stripped response.
+
+        Parameters
+        ----------
+        command : str
+            SCPI query to send, for example ``"MEAS:VOLT:DC?"``.
+
+        Returns
+        -------
+        str or float
+            The stripped response string on success. Returns the float ``0.0``
+            if the query raised, or if the driver never connected.
+
+        Notes
+        -----
+        The ``0.0`` fallback is indistinguishable from a genuine ``0.0``
+        reading, and the two failure modes return a different *type* to the
+        success path. Callers that need to tell a real zero from a failed read
+        should check ``self.inst`` first and use the underlying resource
+        directly.
+        """
         if self.inst:
             try:
                 return self.inst.query(command).strip()
@@ -26,16 +86,69 @@ class VisaDriver:
         return 0.0
 
     def write(self, command):
+        """Send a command without reading a response.
+
+        Parameters
+        ----------
+        command : str
+            SCPI command to send, for example ``"OUTP ON"``.
+
+        Notes
+        -----
+        Silently does nothing if the driver never connected. Unlike
+        :meth:`query_value`, write errors are *not* caught and will propagate.
+        """
         if self.inst:
             self.inst.write(command)
 
     def close(self):
+        """Close the VISA resource, leaving the shared resource manager open.
+
+        Safe to call when the driver never connected. The resource manager is
+        a process-wide singleton shared with every other driver, so it is
+        deliberately not closed here.
+        """
         if self.inst:
             self.inst.close()
         # Note: We do NOT close the RM here as it is a global singleton
 
 class SerialDriver:
-    """Generic wrapper for Serial devices."""
+    """Generic wrapper for Serial devices.
+
+    Opens the port on construction and waits two seconds for the device to
+    stabilise, which many USB-serial adapters need before they will accept
+    traffic.
+
+    Parameters
+    ----------
+    port : str
+        Device path or COM port name, for example ``"COM3"`` or
+        ``"/dev/ttyUSB0"``.
+    baudrate : int, optional
+        Baud rate. Defaults to ``9600``.
+    timeout : float, optional
+        Read timeout in seconds. Defaults to ``1``.
+
+    Notes
+    -----
+    Construction never raises. If the port cannot be opened the error is
+    printed and :attr:`ser` is set to ``None``, leaving an object whose methods
+    are all no-ops. Check ``driver.ser is not None`` before relying on it.
+
+    Because of the stabilisation wait, constructing this class blocks for
+    roughly two seconds even when the port opens immediately.
+
+    Attributes
+    ----------
+    port : str
+        Device path or COM port name.
+    baudrate : int
+        Configured baud rate.
+    timeout : float
+        Read timeout in seconds.
+    ser : serial.Serial or None
+        The open port, or ``None`` if it could not be opened.
+    """
     def __init__(self, port, baudrate=9600, timeout=1):
         self.port = port
         self.baudrate = baudrate
@@ -48,6 +161,21 @@ class SerialDriver:
             self.ser = None
 
     def send_command(self, command_str):
+        """Write a command to the port, appending a newline if needed.
+
+        Parameters
+        ----------
+        command_str : str or bytes
+            The command to send. A ``str`` is encoded as UTF-8 and gets a
+            trailing ``\\n`` appended unless it already ends with one. ``bytes``
+            are written through unchanged, with no terminator added.
+
+        Notes
+        -----
+        Silently does nothing if the port never opened, and write errors are
+        caught and printed rather than raised -- so a successful return does
+        not guarantee the command reached the device.
+        """
         if self.ser:
             try:
                 # Handle both bytes and string input
@@ -63,6 +191,20 @@ class SerialDriver:
                 print(f"Serial Write Error: {e}")
 
     def read_response(self):
+        """Read one newline-terminated line and return it stripped.
+
+        Returns
+        -------
+        str
+            The decoded, stripped line. Returns ``""`` on a read error, if the
+            port never opened, or if the read timed out with no data.
+
+        Notes
+        -----
+        An empty string is ambiguous -- it covers a timeout, a decode failure,
+        and a device that genuinely sent a blank line. Blocks up to
+        :attr:`timeout` seconds.
+        """
         if self.ser:
             try:
                 return self.ser.readline().decode('utf-8').strip()
@@ -71,6 +213,7 @@ class SerialDriver:
         return ""
 
     def close(self):
+        """Close the serial port. Safe to call if it never opened."""
         if self.ser:
             self.ser.close()
 

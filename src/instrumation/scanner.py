@@ -1,10 +1,43 @@
+"""Device discovery across serial ports and VISA resources.
+
+Enumerates what is physically attached -- serial ports via ``pyserial`` and VISA
+resources via the shared resource manager -- and reports bus address conflicts
+found in the result.
+"""
+
 import serial.tools.list_ports
 from typing import Dict, List
 
 def scan() -> List[Dict[str, str]]:
-    """
-    Scans for both Serial ports (Control Box) and VISA instruments.
-    Returns a list of dictionaries with device info.
+    """Enumerate attached serial ports and VISA instruments.
+
+    Serial ports are always scanned. The VISA scan is attempted afterwards and
+    skipped with a printed warning if the resource manager is unavailable, so a
+    machine with no VISA backend still returns its serial devices.
+
+    Returns
+    -------
+    list of dict
+        One dict per device, each with keys:
+
+        ``type``
+            ``"serial"`` or ``"visa"``.
+        ``id``
+            The address -- a port path such as ``"COM3"`` or ``"/dev/ttyUSB0"``
+            for serial devices, or a VISA resource string for VISA devices.
+        ``desc``
+            The port description for serial devices, or the literal
+            ``"VISA Instrument"`` for VISA devices.
+
+    Notes
+    -----
+    A VISA scan failure is reported on stdout rather than raised, so an empty
+    or serial-only result does not necessarily mean nothing is connected.
+
+    Examples
+    --------
+    >>> for dev in scan():
+    ...     print(dev["type"], dev["id"], dev["desc"])
     """
     found_devices = []
 
