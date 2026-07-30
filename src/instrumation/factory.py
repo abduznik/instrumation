@@ -1,3 +1,10 @@
+"""Driver factory and instrument discovery.
+
+Resolves a resource address into a connected instrument driver, handling replay
+files, simulated instruments, auto-discovery and real hardware behind a single
+entry point, :func:`get_instrument`.
+"""
+
 import pyvisa
 import logging
 import os
@@ -13,6 +20,21 @@ logger = logging.getLogger(__name__)
 _GLOBAL_RM = None
 
 def get_rm():
+    """Return the process-wide PyVISA resource manager, creating it on first use.
+
+    A single :class:`pyvisa.ResourceManager` is cached for the lifetime of the
+    process. Opening several managers causes "Too many managers" errors on
+    macOS, so every caller shares this one.
+
+    On macOS the NI-VISA framework at
+    ``/Library/Frameworks/VISA.framework/VISA`` is requested explicitly when
+    that path exists; otherwise PyVISA selects its own backend.
+
+    Returns
+    -------
+    pyvisa.ResourceManager
+        The shared resource manager instance.
+    """
     global _GLOBAL_RM
     if _GLOBAL_RM is None:
         ni_lib = "/Library/Frameworks/VISA.framework/VISA"
@@ -21,6 +43,17 @@ def get_rm():
     return _GLOBAL_RM
 
 def is_sim_mode() -> bool:
+    """Report whether simulation (digital twin) mode is enabled.
+
+    Simulation mode is controlled by the ``INSTRUMATION_MODE`` environment
+    variable and the comparison is case-insensitive.
+
+    Returns
+    -------
+    bool
+        ``True`` when ``INSTRUMATION_MODE`` is ``"SIM"`` or ``"SIMULATED"``,
+        ``False`` otherwise.
+    """
     mode = os.environ.get("INSTRUMATION_MODE", "").upper()
     return mode == "SIM" or mode == "SIMULATED"
 
@@ -62,6 +95,55 @@ def _discover_mdns_resources() -> list:
     return resources
 
 def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
+    """Connect to an instrument and return a driver instance for it.
+
+    The address is resolved in priority order:
+
+    1. **Replay** -- an address beginning with ``replay://`` returns a
+       ``ReplayDriver`` that reads from the file named after the prefix.
+    2. **Simulation** -- when :func:`is_sim_mode` is true, a simulated driver
+       registered for ``driver_type`` is returned instead of touching hardware.
+    3. **Auto-discovery** -- the literal address ``"AUTO"`` searches for a
+       matching instrument, trying the on-disk cache first, then mDNS, then the
+       LAN ARP table, then a full VISA scan.
+    4. **Real hardware** -- any other address is opened directly, identified via
+       ``*IDN?``, and routed to the matching vendor driver.
+
+    Parameters
+    ----------
+    resource_address : str
+        A VISA resource string such as ``"TCPIP::192.168.1.5::INSTR"``, a
+        ``replay://`` file path, or the literal ``"AUTO"`` to auto-discover.
+    driver_type : str, optional
+        Instrument category used to select and validate the driver. One of
+        ``"SCOPE"``, ``"SA"``, ``"SG"``, ``"PSU"``, ``"DMM"``, ``"VNA"``,
+        ``"NA"``, ``"LOAD"``, ``"ELOAD"``, ``"COUNTER"`` or ``"GENERIC"``.
+        Defaults to ``"GENERIC"``, which accepts any instrument.
+
+    Returns
+    -------
+    object
+        A connected driver instance. The concrete class depends on which
+        instrument was identified.
+
+    Raises
+    ------
+    ValueError
+        If simulation mode is active, ``driver_type`` is not ``"GENERIC"`` and
+        no simulated driver is registered for that type; or if ``"AUTO"``
+        discovery finds no matching instrument.
+
+    Notes
+    -----
+    Resources found through ``"AUTO"`` discovery are written to
+    ``.visa_cache.json`` in the working directory, most recent first, so later
+    lookups try them before falling back to a full scan.
+
+    Examples
+    --------
+    >>> dmm = get_instrument("TCPIP::192.168.1.5::INSTR", "DMM")
+    >>> scope = get_instrument("AUTO", "SCOPE")
+    """
     # 0. Check for replay mode (Highest Priority)
     if resource_address.startswith("replay://"):
         file_path = resource_address.replace("replay://", "")
@@ -311,6 +393,31 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
     return final_drv
 
 def get_instrument_from_config(config: dict) -> any:
+    """Connect to an instrument described by a configuration mapping.
+
+    A thin wrapper over :func:`get_instrument` for config-driven setups such as
+    station definitions loaded from disk.
+
+    Parameters
+    ----------
+    config : dict
+        Must contain ``"address"`` -- a VISA resource string or ``"AUTO"`` --
+        and ``"type"``, the driver category passed through as ``driver_type``.
+
+    Returns
+    -------
+    object
+        A connected driver instance, as returned by :func:`get_instrument`.
+
+    Raises
+    ------
+    ValueError
+        If either ``"address"`` or ``"type"`` is missing from ``config``.
+
+    Examples
+    --------
+    >>> get_instrument_from_config({"address": "AUTO", "type": "SCOPE"})
+    """
     resource_address = config.get("address")
     driver_type = config.get("type") # Mandatory for test compatibility
     if not resource_address:
