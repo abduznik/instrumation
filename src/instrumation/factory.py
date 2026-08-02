@@ -1,12 +1,42 @@
 import pyvisa
 import logging
 import os
+import json
 import time
+from pathlib import Path
 from .drivers.real import RealDriver
 from .drivers.registry import DriverRegistry
 from .drivers.base import Oscilloscope, SpectrumAnalyzer, SignalGenerator, FunctionGenerator, PowerSupply, Multimeter, NetworkAnalyzer, ElectronicLoad, FrequencyCounter
 
 logger = logging.getLogger(__name__)
+
+# VISA resource cache. Overridable via INSTRUMATION_CACHE for tests/deployments.
+CACHE_FILE = Path(os.environ.get("INSTRUMATION_CACHE", ".visa_cache.json"))
+
+
+def _read_visa_cache():
+    """Return the cached resource list, creating an empty cache on first use.
+
+    On first run the file does not exist, so AUTO always fell through to the
+    slow full VISA scan. Creating it with an empty list here means subsequent
+    reads hit the cache. Never raises: a missing/corrupt/unwritable cache
+    degrades to an empty list.
+    """
+    try:
+        if not CACHE_FILE.exists():
+            _write_visa_cache([])
+            return []
+        return json.loads(CACHE_FILE.read_text())
+    except (IOError, OSError, ValueError):
+        return []
+
+
+def _write_visa_cache(resources):
+    """Persist the top-10 resources; best-effort, never raises."""
+    try:
+        CACHE_FILE.write_text(json.dumps(resources[:10]))
+    except (IOError, OSError):
+        pass
 
 # Global Resource Manager to prevent "Too many managers" errors on macOS
 _GLOBAL_RM = None
@@ -90,19 +120,11 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
 
     # 2. Handle AUTO discovery
     if resource_address == "AUTO":
-        import json
         from concurrent.futures import ThreadPoolExecutor, as_completed
-        cache_file = ".visa_cache.json"
-        
+
         # 1. Load Cache & LAN (The Fast Resources)
-        cached_resources = []
-        if os.path.exists(cache_file):
-            try:
-                with open(cache_file, "r") as f:
-                    cached_resources = json.load(f)
-            except (IOError, OSError, json.JSONDecodeError):
-                pass
-        
+        cached_resources = _read_visa_cache()
+
         lan_resources = _discover_lan_resources()
         tried = set()
 
@@ -141,13 +163,9 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
             return None
 
         def update_cache(res):
-            try:
-                # Move successful resource to the front of the cache
-                new_cache = [res] + [r for r in cached_resources if r != res]
-                with open(cache_file, "w") as f:
-                    json.dump(new_cache[:10], f) # Keep top 10 for speed
-            except (IOError, OSError):
-                pass
+            # Move successful resource to the front of the cache
+            new_cache = [res] + [r for r in cached_resources if r != res]
+            _write_visa_cache(new_cache)
 
         def probe_resource(res):
             try:
@@ -289,17 +307,9 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
     
     # Update cache with successful manual connection to enable future AUTO discovery
     if resource_address != "AUTO":
-        try:
-            cache_file = ".visa_cache.json"
-            cached_resources = []
-            if os.path.exists(cache_file):
-                with open(cache_file, "r") as f:
-                    cached_resources = json.load(f)
-            new_cache = [resource_address] + [r for r in cached_resources if r != resource_address]
-            with open(cache_file, "w") as f:
-                json.dump(new_cache[:10], f)
-        except Exception:
-            pass
+        cached_resources = _read_visa_cache()
+        new_cache = [resource_address] + [r for r in cached_resources if r != resource_address]
+        _write_visa_cache(new_cache)
 
     return final_drv
 
