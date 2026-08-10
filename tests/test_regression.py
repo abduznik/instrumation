@@ -11,7 +11,7 @@ import os
 import time
 
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from instrumation.factory import get_instrument
 from instrumation.results import MeasurementResult
@@ -609,3 +609,49 @@ class TestBatchQueryRegression:
         result = batch_query(mock_inst, [])
         assert result == {}
         mock_inst.query.assert_not_called()
+
+
+# ── Windows packaging regression ─────────────────────────────
+
+class TestResourceManagerWindowsCompat:
+    """Regression: get_rm() must never pass None to pyvisa.ResourceManager.
+
+    Newer PyVISA versions crash on Windows when passed ``None`` with
+    ``AttributeError: 'NoneType' object has no attribute 'rsplit'``. The
+    manager must be built with an empty string so PyVISA auto-selects the
+    available backend (system VISA or the bundled pyvisa_py).
+    """
+
+    def test_get_rm_passes_empty_string_when_no_ni_visa(self):
+        import instrumation.factory as factory
+
+        factory._GLOBAL_RM = None
+        calls = []
+
+        def fake_rm(arg):
+            calls.append(arg)
+            return MagicMock()
+
+        with patch("instrumation.factory.os.path.exists", return_value=False), \
+             patch("instrumation.factory.pyvisa.ResourceManager", side_effect=fake_rm):
+            factory.get_rm()
+
+        assert calls == [""]
+        assert None not in calls
+
+    def test_get_rm_passes_ni_visa_path_on_macos(self):
+        import instrumation.factory as factory
+
+        factory._GLOBAL_RM = None
+        calls = []
+        ni_lib = "/Library/Frameworks/VISA.framework/VISA"
+
+        def fake_rm(arg):
+            calls.append(arg)
+            return MagicMock()
+
+        with patch("instrumation.factory.os.path.exists", return_value=True), \
+             patch("instrumation.factory.pyvisa.ResourceManager", side_effect=fake_rm):
+            factory.get_rm()
+
+        assert calls == [ni_lib]

@@ -118,6 +118,37 @@ pip install .
 
 ---
 
+## Packaging as a Windows .exe (PyInstaller)
+
+> **If your packaged app starts but fails the moment it connects to an instrument, read this.**
+
+Instrumation loads part of its functionality **at runtime** instead of at import time:
+
+- `pyvisa_py` — the pure-Python VISA backend used by PyVISA when no vendor VISA library is installed.
+- `instrumation.drivers.*` — device drivers discovered dynamically via `load_plugins()` and lazy imports.
+
+PyInstaller only bundles modules it can see by static analysis, so a default single-file build **will be missing these modules**. The `.exe` starts fine but fails as soon as it tries to connect, with errors like:
+
+```
+ModuleNotFoundError: No module named 'pyvisa_py'
+AttributeError: 'NoneType' object has no attribute 'rsplit'
+```
+
+Include them explicitly at build time:
+
+```bash
+pyinstaller --onefile --windowed --name MyApp ^
+  --collect-all pyvisa_py ^
+  --hidden-import pyvisa_py.protocols.hislip ^
+  --hidden-import pyvisa_py.protocols.vxi11 ^
+  --collect-all instrumation ^
+  app.py
+```
+
+> **Note for Windows:** `instrumation` never passes `None` to `pyvisa.ResourceManager` (it passes an empty string), so PyVISA automatically selects system VISA if installed and falls back to the bundled `pyvisa_py` otherwise.
+
+---
+
 ## Quick Start
 
 ### Real hardware

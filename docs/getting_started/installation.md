@@ -36,3 +36,30 @@ If you only intend to use simulation for development, no additional drivers are 
     ```bash
     export INSTRUMATION_MODE="SIM"
     ```
+
+## Packaging as a Windows .exe (PyInstaller)
+
+If you package an Instrumation app as a single-file Windows `.exe`, note that part of the library is **dynamically loaded at runtime** rather than imported at the top of the file:
+
+- `pyvisa_py` — the pure-Python VISA backend PyVISA uses when no vendor VISA library is installed.
+- `instrumation.drivers.*` — device drivers discovered at runtime via `load_plugins()` and lazy imports.
+
+PyInstaller only bundles what it can see by static analysis, so a default build will be **missing these modules**. The `.exe` starts fine but fails the moment it tries to connect, with errors such as:
+
+```
+ModuleNotFoundError: No module named 'pyvisa_py'
+AttributeError: 'NoneType' object has no attribute 'rsplit'
+```
+
+Include them explicitly when building:
+
+```bash
+pyinstaller --onefile --windowed --name MyApp ^
+  --collect-all pyvisa_py ^
+  --hidden-import pyvisa_py.protocols.hislip ^
+  --hidden-import pyvisa_py.protocols.vxi11 ^
+  --collect-all instrumation ^
+  app.py
+```
+
+> **Note for Windows:** Instrumation never passes `None` to `pyvisa.ResourceManager` (it passes an empty string), so PyVISA automatically selects system VISA if installed and falls back to the bundled `pyvisa_py` otherwise.

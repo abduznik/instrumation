@@ -30,6 +30,13 @@ def get_rm():
     ``/Library/Frameworks/VISA.framework/VISA`` is requested explicitly when
     that path exists; otherwise PyVISA selects its own backend.
 
+    On Windows ``None`` is never passed to :class:`pyvisa.ResourceManager`:
+    passing ``None`` crashes newer PyVISA versions with
+    ``AttributeError: 'NoneType' object has no attribute 'rsplit'``. An empty
+    string is passed instead so PyVISA automatically selects whatever backend
+    is available (system VISA if installed, otherwise the bundled
+    ``pyvisa_py``).
+
     Returns
     -------
     pyvisa.ResourceManager
@@ -38,7 +45,7 @@ def get_rm():
     global _GLOBAL_RM
     if _GLOBAL_RM is None:
         ni_lib = "/Library/Frameworks/VISA.framework/VISA"
-        rm_args = ni_lib if os.path.exists(ni_lib) else None
+        rm_args = ni_lib if os.path.exists(ni_lib) else ""
         _GLOBAL_RM = pyvisa.ResourceManager(rm_args)
     return _GLOBAL_RM
 
