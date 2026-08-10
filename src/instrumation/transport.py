@@ -11,9 +11,9 @@ object usable but inert rather than raising. See the individual docstrings for
 what that means for callers.
 """
 
-import serial
+import serial # type: ignore
 import time
-from typing import List, Optional
+from typing import List, Optional, Union, Any
 
 class VisaDriver:
     """Generic wrapper for VISA instruments.
@@ -43,7 +43,7 @@ class VisaDriver:
     inst : pyvisa.Resource or None
         The open resource, or ``None`` if the connection failed.
     """
-    def __init__(self, address, timeout=5000):
+    def __init__(self, address: str, timeout: int = 5000) -> None:
         from .factory import get_rm
         self.rm = get_rm()
         self.address = address
@@ -55,7 +55,7 @@ class VisaDriver:
             print(f"Error connecting to {address}: {e}")
             self.inst = None
 
-    def query_value(self, command):
+    def query_value(self, command: str) -> Union[str, float]:
         """Send a query and return the stripped response.
 
         Parameters
@@ -85,7 +85,7 @@ class VisaDriver:
                 return 0.0
         return 0.0
 
-    def write(self, command):
+    def write(self, command: str) -> None:
         """Send a command without reading a response.
 
         Parameters
@@ -101,7 +101,7 @@ class VisaDriver:
         if self.inst:
             self.inst.write(command)
 
-    def close(self):
+    def close(self) -> None:
         """Close the VISA resource, leaving the shared resource manager open.
 
         Safe to call when the driver never connected. The resource manager is
@@ -149,7 +149,7 @@ class SerialDriver:
     ser : serial.Serial or None
         The open port, or ``None`` if it could not be opened.
     """
-    def __init__(self, port, baudrate=9600, timeout=1):
+    def __init__(self, port, baudrate: int = 9600, timeout: float = 1) -> None :
         self.port = port
         self.baudrate = baudrate
         self.timeout = timeout
@@ -160,7 +160,7 @@ class SerialDriver:
             print(f"Error opening serial port {port}: {e}")
             self.ser = None
 
-    def send_command(self, command_str):
+    def send_command(self, command_str: Union[str, bytes]) -> None:
         """Write a command to the port, appending a newline if needed.
 
         Parameters
@@ -190,7 +190,7 @@ class SerialDriver:
             except Exception as e:
                 print(f"Serial Write Error: {e}")
 
-    def read_response(self):
+    def read_response(self) -> str:
         """Read one newline-terminated line and return it stripped.
 
         Returns
@@ -212,7 +212,7 @@ class SerialDriver:
                 return ""
         return ""
 
-    def close(self):
+    def close(self) -> None:
         """Close the serial port. Safe to call if it never opened."""
         if self.ser:
             self.ser.close()
@@ -220,7 +220,7 @@ class SerialDriver:
 
 # ── Transport utilities ────────────────────────────────────
 
-def detect_line_termination(instrument: VisaDriver, query: str = "*IDN?") -> str:
+def detect_line_termination(instrument: Any, query: str = "*IDN?") -> str:
     """Detect which line-termination character an instrument responds to.
 
     Tries each common terminator (LF, CR, CRLF) against a safe SCPI query
@@ -264,7 +264,7 @@ def detect_line_termination(instrument: VisaDriver, query: str = "*IDN?") -> str
 
 
 def find_minimum_timeout(
-    instrument: VisaDriver,
+    instrument: Any,
     query: str = "*IDN?",
     candidates: Optional[List[int]] = None,
 ) -> int:
@@ -319,7 +319,7 @@ def find_minimum_timeout(
 
 
 def poll_for_mav(
-    instrument: VisaDriver,
+    instrument: Any,
     timeout: float = 10.0,
     poll_interval: float = 0.1,
 ) -> None:
@@ -363,7 +363,7 @@ def poll_for_mav(
 
 
 def poll_opc_with_backoff(
-    instrument: VisaDriver,
+    instrument: Any,
     timeout: float = 30.0,
     initial_delay: float = 0.1,
     max_delay: float = 1.0,
@@ -411,7 +411,7 @@ def poll_opc_with_backoff(
 
 
 def batch_query(
-    instrument: VisaDriver,
+    instrument: Any,
     queries: List[str],
     stop_on_error: bool = False,
 ) -> dict:

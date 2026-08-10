@@ -14,6 +14,7 @@ import json
 import os
 import socket
 from datetime import datetime
+from typing import Any, Dict, List, Union 
 
 
 class DataBroadcaster:
@@ -48,12 +49,12 @@ class DataBroadcaster:
             b.send({"peak_power": -45.2})
     """
 
-    def __init__(self, host="127.0.0.1", port=5005):
+    def __init__(self, host: str = "127.0.0.1", port: int = 5005) -> None:
         self.host = host
         self.port = port
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    def send(self, data):
+    def send(self, data: Union[Dict, List]) -> None:
         """
         Serialize *data* (dict or list) to JSON and send it as a UDP packet.
         Silently ignores transmission errors so the test flow is never interrupted.
@@ -64,18 +65,18 @@ class DataBroadcaster:
         except Exception:
             pass
 
-    def close(self):
+    def close(self) -> None:
         """Close the underlying UDP socket."""
         try:
             self._sock.close()
         except Exception:
             pass
 
-    def __enter__(self):
+    def __enter__(self) -> "DataBroadcaster":
         """Return self, so the broadcaster can be used as a context manager."""
         return self
 
-    def __exit__(self, *_):
+    def __exit__(self, *_: Any) -> None:
         """Close the socket on context exit. Exceptions are not suppressed."""
         self.close()
 
@@ -106,7 +107,7 @@ class TestLogger:
     >>> logger.log("output_power", -45.2, "PASS")
     """
 
-    def __init__(self, filename="test_report.csv"):
+    def __init__(self, filename:  str = "test_report.csv") -> None:
         """Prepare the log file, writing a header if it does not yet exist.
 
         Parameters
@@ -118,12 +119,12 @@ class TestLogger:
         if not os.path.exists(self.filename):
             self._write_header()
 
-    def _write_header(self):
+    def _write_header(self) -> None:
         with open(self.filename, mode='w', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(["Timestamp", "Test Name", "Data", "Result"])
 
-    def log(self, test_name, data, result):
+    def log(self, test_name: str, data: Any, result: Any) -> None:
         """Append one timestamped result row and echo it to stdout.
 
         Parameters
