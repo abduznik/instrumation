@@ -5,8 +5,8 @@ resources via the shared resource manager -- and reports bus address conflicts
 found in the result.
 """
 
-import serial.tools.list_ports
-from typing import Dict, List
+import serial.tools.list_ports # type: ignore
+from typing import Dict, List, Any
 
 def scan() -> List[Dict[str, str]]:
     """Enumerate attached serial ports and VISA instruments.
@@ -67,7 +67,7 @@ def scan() -> List[Dict[str, str]]:
     return found_devices
 
 
-def find_duplicate_addresses(devices: List[Dict[str, str]]) -> List[Dict[str, str]]:
+def find_duplicate_addresses(devices: List[Dict[str, str]]) -> List[Dict[str, Any]]:
     """Find addresses that appear more than once with different identities.
 
     On shared buses (GPIB, RS-485), two instruments configured with the same
