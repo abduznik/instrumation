@@ -234,7 +234,7 @@ pip install -e .
 
 
 # Install test dependencies
-pip install pytest flake8
+pip install pytest ruff
 
 # Run tests (simulation mode)
 export INSTRUMATION_MODE=SIM  # Linux/macOS

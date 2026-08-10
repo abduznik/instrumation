@@ -50,3 +50,12 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"
+
+[tool.ruff]
+line-length = 127
+target-version = "py37"
+
+[tool.ruff.lint]
+# Matches the previous flake8 hard-fail set: syntax errors and undefined
+# names. Style issues (E501, W etc.) remain non-blocking, as before.
+select = ["E9", "F63", "F7", "F82"]
