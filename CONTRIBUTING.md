@@ -76,12 +76,12 @@ pytest -v
 
 ## Code Style
 
-This project uses **ruff** for linting. It checks for Python syntax errors, undefined names, and style issues.
+This project uses **ruff** for linting. It checks for Python syntax errors and undefined names (`E9`, `F63`, `F7`, `F82`).
 
 To check your code locally before pushing:
 
 ```bash
-# Run ruff to check for errors and style issues
+# Run ruff to check for errors and undefined names
 ruff check .
 ```
 
@@ -89,7 +89,7 @@ ruff check .
 
 Before opening a pull request, verify the following:
 
-1. **Lint passes** — Run the flake8 checks above and fix any errors
+1. **Lint passes** — Run the ruff check above and fix any errors
 2. **Tests pass** — Run `pytest` in SIM mode and ensure all tests pass
 3. **No unrelated changes** — Keep your diff focused on the issue you're addressing
 4. **Commit messages** — Use clear, descriptive commit messages (see PR Workflow below)
