@@ -53,7 +53,7 @@ python_files = "test_*.py"
 
 [tool.ruff]
 line-length = 127
-target-version = "py37"
+target-version = "0.7.0"
 
 [tool.ruff.lint]
 # Matches the previous flake8 hard-fail set: syntax errors and undefined
