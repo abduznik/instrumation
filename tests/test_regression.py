@@ -272,23 +272,31 @@ class TestAsyncWrapper:
     @pytest.mark.asyncio
     async def test_async_context_manager_disconnects_on_keyboard_interrupt(self):
         """Issue #132: __aexit__ must still disconnect when shutdown_safety()
-        raises KeyboardInterrupt (a BaseException)."""
-        from instrumation.drivers.async_driver import AsyncInstrumentDriver, wrap_async
-        from unittest.mock import MagicMock, patch
+        raises a BaseException such as KeyboardInterrupt (which a bare
+        except Exception clause would not catch)."""
+        from instrumation.drivers.async_driver import wrap_async
+        from unittest.mock import patch
+
+        # Simulate KeyboardInterrupt: a BaseException, NOT caught by
+        # `except Exception`. Using a real KeyboardInterrupt in an asyncio
+        # coroutine makes pytest-asyncio abort the whole run, so a custom
+        # BaseException subclass exercises the exact same code path safely.
+        class Interrupt(BaseException):
+            pass
 
         drv = get_instrument("SIM_DMM", "DMM")
         async_drv = wrap_async(drv)
 
-        # shutdown_safety raises KeyboardInterrupt; disconnect must still run
+        # shutdown_safety raises; disconnect must still run
         async def raiser():
-            raise KeyboardInterrupt()
+            raise Interrupt()
 
         with patch.object(async_drv, "shutdown_safety", raiser), \
              patch.object(async_drv, "disconnect", new_callable=AsyncMock):
             try:
                 async with async_drv:
                     pass
-            except KeyboardInterrupt:
+            except Interrupt:
                 pass
 
             async_drv.disconnect.assert_awaited_once()
