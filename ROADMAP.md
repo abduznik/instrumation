@@ -39,12 +39,13 @@ Lab engineers currently copy-paste readings into spreadsheets. A live dashboard 
 
 | Issue | Description | Priority |
 | --- | --- | --- |
-| #120 | `connect_instrument()` swallows `ConfigurationError` — should propagate | High |
+| #120 | `connect_instrument()` swallows `ConfigurationError` — should propagate | ~~High~~ ✅ Fixed in v0.7.0 |
 | #121 | `find_duplicate_addresses` doesn't handle empty scan list | Medium |
-| #122 | Async wrapper leaks connections on `KeyboardInterrupt` | High |
-| #123 | `get_instrument()` cache file `.visa_cache.json` not created on first run | Low |
+| #122 | Async wrapper leaks connections on `KeyboardInterrupt` | ~~High~~ ✅ Fixed in v0.7.0 |
+| #123 | `get_instrument()` cache file `.visa_cache.json` not created on first run | ~~Low~~ ✅ Fixed in v0.6.0 |
 | #124 | `poll_for_mav` blocks event loop when used in async context | Medium |
 | #125 | `batch_query` should support `write_then_read` pattern (no query) | Low |
+| #135 | `get_instrument()` manual connection cache update fails with `UnboundLocalError` | ~~High~~ ✅ Fixed in v0.7.0 |
 
 ---
 

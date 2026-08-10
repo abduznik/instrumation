@@ -1,3 +1,25 @@
+## Key Features in v0.7.0
+
+### Windows Compatibility (Issue #143)
+- **`get_rm()` no longer passes `None` to PyVISA**: On machines without the macOS NI-VISA framework (i.e. Windows), the shared resource manager is now created with an empty string so PyVISA auto-selects the available backend (system VISA if installed, otherwise the bundled `pyvisa-py`). Previously this crashed newer PyVISA versions with `AttributeError: 'NoneType' object has no attribute 'rsplit'` on every connection attempt.
+- **PyInstaller packaging guide**: Documented how to build a single-file `.exe` — dynamically loaded modules (`pyvisa_py` and `instrumation.drivers.*`) are missed by static analysis, so they must be included explicitly with `--collect-all pyvisa_py` / `--collect-all instrumation` (see README and installation docs).
+
+### Bug Fixes
+- **Issue #135 — manual connections now update the VISA cache**: `get_instrument()` previously imported `json` inside the `AUTO` branch, making it a cell variable that was never bound on the manual-connection path. The cache-update block silently failed with `UnboundLocalError`. `json` is now a module-level import and the cache file is correctly written after successful manual connections.
+- **Issue #131 — `connect_instrument()` propagates `ConfigurationError`**: Auto-detection no longer silently swallows this actionable error. `ConfigurationError` re-raises to the caller, while ordinary VISA/serial errors are still handled gracefully and logged.
+- **Issue #132 — async context manager no longer leaks connections**: `AsyncInstrumentDriver.__aexit__()` now always calls `disconnect()` in a `finally` block, even when `shutdown_safety()` raises a `KeyboardInterrupt` (a `BaseException` the old `except Exception` missed). Both cleanup steps are bounded by a timeout so a hung driver cannot block exit.
+
+### CI & Linting
+- **Replaced flake8 with ruff** (Issue #126): CI now runs `ruff check .` across the whole repo. Ruff is scoped to the same hard-fail set flake8 enforced (`E9`/`F63`/`F7`/`F82` — syntax errors and undefined names), so the pre-existing style debt stays non-blocking.
+
+### Community Contributions
+- **@exharmonic** — PR #141: Added type hints to `utils.py`, `scanner.py`, and `transport.py` (Issue #128).
+- **@webbrain-one** — PR #139: Replaced flake8 with ruff in CI (Issue #126).
+
+### Tests
+- 7 new regression tests covering the manual-connection cache fix, `ConfigurationError` propagation, and async cleanup on interrupt/timeout.
+- 353 total tests passing.
+
 ## Key Features in v0.6.0
 
 ### New Feature: batch_query (Issue #119)

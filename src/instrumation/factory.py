@@ -6,6 +6,7 @@ entry point, :func:`get_instrument`.
 """
 
 import pyvisa
+import json
 import logging
 import os
 import time
@@ -180,7 +181,6 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
 
     # 2. Handle AUTO discovery
     if resource_address == "AUTO":
-        import json
         from concurrent.futures import ThreadPoolExecutor, as_completed
         cache_file = Path(".visa_cache.json")
 
@@ -394,7 +394,7 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
                     pass
             new_cache = [resource_address] + [r for r in cached_resources if r != resource_address]
             cache_path.write_text(json.dumps(new_cache[:10]))
-        except Exception:
+        except (IOError, OSError, json.JSONDecodeError):
             pass
 
     return final_drv

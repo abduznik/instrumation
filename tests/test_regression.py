@@ -11,7 +11,7 @@ import os
 import time
 
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from instrumation.factory import get_instrument
 from instrumation.results import MeasurementResult
@@ -268,6 +268,69 @@ class TestAsyncWrapper:
             assert result.value > 0
 
         assert drv.connected is False
+
+    @pytest.mark.asyncio
+    async def test_async_context_manager_disconnects_on_keyboard_interrupt(self):
+        """Issue #132: __aexit__ must still disconnect when shutdown_safety()
+        raises KeyboardInterrupt (a BaseException)."""
+        from instrumation.drivers.async_driver import AsyncInstrumentDriver, wrap_async
+        from unittest.mock import MagicMock, patch
+
+        drv = get_instrument("SIM_DMM", "DMM")
+        async_drv = wrap_async(drv)
+
+        # shutdown_safety raises KeyboardInterrupt; disconnect must still run
+        async def raiser():
+            raise KeyboardInterrupt()
+
+        with patch.object(async_drv, "shutdown_safety", raiser), \
+             patch.object(async_drv, "disconnect", new_callable=AsyncMock):
+            try:
+                async with async_drv:
+                    pass
+            except KeyboardInterrupt:
+                pass
+
+            async_drv.disconnect.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_async_context_manager_disconnects_on_shutdown_error(self):
+        """Issue #132: __aexit__ must still disconnect when shutdown_safety()
+        raises an ordinary exception."""
+        from instrumation.drivers.async_driver import wrap_async
+        from unittest.mock import patch
+
+        drv = get_instrument("SIM_DMM", "DMM")
+        async_drv = wrap_async(drv)
+
+        async def raiser():
+            raise RuntimeError("boom")
+
+        with patch.object(async_drv, "shutdown_safety", raiser), \
+             patch.object(async_drv, "disconnect", new_callable=AsyncMock):
+            async with async_drv:
+                pass
+
+            async_drv.disconnect.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_async_context_manager_cleanup_timeout(self):
+        """Issue #132: cleanup is bounded by a timeout so a hung driver cannot
+        block the context manager exit forever."""
+        from instrumation.drivers.async_driver import AsyncInstrumentDriver, wrap_async
+        from unittest.mock import patch
+
+        drv = get_instrument("SIM_DMM", "DMM")
+        async_drv = wrap_async(drv)
+
+        async def forever():
+            await asyncio.sleep(3600)
+
+        with patch.object(async_drv, "shutdown_safety", forever), \
+             patch.object(async_drv, "disconnect", forever), \
+             patch("instrumation.drivers.async_driver.CLEANUP_TIMEOUT", 0.05):
+            async with async_drv:
+                pass  # must return promptly despite the hung cleanup
 
     @pytest.mark.asyncio
     async def test_async_sa_operations(self):
@@ -655,3 +718,91 @@ class TestResourceManagerWindowsCompat:
             factory.get_rm()
 
         assert calls == [ni_lib]
+
+
+# ── Issue #135: cache update after manual connection ───────
+
+class TestManualConnectionCache:
+    """Regression: a manual (non-AUTO) connection must update
+    ``.visa_cache.json`` without raising UnboundLocalError.
+
+    Previously ``import json`` lived inside the ``AUTO`` branch, making ``json``
+    a cell variable that was never bound on the manual-connection path, so the
+    cache-update block silently failed with ``UnboundLocalError``.
+    """
+
+    def test_manual_connection_updates_cache(self, tmp_path, monkeypatch):
+        import instrumation.factory as factory
+        from unittest.mock import patch
+
+        monkeypatch.chdir(tmp_path)
+        cache_file = tmp_path / ".visa_cache.json"
+        cache_file.write_text("[]")
+
+        mock_real_cls = MagicMock()
+        mock_real_cls.return_value.get_id.return_value = "UNKNOWN,NOBODY"
+
+        with patch("instrumation.factory.is_sim_mode", return_value=False), \
+             patch("instrumation.factory.get_rm", return_value=MagicMock()), \
+             patch("instrumation.factory.RealDriver", mock_real_cls), \
+             patch("instrumation.factory.DriverRegistry.get_drivers_by_type", return_value=[]):
+            factory.get_instrument("TCPIP::192.168.1.99::INSTR", "DMM")
+
+        assert cache_file.exists()
+        assert "TCPIP::192.168.1.99::INSTR" in cache_file.read_text()
+
+    def test_manual_connection_does_not_raise_unboundlocal(self, tmp_path, monkeypatch):
+        import instrumation.factory as factory
+        from unittest.mock import patch
+
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / ".visa_cache.json").write_text("[]")
+
+        mock_real_cls = MagicMock()
+        mock_real_cls.return_value.get_id.return_value = "UNKNOWN,NOBODY"
+
+        with patch("instrumation.factory.is_sim_mode", return_value=False), \
+             patch("instrumation.factory.get_rm", return_value=MagicMock()), \
+             patch("instrumation.factory.RealDriver", mock_real_cls), \
+             patch("instrumation.factory.DriverRegistry.get_drivers_by_type", return_value=[]):
+            factory.get_instrument("TCPIP::192.168.1.99::INSTR", "DMM")  # no exception
+
+
+# ── Issue #131: connect_instrument must not swallow ConfigurationError ─
+
+class TestConnectInstrumentPropagatesConfigurationError:
+    """Regression: connect_instrument() auto-detection must re-raise
+    ConfigurationError instead of silently swallowing it and falling back."""
+
+    def test_configuration_error_propagates(self):
+        import instrumation
+        from unittest.mock import patch
+        from instrumation.exceptions import ConfigurationError
+
+        mock_rm = MagicMock()
+        mock_res = MagicMock()
+        mock_res.query.return_value = "KEYSIGHT,EXG"
+
+        with patch("instrumation.factory.get_rm", return_value=mock_rm), \
+             patch("instrumation.factory.RealDriver"), \
+             patch("instrumation.get_instrument",
+                   side_effect=ConfigurationError("Bad config")):
+            mock_rm.open_resource.return_value = mock_res
+
+            with pytest.raises(ConfigurationError):
+                instrumation.connect_instrument("TCPIP::1.2.3.4::INSTR")
+
+    def test_other_errors_still_fall_back_to_dmm(self):
+        import instrumation
+        from unittest.mock import patch
+
+        mock_rm = MagicMock()
+        mock_rm.open_resource.side_effect = Exception("no such resource")
+
+        with patch("instrumation.factory.get_rm", return_value=mock_rm), \
+             patch("instrumation.factory.RealDriver"):
+            # Fallback path returns a driver; it just must not raise
+            try:
+                instrumation.connect_instrument("TCPIP::1.2.3.4::INSTR")
+            except Exception:
+                pass

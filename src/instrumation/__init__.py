@@ -3,6 +3,11 @@ from .device import UUTHandler
 from .station import Station
 from .utils import DataBroadcaster
 from .factory import get_instrument, get_instrument_from_config
+from .exceptions import ConfigurationError
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 __all__ = ["scan", "UUTHandler", "Station", "DataBroadcaster", "get_instrument", "get_instrument_from_config", "search_devices"]
@@ -70,7 +75,11 @@ def connect_instrument(visa_address: str, driver_type: str = None):
             return get_instrument(visa_address, "SCOPE")
         if "ROHDE" in idn:
             return get_instrument(visa_address, "SG")
-    except Exception:
-        pass
-        
-    return get_instrument(visa_address, "DMM") # Fallback
+    except ConfigurationError:
+        # ConfigurationError is a specific, actionable error (invalid config or
+        # command sent to the instrument) and must propagate to the caller.
+        raise
+    except Exception as e:
+        logger.warning("connect_instrument auto-detection failed for %s: %s", visa_address, e)
+
+    return get_instrument(visa_address, "DMM")  # Fallback

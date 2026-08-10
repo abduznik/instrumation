@@ -16,6 +16,10 @@ import asyncio
 from typing import Any, List, Optional, Union
 
 from ..results import MeasurementResult
+
+# Timeout (seconds) applied to shutdown_safety() and disconnect() during
+# async context-manager cleanup so a hung VISA call cannot block exit.
+CLEANUP_TIMEOUT = 5.0
 from .base import (
     InstrumentDriver,
     Multimeter,
@@ -126,11 +130,20 @@ class AsyncInstrumentDriver:
         return self
 
     async def __aexit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Any) -> None:
+        # Cleanup must always run, even if shutdown_safety() raises a
+        # KeyboardInterrupt (a BaseException that a bare except Exception
+        # clause would not catch) — otherwise the VISA session leaks. Each
+        # step is bounded with a timeout so a hung driver cannot block exit.
         try:
-            await self.shutdown_safety()
-        except Exception:
-            pass
-        await self.disconnect()
+            try:
+                await asyncio.wait_for(self.shutdown_safety(), timeout=CLEANUP_TIMEOUT)
+            except BaseException:
+                pass
+        finally:
+            try:
+                await asyncio.wait_for(self.disconnect(), timeout=CLEANUP_TIMEOUT)
+            except BaseException:
+                pass
 
 
 class AsyncMultimeter(AsyncInstrumentDriver):
