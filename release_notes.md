@@ -50,7 +50,7 @@
 ### Tests
 - 27 unit tests for transport utilities (up from 15)
 - 5 regression tests for batch_query
-- All 90 tests passing
+- 90 tests passing in the transport/scanner-utilities module (full suite: 242, unchanged from v0.5.0)
 
 ### Other
 - Version bumped to 0.6.0

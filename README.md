@@ -1,9 +1,3 @@
-## Support This Project
-
-> **All projects made with passion** 💙
-
-[![Sponsor me](https://img.shields.io/badge/❤️%20Sponsor-GitHub-red?style=for-the-badge)](https://github.com/sponsors/abduznik)
-
 # Instrumation
 
 [![PyPI version](https://img.shields.io/pypi/v/instrumation)](https://pypi.org/project/instrumation/)
@@ -12,9 +6,11 @@
 [![Stars](https://img.shields.io/github/stars/abduznik/instrumation?style=flat)](https://github.com/abduznik/instrumation/stargazers)
 [![Downloads](https://static.pepy.tech/personalized-badge/instrumation?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/instrumation)
 
-![Example](assets/example.gif)
+**Instrumation** is a Python Hardware Abstraction Layer (HAL) for RF test instruments — oscilloscopes, spectrum analyzers, signal generators, network analyzers, multimeters, power supplies, electronic loads, and frequency counters — built on PyVISA/SCPI, with a Digital Twin simulation mode for offline development.
 
-A high-level Hardware Abstraction Layer (HAL) for RF test stations. Stop wrestling with PyVISA boilerplate — write test logic, not connection code.
+21 instrument drivers across 8 categories · 8 supported brands (Keysight, Rigol, Siglent, Tektronix, Rohde & Schwarz, Anritsu, Keithley, TDK-Lambda) · 353 tests · 6 real-hardware validation reports · MIT licensed
+
+Actively maintained — see [release notes](release_notes.md) and the [development log](https://abduznik.github.io/instrumation/logs/) for the full history.
 
 ---
 
@@ -22,9 +18,9 @@ A high-level Hardware Abstraction Layer (HAL) for RF test stations. Stop wrestli
 
 RF test bench automation is painful. Every instrument brand has its own quirks, SCPI dialects vary, and testing your scripts requires physical hardware on your desk. Instrumation fixes all three:
 
-- **One API for everything** — same code works on Keysight, Rigol, Siglent, Tektronix, R&S, Anritsu, Keithley, and TDK-Lambda
 - **Digital Twin mode** — develop and debug offline with simulated instruments that emit realistic Gaussian noise
 - **Smart auto-detection** — scans connected devices and loads the right driver automatically, no manual config
+- **Built-in CSV logging** — test results logged out of the box, no extra dependencies
 
 ---
 
@@ -32,11 +28,12 @@ RF test bench automation is painful. Every instrument brand has its own quirks, 
 
 Instrumation has been validated against real lab hardware. See our experiment reports:
 
-- [🔬 AFG ↔ DSOX Loopback Validation](https://abduznik.github.io/instrumation/experiments/afg_dso_loopback/) — Plug-and-play AUTO discovery with Tektronix AFG3022C + Keysight DSOX2002A
-- [📡 PXA N9030A Spectrum Analyzer](https://abduznik.github.io/instrumation/experiments/pxa_validation/) — 32-bit binary trace transfers at high speed
-- [🎛️ MXG N5183B Signal Generator](https://abduznik.github.io/instrumation/experiments/mxg_validation/) — Pulse modulation and frequency sweeps
-- [📊 PNA N5232A Network Analyzer](https://abduznik.github.io/instrumation/experiments/vna_validation/) — S-parameter measurements and Smith charts
-- [📈 Rigol DS1054Z Oscilloscope](https://abduznik.github.io/instrumation/experiments/rigol_ds1054z/) — 4-channel calibrated waveform readout and edge trigger
+- **Tektronix AFG3022C + Keysight DSOX2002A** — [Loopback Validation](https://abduznik.github.io/instrumation/experiments/afg_dso_loopback/) — plug-and-play AUTO discovery
+- **Keysight PXA N9030A** — [Spectrum Analyzer Validation](https://abduznik.github.io/instrumation/experiments/pxa_validation/) — 32-bit binary trace transfers at high speed
+- **Keysight MXG N5183B** — [Signal Generator Validation](https://abduznik.github.io/instrumation/experiments/mxg_validation/) — pulse modulation and frequency sweeps
+- **Keysight PNA N5232A** — [Network Analyzer Validation](https://abduznik.github.io/instrumation/experiments/vna_validation/) — S-parameter measurements and Smith charts
+- **Rigol DS1054Z** — [Oscilloscope Validation](https://abduznik.github.io/instrumation/experiments/rigol_ds1054z/) — 4-channel calibrated waveform readout and edge trigger
+- **TDK-Lambda Z+** — [Power Supply Validation](https://abduznik.github.io/instrumation/experiments/tdk_lambda_zplus/) — handshake and setpoint validation
 
 ---
 
@@ -80,23 +77,15 @@ No resource manager. No SCPI strings. No hardcoded addresses. Just your test log
 
 ---
 
-## Live Data Streaming 
+## Live Data Streaming
 
-Instrumation includes a built-in `DataBroadcaster` for streaming live readings over UDP. This allows you to build real-time dashboards or loggers with zero external dependencies. 
+Instrumation includes a built-in `DataBroadcaster` for streaming live readings over UDP. This allows you to build real-time dashboards or loggers with zero external dependencies.
 
-- **Zero-lag** — UDP delivery doesn't block your test flow. 
-- **Zero-config** — Broadcast to any host/port as JSON packets. 
-- **Zero-dep** — Built-in with Python standard library. 
+- **Non-blocking** — UDP delivery runs independently of your test flow, so streaming telemetry never stalls a measurement.
+- **Zero-config** — Broadcast to any host/port as JSON packets.
+- **Zero-dep** — Built-in with Python standard library.
 
-See [examples/broadcast_demo.py](examples/broadcast_demo.py) and [examples/dashboard.py](examples/dashboard.py) for usage. 
-
-## Features
-
-- **Auto-Discovery** — scans VISA and Serial buses, identifies what's connected
-- **Smart Factory** — detects instrument brand and loads the correct driver
-- **Digital Twin** — full simulation mode for offline development and CI pipelines
-- **Unified API** — write once, run on any supported hardware
-- **Built-in CSV logging** — test results logged out of the box
+See [examples/broadcast_demo.py](examples/broadcast_demo.py) and [examples/dashboard.py](examples/dashboard.py) for usage.
 
 ---
 
@@ -313,7 +302,7 @@ report.generate_excel("report.xlsx")
 
 ## Tech Stack
 
-- **Language:** Python 3.7+
+- **Language:** Python 3.9+
 - **Libraries:** PyVISA, PySerial
 - **Architecture:** Smart Factory Pattern, Polymorphism
 - **Standards:** SCPI (Standard Commands for Programmable Instruments)
@@ -324,7 +313,7 @@ report.generate_excel("report.xlsx")
 
 Instrumation is maintained in my spare time alongside a full-time RF technician job. If it's saved you hours of boilerplate or made your test bench easier to automate, consider supporting:
 
-[![GitHub Sponsors](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?logo=github)](https://github.com/sponsors/abduznik)
+[![GitHub Sponsors](https://img.shields.io/badge/Sponsor-GitHub-ea4aaa?logo=github)](https://github.com/sponsors/abduznik)
 
 Commercial support or custom driver development? Reach out via GitHub Issues or Discussions.
 

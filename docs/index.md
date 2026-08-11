@@ -19,11 +19,12 @@
 
 Instrumation has been validated against real lab equipment. Check out our experiment reports:
 
-- [🔬 AFG ↔ DSOX Loopback](experiments/afg_dso_loopback.md) — Plug-and-play AUTO discovery with Tektronix AFG + Keysight DSOX
-- [📡 PXA N9030A Validation](experiments/pxa_validation.md) — High-speed 32-bit binary trace transfers
-- [🎛️ MXG N5183B Validation](experiments/mxg_validation.md) — Pulse modulation and frequency sweeps
-- [📊 PNA N5232A Validation](experiments/vna_validation.md) — S-parameter measurements and Smith charts
-- [📈 Rigol DS1054Z Integration](experiments/rigol_ds1054z.md) — 4-channel scope with calibrated waveform readout
+- **Tektronix AFG + Keysight DSOX** — [Loopback Validation](experiments/afg_dso_loopback.md) — plug-and-play AUTO discovery
+- **Keysight PXA N9030A** — [Spectrum Analyzer Validation](experiments/pxa_validation.md) — high-speed 32-bit binary trace transfers
+- **Keysight MXG N5183B** — [Signal Generator Validation](experiments/mxg_validation.md) — pulse modulation and frequency sweeps
+- **Keysight PNA N5232A** — [Network Analyzer Validation](experiments/vna_validation.md) — S-parameter measurements and Smith charts
+- **Rigol DS1054Z** — [Oscilloscope Integration](experiments/rigol_ds1054z.md) — 4-channel scope with calibrated waveform readout
+- **TDK-Lambda Z+** — [Power Supply Validation](experiments/tdk_lambda_zplus.md) — handshake and setpoint validation
 
 ---
 
@@ -89,3 +90,7 @@ with get_instrument("AUTO", "DMM") as dmm:
 - Learn about [Simulation Mode](user_guide/simulation.md)
 - See our [Hardware Experiments](experiments/afg_dso_loopback.md)
 - Dive into the [API Reference](api_ref/index.md)
+
+## Development Log
+
+Instrumation is under active development. See the [development log](logs/index.md) for a dated record of engineering changes, or the [release notes](https://github.com/abduznik/instrumation/blob/main/release_notes.md) for a per-version summary.

@@ -7,15 +7,35 @@ name = "instrumation"
 version = "0.7.0"
 description = "A high-level Hardware Abstraction Layer (HAL) for RF test stations with Digital Twin support."
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 license = {text = "MIT"}
 authors = [
   {name = "abduznik", email = "abduznik@users.noreply.github.com"}
 ]
+keywords = [
+    "pyvisa",
+    "scpi",
+    "rf-testing",
+    "hardware-abstraction-layer",
+    "test-automation",
+    "lab-automation",
+    "instrument-control",
+    "oscilloscope",
+    "spectrum-analyzer",
+    "signal-generator",
+    "network-analyzer",
+    "test-instrumentation",
+]
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Interface Engine/Protocol Translator",
 ]
 dependencies = [
@@ -41,6 +61,7 @@ instrumation = "instrumation.cli:main"
 
 [project.urls]
 "Homepage" = "https://github.com/abduznik/instrumation"
+"Documentation" = "https://abduznik.github.io/instrumation/"
 "Repository" = "https://github.com/abduznik/instrumation"
 "Bug Tracker" = "https://github.com/abduznik/instrumation/issues"
 
@@ -53,7 +74,7 @@ python_files = "test_*.py"
 
 [tool.ruff]
 line-length = 127
-target-version = "0.7.0"
+target-version = "py39"
 
 [tool.ruff.lint]
 # Matches the previous flake8 hard-fail set: syntax errors and undefined
