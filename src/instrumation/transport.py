@@ -11,9 +11,10 @@ object usable but inert rather than raising. See the individual docstrings for
 what that means for callers.
 """
 
+import asyncio
 import serial # type: ignore
 import time
-from typing import List, Optional, Union, Any
+from typing import List, Optional, Tuple, Union, Any
 
 class VisaDriver:
     """Generic wrapper for VISA instruments.
@@ -362,6 +363,40 @@ def poll_for_mav(
     raise InstrumentTimeout(f"MAV bit not set within {timeout}s timeout")
 
 
+async def poll_for_mav_async(
+    instrument: Any,
+    timeout: float = 10.0,
+    poll_interval: float = 0.1,
+) -> None:
+    """Async variant of :func:`poll_for_mav`, using ``asyncio.sleep``.
+
+    Identical polling behavior to the sync version, but non-blocking so it
+    can run alongside other coroutines in an async context.
+
+    Args:
+        instrument: A connected VisaDriver or pyvisa Resource object.
+        timeout: Maximum seconds to wait for MAV. Defaults to 10.0.
+        poll_interval: Seconds between polls. Defaults to 0.1.
+
+    Raises:
+        InstrumentTimeout: If MAV is not set within the timeout period.
+    """
+    from .exceptions import InstrumentTimeout
+
+    start = time.time()
+    while time.time() - start < timeout:
+        try:
+            response = instrument.query("*STB?")
+            value = int(response)
+            if value & 0x10:
+                return
+        except (ValueError, Exception):
+            pass
+        await asyncio.sleep(poll_interval)
+
+    raise InstrumentTimeout(f"MAV bit not set within {timeout}s timeout")
+
+
 def poll_opc_with_backoff(
     instrument: Any,
     timeout: float = 30.0,
@@ -414,6 +449,7 @@ def batch_query(
     instrument: Any,
     queries: List[str],
     stop_on_error: bool = False,
+    write_then_read: Optional[List[Tuple[str, str]]] = None,
 ) -> dict:
     """Send multiple SCPI queries and return a dictionary of results.
 
@@ -429,21 +465,33 @@ def batch_query(
            b. Store the stripped response in results[query].
            c. If the query fails and stop_on_error is True, raise the exception.
            d. If stop_on_error is False, store the error message as the value.
-        3. Return the results dictionary.
+        3. For each (write_cmd, read_cmd) pair in write_then_read:
+           a. Send write_cmd via instrument.write(), then read_cmd via instrument.query().
+           b. Store the stripped response in results[write_cmd].
+           c. Same stop_on_error/error-message behavior as queries.
+        4. Return the results dictionary.
 
     Args:
         instrument: A connected VisaDriver or pyvisa Resource object.
         queries: List of SCPI query strings to send.
         stop_on_error: If True, raise on first error. If False (default),
             store error messages and continue with remaining queries.
+        write_then_read: Optional list of (write_cmd, read_cmd) pairs for
+            instruments that need a separate write before the read (e.g.
+            writing a register address, then reading its value). Results
+            are keyed by write_cmd.
 
     Returns:
-        A dictionary mapping each query string to its response (or error message).
+        A dictionary mapping each query string (or write_then_read write_cmd)
+        to its response (or error message).
 
     Example:
         >>> results = batch_query(dmm, ["*IDN?", "MEAS:VOLT:DC?", "*STB?"])
         >>> for cmd, resp in results.items():
         ...     print(f"{cmd} -> {resp}")
+
+        >>> results = batch_query(inst, [], write_then_read=[("REG 0", "REG?")])
+        >>> results["REG 0"]
     """
     results = {}
     for query in queries:
@@ -454,4 +502,15 @@ def batch_query(
             if stop_on_error:
                 raise
             results[query] = f"ERROR: {e}"
+
+    for write_cmd, read_cmd in write_then_read or []:
+        try:
+            instrument.write(write_cmd)
+            response = instrument.query(read_cmd)
+            results[write_cmd] = response.strip() if isinstance(response, str) else response
+        except Exception as e:
+            if stop_on_error:
+                raise
+            results[write_cmd] = f"ERROR: {e}"
+
     return results

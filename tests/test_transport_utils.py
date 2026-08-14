@@ -9,6 +9,7 @@ from instrumation.transport import (
     detect_line_termination,
     find_minimum_timeout,
     poll_for_mav,
+    poll_for_mav_async,
     poll_opc_with_backoff,
     batch_query,
 )
@@ -145,6 +146,38 @@ class TestPollForMav:
         mock_inst.query.side_effect = ["0", "0", "0", "16"]
 
         poll_for_mav(mock_inst, timeout=2.0, poll_interval=0.01)
+        assert mock_inst.query.call_count == 4
+
+
+# ── poll_for_mav_async ──────────────────────────────────────
+
+class TestPollForMavAsync:
+    """Tests for poll_for_mav_async()."""
+
+    @pytest.mark.asyncio
+    async def test_returns_when_mav_set(self):
+        """Should return (not raise) once MAV bit (0x10) is detected."""
+        mock_inst = MagicMock()
+        mock_inst.query.return_value = "16"
+
+        await poll_for_mav_async(mock_inst, timeout=1.0, poll_interval=0.01)
+
+    @pytest.mark.asyncio
+    async def test_raises_on_timeout(self):
+        """Should raise InstrumentTimeout if MAV never appears."""
+        mock_inst = MagicMock()
+        mock_inst.query.return_value = "0"
+
+        with pytest.raises(InstrumentTimeout):
+            await poll_for_mav_async(mock_inst, timeout=0.2, poll_interval=0.05)
+
+    @pytest.mark.asyncio
+    async def test_polls_multiple_times(self):
+        """Should call query multiple times before MAV is set."""
+        mock_inst = MagicMock()
+        mock_inst.query.side_effect = ["0", "0", "0", "16"]
+
+        await poll_for_mav_async(mock_inst, timeout=2.0, poll_interval=0.01)
         assert mock_inst.query.call_count == 4
 
 
@@ -311,3 +344,44 @@ class TestBatchQuery:
 
         result = batch_query(mock_inst, ["CMD_C", "CMD_A", "CMD_B"])
         assert list(result.keys()) == ["CMD_C", "CMD_A", "CMD_B"]
+
+    def test_write_then_read_only(self):
+        """Should work with only write_then_read pairs and no queries."""
+        mock_inst = MagicMock()
+        mock_inst.query.return_value = "42"
+
+        result = batch_query(mock_inst, [], write_then_read=[("REG 0", "REG?")])
+        assert result == {"REG 0": "42"}
+        mock_inst.write.assert_called_once_with("REG 0")
+        mock_inst.query.assert_called_once_with("REG?")
+
+    def test_write_then_read_mixed_with_queries(self):
+        """Should combine plain queries and write_then_read pairs in one result dict."""
+        mock_inst = MagicMock()
+        mock_inst.query.side_effect = ["SIM,SIM_DMM,1.0", "42"]
+
+        result = batch_query(
+            mock_inst,
+            ["*IDN?"],
+            write_then_read=[("REG 0", "REG?")],
+        )
+        assert result["*IDN?"] == "SIM,SIM_DMM,1.0"
+        assert result["REG 0"] == "42"
+
+    def test_write_then_read_error_continues_by_default(self):
+        """A failing write_then_read pair should store an error and continue."""
+        mock_inst = MagicMock()
+        mock_inst.write.side_effect = Exception("bus error")
+
+        result = batch_query(mock_inst, [], write_then_read=[("REG 0", "REG?")])
+        assert "ERROR:" in result["REG 0"]
+
+    def test_write_then_read_stops_on_error_when_enabled(self):
+        """Should raise immediately when stop_on_error=True and write/read fails."""
+        mock_inst = MagicMock()
+        mock_inst.write.side_effect = Exception("bus error")
+
+        with pytest.raises(Exception, match="bus error"):
+            batch_query(
+                mock_inst, [], write_then_read=[("REG 0", "REG?")], stop_on_error=True
+            )
