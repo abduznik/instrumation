@@ -57,6 +57,17 @@ class SimulatedBaseDriver(InstrumentDriver):
     def measure_duty_cycle(self) -> MeasurementResult: return MeasurementResult(50.0, "%")
     def measure_v_peak_to_peak(self) -> MeasurementResult: return MeasurementResult(2.0, "V")
 
+@register_driver("GENERIC")
+class SimulatedGeneric(SimulatedBaseDriver):
+    """Simulated fallback driver for unrecognized instruments.
+
+    Speaks plain simulated SCPI only (see :class:`SimulatedBaseDriver`) --
+    no brand- or type-specific measurement methods. Mirrors
+    :class:`~instrumation.drivers.generic.GenericDriver` for SIM mode so
+    ``driver_type="GENERIC"`` doesn't silently resolve to a DMM.
+    """
+    pass
+
 @register_driver("DMM")
 class SimulatedMultimeter(SimulatedBaseDriver, Multimeter):
     def configure_voltage_dc(self) -> None:

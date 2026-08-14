@@ -1,6 +1,7 @@
 from .replay import ReplayDriver
 from .simulated import (
     SimulatedBaseDriver,
+    SimulatedGeneric,
     SimulatedMultimeter,
     SimulatedPowerSupply,
     SimulatedSpectrumAnalyzer,
@@ -12,6 +13,7 @@ from .simulated import (
     SimulatedElectronicLoad,
     SimulatedFrequencyCounter,
 )
+from .generic import GenericDriver
 from .keysight import Keysight53230A
 from .rigol import RigolDS1054Z
 from .async_driver import (
@@ -30,7 +32,9 @@ from .async_driver import (
 
 __all__ = [
     "ReplayDriver",
+    "GenericDriver",
     "SimulatedBaseDriver",
+    "SimulatedGeneric",
     "SimulatedMultimeter",
     "SimulatedPowerSupply",
     "SimulatedSpectrumAnalyzer",

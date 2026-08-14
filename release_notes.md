@@ -1,3 +1,22 @@
+## Key Features in v0.7.1
+
+### Async & Batch Improvements
+- **Issue #123 — async variant of `poll_for_mav`**: New `poll_for_mav_async()` in `transport.py` mirrors `poll_for_mav()` but uses `asyncio.sleep()` instead of blocking `time.sleep()`, so it can be awaited from async drivers/tests without stalling the event loop. The sync version is unchanged.
+- **Issue #124 — `batch_query()` supports write-then-read**: `batch_query()` now accepts an optional `write_then_read` list of `(write_cmd, read_cmd)` pairs for instruments that need a separate write before the read (e.g. writing a register address, then reading its value). Results are keyed by `write_cmd`; existing `queries`-only calls are unaffected.
+
+### CI
+- **Issue #125 — Python 3.13 added to the test matrix**: CI now runs on 3.9–3.13. `requires-python` already covered this range.
+
+### Generic Driver Skeleton (Issue #142, in progress)
+- Added `GenericDriver` (`drivers/generic.py`) and `SimulatedGeneric` (`drivers/simulated.py`), both registered under the `"GENERIC"` driver type — a first-class fallback for unrecognized instruments instead of silently reusing brand-specific drivers. This is a skeleton: `factory.py`'s IDN-routing fallback and `connect_instrument()`'s hardcoded `"DMM"` fallback still need to be wired to prefer `GENERIC` (tracked separately in #143/#144).
+
+### Packaging
+- **`py.typed` marker added**: The package now ships a PEP 561 `py.typed` marker, so type checkers and editor IntelliSense pick up the existing type hints/docstrings from a `pip install` instead of treating the package as untyped.
+
+### Tests
+- 12 new tests (async `poll_for_mav`, `batch_query` write-then-read, GenericDriver registration/behavior).
+- 365 total tests passing.
+
 ## Key Features in v0.7.0
 
 ### Windows Compatibility (Issue #143)
