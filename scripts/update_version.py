@@ -12,14 +12,15 @@ def update_file(file_path, new_version):
         content = f.read()
 
     # Regex breakdown:
-    # (version\s*=\s*["\'])  -> Group 1: Matches 'version = "' or 'version="'
-    # ([^"\']+)              -> Group 2: Matches the version number inside
-    # ([ "\'])                -> Group 3: Matches the closing quote
-    pattern = r'(version\s*=\s*["\'])([^"\']+)(["\'])'
+    # (^version\s*=\s*["\'])  -> Group 1: Matches a line starting with 'version = "'
+    #                            (anchored so keys like 'target-version' aren't matched)
+    # ([^"\']+)               -> Group 2: Matches the version number inside
+    # (["\'])                 -> Group 3: Matches the closing quote
+    pattern = r'(^version\s*=\s*["\'])([^"\']+)(["\'])'
     
-    if re.search(pattern, content):
+    if re.search(pattern, content, flags=re.MULTILINE):
         # We replace Group 2 (the old version) with the new_version
-        new_content = re.sub(pattern, f'\g<1>{new_version}\g<3>', content)
+        new_content = re.sub(pattern, f'\g<1>{new_version}\g<3>', content, flags=re.MULTILINE)
         
         with open(file_path, 'w') as f:
             f.write(new_content)
