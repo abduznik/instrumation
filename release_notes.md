@@ -1,3 +1,14 @@
+## Key Features in v0.8.0
+
+### Bug Fixes: Generic/Fallback Instrument Driver Wired Up (Issues #142-#145, #147)
+- **Issue #142 — `GenericDriver`/`SimulatedGeneric` now fully wired, not just a skeleton**: v0.7.1 introduced `GenericDriver` (`drivers/generic.py`) and `SimulatedGeneric` (`drivers/simulated.py`) registered under `"GENERIC"`, but the factory routing still needed to prefer them. That wiring is now complete.
+- **Issue #143 — unrecognized IDN no longer receives the wrong brand driver**: When an instrument's `*IDN?` doesn't match a known brand, `get_instrument()` previously grabbed the first registered driver for the requested type regardless of brand (e.g. a non-Keithley DMM could get Keithley-specific SCPI). It now falls back to `GenericDriver` unless exactly one unambiguous driver is registered for that type (e.g. a single plugin driver), and logs a warning when it does.
+- **Issue #144 — `connect_instrument()` no longer hardcodes DMM as its fallback**: Unrecognized instruments (scopes, PSUs, signal generators, etc.) previously all fell through to a DMM driver. The fallback now routes to `"GENERIC"`, and ANRITSU/PROLOGIX IDN detection was added alongside the existing brand checks.
+- **Issue #147 — SIM-mode `GENERIC` no longer secretly a multimeter**: `driver_type="GENERIC"` in simulation mode now returns `SimulatedGeneric` instead of `SimulatedMultimeter`.
+
+### Tests
+- New `tests/test_factory_routing.py`: mocked-VISA coverage for unrecognized-IDN routing, ambiguous-brand fallback, known-brand routing, SIM-mode GENERIC, and the ASRL/TDK-Lambda smart probe on unrelated serial devices (Issue #145).
+
 ## Key Features in v0.7.1
 
 ### Async & Batch Improvements

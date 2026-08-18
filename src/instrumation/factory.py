@@ -12,6 +12,7 @@ import os
 import time
 from pathlib import Path
 from .drivers.real import RealDriver
+from .drivers.generic import GenericDriver
 from .drivers.registry import DriverRegistry
 from .drivers.base import Oscilloscope, SpectrumAnalyzer, SignalGenerator, FunctionGenerator, PowerSupply, Multimeter, NetworkAnalyzer, ElectronicLoad, FrequencyCounter
 
@@ -160,7 +161,7 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
 
     # 1. Handle Simulation Mode (The Digital Twin Path)
     if is_sim_mode():
-        from .drivers.simulated import SimulatedMultimeter
+        from .drivers.simulated import SimulatedGeneric
         drivers = DriverRegistry.get_drivers_by_type(driver_type)
         for drv_cls in drivers:
             if "Simulated" in drv_cls.__name__:
@@ -169,13 +170,13 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
                 drv = drv_cls(addr)
                 drv.connect()
                 return drv
-        
+
         # If explicitly requested a type and not found, raise error (don't fallback to DMM silently)
         if driver_type != "GENERIC":
             raise ValueError(f"No simulated driver found for type: {driver_type}")
 
         # Fallback for GENERIC only
-        drv = SimulatedMultimeter(resource_address if resource_address != "AUTO" else "USB0::SIM::INSTR")
+        drv = SimulatedGeneric(resource_address if resource_address != "AUTO" else "USB0::SIM::INSTR")
         drv.connect()
         return drv
 
@@ -369,15 +370,39 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
     elif "TDK-LAMBDA" in idn or "Z+" in idn:
         from .drivers.tdk import TDKLambdaZPlus
         final_drv = TDKLambdaZPlus(resource_address)
+    elif "ANRITSU" in idn:
+        if "MS2035" in idn:
+            from .drivers.anritsu import AnritsuMS2035B
+            final_drv = AnritsuMS2035B(resource_address)
+        elif "SHOCKLINE" in idn or "MS4" in idn:
+            from .drivers.anritsu import AnritsuShockLineVNA
+            final_drv = AnritsuShockLineVNA(resource_address)
+        elif "VNA" in idn or "MS20" in idn:
+            from .drivers.anritsu import AnritsuVNA
+            final_drv = AnritsuVNA(resource_address)
+        else:
+            from .drivers.anritsu import AnritsuSA
+            final_drv = AnritsuSA(resource_address)
+    elif "PROLOGIX" in idn:
+        from .drivers.prologix import PrologixDriver
+        final_drv = PrologixDriver(resource_address)
 
     if not final_drv:
-        drivers = DriverRegistry.get_drivers_by_type(driver_type)
-        for drv_cls in drivers:
-            if "Simulated" not in drv_cls.__name__:
-                final_drv = drv_cls(resource_address)
-                break
-    if not final_drv:
-        final_drv = RealDriver(resource_address, rm=get_rm())
+        # No brand matched the IDN. If exactly one driver is registered for the
+        # requested type (e.g. a plugin driver with no brand siblings), there's
+        # no ambiguity and it's safe to use it. If multiple candidates exist,
+        # picking one would be guessing a brand's SCPI dialect for an
+        # unidentified instrument, so fall back to the explicit GENERIC driver.
+        candidates = [d for d in DriverRegistry.get_drivers_by_type(driver_type) if "Simulated" not in d.__name__]
+        if len(candidates) == 1:
+            final_drv = candidates[0](resource_address)
+        else:
+            if idn:
+                logger.warning(
+                    f"Unrecognized instrument IDN '{idn.strip()}' at {resource_address}; "
+                    f"using GENERIC driver instead of guessing a {driver_type} brand driver."
+                )
+            final_drv = GenericDriver(resource_address, rm=get_rm())
 
 
     final_drv.connect()

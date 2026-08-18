@@ -75,6 +75,10 @@ def connect_instrument(visa_address: str, driver_type: str = None):
             return get_instrument(visa_address, "SCOPE")
         if "ROHDE" in idn:
             return get_instrument(visa_address, "SG")
+        if "ANRITSU" in idn:
+            return get_instrument(visa_address, "SA")
+        if "PROLOGIX" in idn:
+            return get_instrument(visa_address, "GENERIC")
     except ConfigurationError:
         # ConfigurationError is a specific, actionable error (invalid config or
         # command sent to the instrument) and must propagate to the caller.
@@ -82,4 +86,6 @@ def connect_instrument(visa_address: str, driver_type: str = None):
     except Exception as e:
         logger.warning("connect_instrument auto-detection failed for %s: %s", visa_address, e)
 
-    return get_instrument(visa_address, "DMM")  # Fallback
+    # Unrecognized instrument: never guess a brand/type-specific driver here.
+    logger.warning("connect_instrument could not identify %s; using GENERIC driver.", visa_address)
+    return get_instrument(visa_address, "GENERIC")  # Fallback
