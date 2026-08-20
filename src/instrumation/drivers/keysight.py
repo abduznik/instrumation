@@ -82,6 +82,252 @@ class KeysightPXA(KeysightMXA):
         self._validate_frequency(hz)
         super().set_center_freq(hz)
 
+    # ── Measurement Configuration ──────────────────────────────────────────────
+
+    def set_sweep_type(self, mode: str) -> None:
+        """Set sweep type.
+
+        SCPI: :SENS:SWE:TYPE {IMM|AUTO|SWEep|FFT}
+        """
+        valid = {"IMM", "AUTO", "SWE", "FFT"}
+        if mode.upper() not in valid:
+            raise ValueError(f"Invalid sweep type '{mode}'. Must be one of {valid}")
+        self.safe_send(f":SENS:SWE:TYPE {mode}")
+
+    def set_detector(self, func: str) -> None:
+        """Set detector function.
+
+        SCPI: :SENS:AVER:FUNC {AVERage|POSitive|NEGative|SAMPle|RMS|QPEak}
+        """
+        valid = {"AVER", "POS", "NEG", "SAMP", "RMS", "QPEAK"}
+        if func.upper() not in valid:
+            raise ValueError(f"Invalid detector function '{func}'. Must be one of {valid}")
+        self.safe_send(f":SENS:AVER:FUNC {func}")
+
+    def set_average_count(self, count: int) -> None:
+        """Set number of averages.
+
+        SCPI: :SENS:AVER:COUN <count>
+        """
+        if count < 1:
+            raise ValueError("Average count must be >= 1")
+        self.safe_send(f":SENS:AVER:COUN {count}")
+
+    def set_video_average(self, enable: bool) -> None:
+        """Enable or disable video averaging.
+
+        SCPI: :SENS:BAND:VID:AUTO {ON|OFF}
+        """
+        self.write(f":SENS:BAND:VID:AUTO {'ON' if enable else 'OFF'}")
+
+    def set_frequency_correction(self, enable: bool) -> None:
+        """Enable or disable frequency correction.
+
+        SCPI: :SENS:FREQ:CORR:STAT {ON|OFF}
+        """
+        self.write(f":SENS:FREQ:CORR:STAT {'ON' if enable else 'OFF'}")
+
+    def set_input_coupling(self, coupling: str) -> None:
+        """Set input coupling (DC or AC).
+
+        SCPI: :INP:COUP {DC|AC}
+        """
+        valid = {"DC", "AC"}
+        if coupling.upper() not in valid:
+            raise ValueError(f"Invalid coupling '{coupling}'. Must be DC or AC")
+        self.write(f":INP:COUP {coupling.upper()}")
+
+    def set_input_impedance(self, ohms: float) -> None:
+        """Set input impedance (50 or 75 ohms).
+
+        SCPI: :INP:IMP {50|75}
+        """
+        valid = {50.0, 75.0}
+        if ohms not in valid:
+            raise ValueError(f"Invalid impedance '{ohms}'. Must be 50 or 75 ohms")
+        self.write(f":INP:IMP {ohms}")
+
+    # ── Advanced Triggering ─────────────────────────────────────────────────────
+
+    def set_trigger_source(self, source: str) -> None:
+        """Set trigger source.
+
+        SCPI: :TRIG:SOUR {IMM|EXT|VID|IFP|TIME}
+        """
+        valid = {"IMM", "EXT", "VID", "IFP", "TIME"}
+        if source.upper() not in valid:
+            raise ValueError(f"Invalid trigger source '{source}'. Must be one of {valid}")
+        self.safe_send(f":TRIG:SOUR {source.upper()}")
+
+    def set_trigger_level(self, level: float) -> None:
+        """Set trigger level in dBm or V.
+
+        SCPI: :TRIG:LEV <level>
+        """
+        self.safe_send(f":TRIG:LEV {level}")
+
+    def set_trigger_delay(self, seconds: float) -> None:
+        """Set trigger delay in seconds.
+
+        SCPI: :TRIG:DEL <seconds>
+        """
+        if seconds < 0:
+            raise ValueError("Trigger delay must be >= 0")
+        self.safe_send(f":TRIG:DEL {seconds}")
+
+    def set_trigger_slope(self, slope: str) -> None:
+        """Set trigger slope (POS or NEG).
+
+        SCPI: :TRIG:SLOP {POS|NEG}
+        """
+        valid = {"POS", "NEG"}
+        if slope.upper() not in valid:
+            raise ValueError(f"Invalid trigger slope '{slope}'. Must be POS or NEG")
+        self.write(f":TRIG:SLOP {slope.upper()}")
+
+    # ── Marker Operations (enhanced) ────────────────────────────────────────────
+
+    def get_marker_frequency(self) -> MeasurementResult:
+        """Get marker 1 frequency.
+
+        SCPI: :CALC:MARK1:X?
+        """
+        val = self.query_ascii(":CALC:MARK1:X?")
+        return MeasurementResult(float(val), "Hz")
+
+    def set_marker_position(self, freq_hz: float) -> None:
+        """Set marker 1 position to a specific frequency.
+
+        SCPI: :CALC:MARK1:X <freq_hz>
+        """
+        self._validate_frequency(freq_hz)
+        self.write(f":CALC:MARK1:X {freq_hz}")
+
+    def marker_next_peak(self) -> None:
+        """Move marker 1 to next peak.
+
+        SCPI: :CALC:MARK1:MAX
+        """
+        self.safe_send(":CALC:MARK1:MAX")
+
+    def set_marker_threshold(self, dbm: float) -> None:
+        """Set marker search threshold in dBm.
+
+        SCPI: :CALC:MARK1:THRESH <dbm>
+        """
+        self.safe_send(f":CALC:MARK1:THRESH {dbm}")
+
+    def get_marker_noise(self) -> MeasurementResult:
+        """Get marker 1 noise measurement.
+
+        SCPI: :CALC:MARK1:NOIS?
+        """
+        val = self.query_ascii(":CALC:MARK1:NOIS?")
+        return MeasurementResult(float(val), "dBm/Hz")
+
+    # ── Bandwidth & Sweep ───────────────────────────────────────────────────────
+
+    def set_rbw_auto(self, enable: bool) -> None:
+        """Enable or disable automatic RBW.
+
+        SCPI: :SENS:BAND:AUTO {ON|OFF}
+        """
+        self.write(f":SENS:BAND:AUTO {'ON' if enable else 'OFF'}")
+
+    def set_vbw_ratio(self, ratio: float) -> None:
+        """Set VBW to RBW ratio.
+
+        SCPI: :SENS:BAND:VID:RAT <ratio>
+        """
+        if ratio <= 0:
+            raise ValueError("VBW ratio must be > 0")
+        self.safe_send(f":SENS:BAND:VID:RAT {ratio}")
+
+    def get_sweep_time(self) -> float:
+        """Get current sweep time in seconds.
+
+        SCPI: :SENS:SWE:TIME?
+        """
+        return float(self.query(":SENS:SWE:TIME?"))
+
+    def set_if_gain(self, db: float) -> None:
+        """Set IF gain (PXA-specific, up to 30 dB).
+
+        SCPI: :SENS:POW:GAIN:IF <db>
+        """
+        if db < 0 or db > 30:
+            raise ValueError("IF gain must be between 0 and 30 dB")
+        self.safe_send(f":SENS:POW:GAIN:IF {db}")
+
+    # ── Real-Time Spectrum Analysis (PXA-exclusive) ─────────────────────────────
+
+    def set_rtsa_enable(self, enable: bool) -> None:
+        """Enable or disable Real-Time Spectrum Analysis mode.
+
+        SCPI: :SPEC:RTSA:STAT {ON|OFF}
+        """
+        self.safe_send(f":SPEC:RTSA:STAT {'ON' if enable else 'OFF'}")
+
+    def set_capture_bandwidth(self, hz: float) -> None:
+        """Set RTSA capture bandwidth in Hz.
+
+        SCPI: :SPEC:RTSA:CAP:BAND <hz>
+        """
+        self._validate_frequency(hz)
+        self.safe_send(f":SPEC:RTSA:CAP:BAND {hz}")
+
+    def set_spoiled_regions(self, count: int) -> None:
+        """Set number of spoiled/failed sweep regions.
+
+        SCPI: :SPEC:RTSA:SWR:FCO <count>
+        """
+        if count < 0:
+            raise ValueError("Spoiled region count must be >= 0")
+        self.safe_send(f":SPEC:RTSA:SWR:FCO {count}")
+
+    def get_spectrum_power_density(self) -> MeasurementResult:
+        """Get spectrum power density at marker 1.
+
+        SCPI: :CALC:MARK1:FUNC?
+        """
+        val = self.query_ascii(":CALC:MARK1:FUNC?")
+        return MeasurementResult(float(val), "dBm/Hz")
+
+    # ── System ──────────────────────────────────────────────────────────────────
+
+    def get_option_list(self) -> list:
+        """Get list of installed options.
+
+        SCPI: :SYST:OPT:LIST?
+        """
+        resp = self.query(":SYST:OPT:LIST?").strip().strip('"')
+        if not resp:
+            return []
+        return [opt.strip() for opt in resp.split(",")]
+
+    def get_serial_number(self) -> str:
+        """Get instrument serial number.
+
+        SCPI: :SYST:SER
+        """
+        return self.query(":SYST:SER").strip().strip('"')
+
+    def get_firmware_version(self) -> str:
+        """Get firmware version string.
+
+        SCPI: :SYST:VER
+        """
+        return self.query(":SYST:VER").strip().strip('"')
+
+    def self_test(self) -> bool:
+        """Run built-in self-test.
+
+        SCPI: :DIAG:TEST?
+        Returns True if test passed (0), False otherwise.
+        """
+        result = int(self.query(":DIAG:TEST?"))
+        return result == 0
+
 @register_driver("NA")
 @register_driver("VNA")
 class KeysightPNA(RealDriver, NetworkAnalyzer):
