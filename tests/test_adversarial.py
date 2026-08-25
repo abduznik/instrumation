@@ -316,6 +316,8 @@ def test_station_double_connect():
 
             with patch('instrumation.station.get_instrument') as mock_get:
                 mock_inst = MagicMock()
+                # get_instrument() connects the driver before Station stores it
+                mock_inst.connected = True
                 mock_get.return_value = mock_inst
 
                 station = Station("dummy.toml")
@@ -323,11 +325,12 @@ def test_station_double_connect():
                 # Connect once
                 station.connect()
 
-                # Connect again (double connect)
+                # Connect again (would be a double connect)
                 station.connect()
 
-                # Should not crash, and connect should be called twice
-                assert mock_inst.connect.call_count == 2
+                # Should not crash, and connect must NOT be called a second time
+                # (issue #156: drivers are already connected by get_instrument)
+                assert mock_inst.connect.call_count == 0
 
 
 # ── 11. SimulatedOscilloscope screenshot type ─────────────────────
