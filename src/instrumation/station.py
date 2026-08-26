@@ -88,8 +88,18 @@ class Station:
         logger.debug(f"Instrument '{name}' added to station.")
 
     def connect(self):
-        """Connects all initialized instruments."""
+        """Connects all initialized instruments.
+
+        ``get_instrument`` already connects each driver before it is stored by
+        :meth:`_add_instrument`, so instruments whose ``connected`` flag is
+        already set are skipped to avoid double-connecting (re-opening the VISA
+        resource and re-running sync/discovery). This keeps the operation
+        idempotent and safe for drivers whose ``connect()`` is not idempotent.
+        """
         for name, inst in self.instruments.items():
+            if inst.connected:
+                logger.debug(f"Instrument '{name}' already connected, skipping.")
+                continue
             try:
                 inst.connect()
                 logger.info(f"Connected to {name} at {inst.resource}")

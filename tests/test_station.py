@@ -86,6 +86,7 @@ class TestStation(unittest.TestCase):
         }
         mock_inst = MagicMock()
         mock_inst.resource = "ADDR"
+        mock_inst.connected = False  # freshly added instrument not yet connected
         mock_get_inst.return_value = mock_inst
         
         self.station.load()
@@ -93,6 +94,71 @@ class TestStation(unittest.TestCase):
         with self.assertLogs('instrumation.station', level='INFO') as cm:
             self.station.connect()
             self.assertTrue(any("Connected to sa at ADDR" in output for output in cm.output))
+
+    @patch('os.path.exists', return_value=True)
+    @patch('toml.load')
+    @patch('instrumation.station.get_instrument')
+    def test_connect_skips_already_connected_instrument(self, mock_get_inst, mock_toml_load, mock_exists):
+        """Regression test for #156: connect() must not double-connect.
+
+        get_instrument() already connects drivers before they are stored, so a
+        driver whose ``connected`` flag is already True must not have connect()
+        called again through the Station flow.
+        """
+        mock_toml_load.return_value = {
+            "instruments": {
+                "sa_already": {"driver": "SA", "address": "ADDR1"},
+                "sa_fresh": {"driver": "SA", "address": "ADDR2"},
+            }
+        }
+        already_connected = MagicMock()
+        already_connected.resource = "ADDR1"
+        already_connected.connected = True
+
+        fresh = MagicMock()
+        fresh.resource = "ADDR2"
+        fresh.connected = False
+
+        mock_get_inst.side_effect = [already_connected, fresh]
+
+        self.station.load()
+
+        self.station.connect()
+
+        # The already-connected instrument must NOT be re-connected.
+        already_connected.connect.assert_not_called()
+        # Only the fresh instrument gets connected.
+        fresh.connect.assert_called_once()
+
+    @patch('os.path.exists', return_value=True)
+    @patch('toml.load')
+    @patch('instrumation.station.get_instrument')
+    def test_connect_calls_connect_exactly_once_per_instrument(self, mock_get_inst, mock_toml_load, mock_exists):
+        """Acceptance criterion for #156: connect() is called exactly once.
+
+        Even when Station.connect() is invoked after load (where the driver is
+        already connected), calling connect() again must not re-open the VISA
+        resource. Repeated Station.connect() calls remain no-ops for connected
+        instruments.
+        """
+        mock_toml_load.return_value = {
+            "instruments": {"dmm": {"driver": "DMM", "address": "GPIB::1::INSTR"}}
+        }
+        # Simulate the real flow: get_instrument() connects the driver so its
+        # connected flag is already True when the Station stores it.
+        mock_inst = MagicMock()
+        mock_inst.resource = "GPIB::1::INSTR"
+        mock_inst.connected = True
+        mock_get_inst.return_value = mock_inst
+
+        self.station.load()
+
+        # connect() once
+        self.station.connect()
+        # connect() again -- still should not re-connect
+        self.station.connect()
+
+        mock_inst.connect.assert_not_called()
 
 if __name__ == "__main__":
     unittest.main()
