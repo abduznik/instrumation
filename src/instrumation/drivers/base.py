@@ -1,8 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import List, Union, Dict, Any, Optional
 import asyncio
+import logging
+
 from ..results import MeasurementResult
 from ..exceptions import OverloadError, ConfigurationError
+
+logger = logging.getLogger(__name__)
 
 class InstrumentDriver(ABC):
     """Abstract Base Class for all instrument drivers following the 'Abstract Hardware' spec."""
@@ -127,7 +131,10 @@ class InstrumentDriver(ABC):
         return f"{dbm:.2f} DBM"
 
     def _unsupported_feature(self, feature_name: str) -> None:
-        print(f"Warning: Feature '{feature_name}' is not supported by {self.identity.get('model', 'Instrument')}")
+        model = self.identity.get("model") or "Instrument"
+        logger.warning(
+            "Feature '%s' is not supported by %s", feature_name, model
+        )
 
     def _validate_frequency(self, hz: float) -> None:
         if hz < self.min_frequency or hz > self.max_frequency:
