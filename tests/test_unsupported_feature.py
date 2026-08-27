@@ -21,6 +21,15 @@ class _UnsupportedFeatureProbe(InstrumentDriver):
     def query(self, command: str) -> str:
         return ""
 
+    def safe_send(self, command: str) -> None:
+        self.write(command)
+
+    def query_ascii(self, command: str) -> str:
+        return self.query(command)
+
+    def query_binary_values(self, command: str, datatype: str = "f", is_big_endian: bool = False):
+        return []
+
     def get_id(self) -> str:
         return "PROBE"
 

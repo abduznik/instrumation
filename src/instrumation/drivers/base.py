@@ -30,11 +30,22 @@ class InstrumentDriver(ABC):
         """Dynamic async wrapper for all driver methods."""
         if name.startswith("async_"):
             sync_name = name[6:]
-            if hasattr(self, sync_name):
+            if sync_name and hasattr(self, sync_name):
                 sync_method = getattr(self, sync_name)
+                if not callable(sync_method):
+                    raise AttributeError(
+                        f"'{self.__class__.__name__}' has no async counterpart "
+                        f"for non-callable attribute '{sync_name}'"
+                    )
                 async def wrapper(*args: Any, **kwargs: Any) -> Any:
                     return await asyncio.to_thread(sync_method, *args, **kwargs)
                 return wrapper
+            # Likely typo'd async_ name: the sync attribute doesn't exist.
+            raise AttributeError(
+                f"'{self.__class__.__name__}' has no attribute '{sync_name}' "
+                f"(resolved from async_{sync_name}); did you mean "
+                f"'async_{name[6:]}' on the sync driver?"
+            )
         raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
 
 
@@ -61,14 +72,17 @@ class InstrumentDriver(ABC):
     @abstractmethod
     def query(self, command: str) -> str: pass
 
+    @abstractmethod
     def safe_send(self, command: str) -> None:
         """Sends command and immediately checks SYST:ERR?."""
         raise NotImplementedError()
 
+    @abstractmethod
     def query_ascii(self, command: str) -> str:
         """Sends command, reads response, and checks for errors."""
         raise NotImplementedError()
 
+    @abstractmethod
     def query_binary_values(self, command: str, datatype: str = 'f', is_big_endian: bool = False) -> List[float]:
         """High-speed binary data transfer."""
         raise NotImplementedError()
