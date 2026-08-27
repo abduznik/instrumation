@@ -19,6 +19,14 @@ from .drivers.base import Oscilloscope, SpectrumAnalyzer, SignalGenerator, Funct
 
 logger = logging.getLogger(__name__)
 
+# Canonical instrument categories (driver_type values). GENERIC is the
+# universal fallback; anything NOT in this set is a type the library has
+# never heard of.
+KNOWN_DRIVER_TYPES = frozenset({
+    "SCOPE", "SA", "SG", "PSU", "DMM", "VNA", "NA", "LOAD", "ELOAD",
+    "COUNTER", "GENERIC",
+})
+
 # ASRL resources look like "ASRL1::INSTR", "ASRL10::INSTR", "ASRL21::INSTR".
 # Low-numbered ports (1-4) are typically on-board legacy serial ports that
 # should not be auto-probed; higher numbers are USB-serial adapters worth trying.
@@ -419,6 +427,13 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
         candidates = [d for d in DriverRegistry.get_drivers_by_type(driver_type) if "Simulated" not in d.__name__]
         if len(candidates) == 1:
             final_drv = candidates[0](resource_address)
+        elif not candidates and driver_type not in KNOWN_DRIVER_TYPES:
+            # Issue #146: mirror SIM mode's loud failure. A type that is
+            # neither registered nor a canonical category has no driver to
+            # fall back to — do NOT silently return GENERIC.
+            raise ValueError(
+                f"No real driver found for type: {driver_type}"
+            )
         else:
             if idn:
                 logger.warning(
