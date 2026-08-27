@@ -5,6 +5,8 @@ station. Values are resolved with this precedence (highest wins):
 environment variables > config file > built-in defaults.
 """
 
+from __future__ import annotations
+
 import json
 import os
 from pathlib import Path

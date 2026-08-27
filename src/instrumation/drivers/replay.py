@@ -101,6 +101,11 @@ class ReplayDriver(SignalGenerator, SpectrumAnalyzer, NetworkAnalyzer, Oscillosc
         self.check_errors()
         return resp
 
+    def query_binary_values(self, command: str, datatype: str = 'f', is_big_endian: bool = False) -> List[float]:
+        resp = self.query(command)
+        self.check_errors()
+        return [float(v) for v in resp.split(",") if v.strip()]
+
     def get_id(self) -> str: return self.query("*IDN?")
     def preset(self, automation_optimized: bool = True) -> None: pass
     def clear_status(self) -> None: pass
