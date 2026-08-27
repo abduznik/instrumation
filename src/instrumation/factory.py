@@ -9,6 +9,7 @@ import pyvisa
 import json
 import logging
 import os
+import re
 import time
 from pathlib import Path
 from .drivers.real import RealDriver
@@ -17,6 +18,28 @@ from .drivers.registry import DriverRegistry
 from .drivers.base import Oscilloscope, SpectrumAnalyzer, SignalGenerator, FunctionGenerator, PowerSupply, Multimeter, NetworkAnalyzer, ElectronicLoad, FrequencyCounter
 
 logger = logging.getLogger(__name__)
+
+# ASRL resources look like "ASRL1::INSTR", "ASRL10::INSTR", "ASRL21::INSTR".
+# Low-numbered ports (1-4) are typically on-board legacy serial ports that
+# should not be auto-probed; higher numbers are USB-serial adapters worth trying.
+_ASRL_PORT_RE = re.compile(r"^ASRL(\d+)::", re.IGNORECASE)
+
+
+def _asrl_port_number(resource: str):
+    """Return the numeric port of an ASRL VISA resource, or None if not ASRL."""
+    m = _ASRL_PORT_RE.match(resource.strip())
+    return int(m.group(1)) if m else None
+
+
+def _skip_serial_probe(resource: str) -> bool:
+    """True when an ASRL resource should be skipped by AUTO discovery.
+
+    Only exact ASRL resources with port numbers 1-4 are skipped -- substring
+    matches (e.g. "ASRL10" containing "1", or digits inside a TCPIP address)
+    must NOT trigger the skip.
+    """
+    port = _asrl_port_number(resource)
+    return port is not None and 1 <= port <= 4
 
 # Global Resource Manager to prevent "Too many managers" errors on macOS
 _GLOBAL_RM = None
@@ -247,7 +270,7 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
 
         def probe_resource(res):
             try:
-                if "ASRL" in res and any(p in res for p in ["1", "2", "3", "4"]):
+                if _skip_serial_probe(res):
                     return None
                 dev = get_instrument(res, driver_type)
                 type_map = {"SCOPE": Oscilloscope, "SA": SpectrumAnalyzer, "SG": (SignalGenerator, FunctionGenerator), "PSU": PowerSupply, "DMM": Multimeter, "VNA": NetworkAnalyzer, "NA": NetworkAnalyzer, "LOAD": ElectronicLoad, "ELOAD": ElectronicLoad, "COUNTER": FrequencyCounter}
