@@ -11,10 +11,13 @@ about when data appears to be missing.
 
 import csv
 import json
+import logging
 import os
 import socket
 from datetime import datetime
 from typing import Any, Dict, List, Union 
+
+logger = logging.getLogger(__name__)
 
 
 class DataBroadcaster:
@@ -53,17 +56,32 @@ class DataBroadcaster:
         self.host = host
         self.port = port
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self._consecutive_failures = 0
+        self._max_consecutive_failures = 5
 
     def send(self, data: Union[Dict, List]) -> None:
         """
         Serialize *data* (dict or list) to JSON and send it as a UDP packet.
-        Silently ignores transmission errors so the test flow is never interrupted.
+        Transmission errors are logged rather than raised so the test flow is
+        never interrupted -- but after ``_max_consecutive_failures`` failures in
+        a row a warning is emitted so a broken dashboard link does not stay
+        silent forever.
         """
         try:
             payload = json.dumps(data).encode("utf-8")
             self._sock.sendto(payload, (self.host, self.port))
-        except Exception:
-            pass
+            self._consecutive_failures = 0
+        except Exception as exc:
+            self._consecutive_failures += 1
+            if self._consecutive_failures == 1:
+                logger.debug("DataBroadcaster send failed: %s", exc)
+            elif self._consecutive_failures >= self._max_consecutive_failures:
+                logger.warning(
+                    "DataBroadcaster has failed %d consecutive sends to %s:%s "
+                    "(last error: %s)",
+                    self._consecutive_failures, self.host, self.port, exc,
+                )
+                self._consecutive_failures = 0  # re-arm the threshold
 
     def close(self) -> None:
         """Close the underlying UDP socket."""

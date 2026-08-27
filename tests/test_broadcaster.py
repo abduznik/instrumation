@@ -102,6 +102,49 @@ class TestDataBroadcaster(unittest.TestCase):
         self.assertEqual(len(received), 3)
         self.assertEqual([r["reading"] for r in received], [1, 2, 3])
 
+    def test_consecutive_failures_warn_after_threshold(self):
+        """Issue #155: repeated send failures must surface as a warning, not
+        stay silent forever. First failure logs at debug; the Nth failure
+        (default 5) emits a warning and re-arms the counter."""
+        import io
+        import logging
+
+        b = DataBroadcaster(host="127.0.0.1", port=self.PORT + 5)
+        b.close()  # closed socket -> every send raises
+
+        stream = io.StringIO()
+        handler = logging.StreamHandler(stream)
+        handler.setLevel(logging.WARNING)
+        logger = logging.getLogger("instrumation.utils")
+        old_level = logger.level
+        logger.setLevel(logging.DEBUG)
+        logger.addHandler(handler)
+        try:
+            for _ in range(5):
+                b.send({"x": 1})  # failures 1..5
+            output = stream.getvalue()
+        finally:
+            logger.removeHandler(handler)
+            logger.setLevel(old_level)
+
+        self.assertIn("has failed 5 consecutive sends", output)
+        # Counter re-armed: 4 more failures -> no warning yet (threshold is 5)
+        b2 = DataBroadcaster(host="127.0.0.1", port=self.PORT + 6)
+        b2.close()
+        for _ in range(4):
+            b2.send({"x": 1})
+        self.assertEqual(b2._consecutive_failures, 4)
+
+    def test_failure_counter_resets_on_success(self):
+        """A successful send resets the consecutive-failure counter."""
+        b = DataBroadcaster(host="127.0.0.1", port=self.PORT + 7)
+        b.close()
+        b.send({"x": 1})  # fails, counter = 1
+        # Re-create socket manually to simulate a recovered link
+        b._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        b.send({"x": 1})  # succeeds, counter reset
+        self.assertEqual(b._consecutive_failures, 0)
+
 
 if __name__ == "__main__":
     unittest.main()
