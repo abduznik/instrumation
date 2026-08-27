@@ -56,7 +56,7 @@ class VisaDriver:
             print(f"Error connecting to {address}: {e}")
             self.inst = None
 
-    def query_value(self, command: str) -> Union[str, float]:
+    def query_value(self, command: str) -> Optional[str]:
         """Send a query and return the stripped response.
 
         Parameters
@@ -66,25 +66,25 @@ class VisaDriver:
 
         Returns
         -------
-        str or float
-            The stripped response string on success. Returns the float ``0.0``
-            if the query raised, or if the driver never connected.
+        str or None
+            The stripped response string on success. Returns ``None`` if
+            the query raised, or if the driver never connected -- so a
+            failed read is never mistaken for a genuine ``0.0`` reading.
 
         Notes
         -----
-        The ``0.0`` fallback is indistinguishable from a genuine ``0.0``
-        reading, and the two failure modes return a different *type* to the
-        success path. Callers that need to tell a real zero from a failed read
-        should check ``self.inst`` first and use the underlying resource
-        directly.
+        The previous behaviour of returning ``0.0`` on failure was ambiguous
+        with a real zero reading; callers should treat ``None`` as "no data".
+        Callers that need to know why the read failed should check
+        ``self.inst`` first and use the underlying resource directly.
         """
         if self.inst:
             try:
                 return self.inst.query(command).strip()
             except Exception as e:
                 print(f"VISA Query Error: {e}")
-                return 0.0
-        return 0.0
+                return None
+        return None
 
     def write(self, command: str) -> None:
         """Send a command without reading a response.

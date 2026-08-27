@@ -375,7 +375,6 @@ class TestBatchQuery:
 
         result = batch_query(mock_inst, [], write_then_read=[("REG 0", "REG?")])
         assert "ERROR:" in result["REG 0"]
-
     def test_write_then_read_stops_on_error_when_enabled(self):
         """Should raise immediately when stop_on_error=True and write/read fails."""
         mock_inst = MagicMock()
@@ -385,3 +384,58 @@ class TestBatchQuery:
             batch_query(
                 mock_inst, [], write_then_read=[("REG 0", "REG?")], stop_on_error=True
             )
+
+
+# ── VisaDriver.query_value ─────────────────────────────────
+
+class TestVisaDriverQueryValue:
+    """Tests for VisaDriver.query_value() error contract (gh #153).
+
+    A failed read must return None, never a float 0.0 that could pass for
+    a genuine zero reading. The driver is built via object.__new__ so the
+    VISA backend is never touched; we only exercise query_value() itself.
+    """
+
+    @staticmethod
+    def make_driver(inst):
+        drv = object.__new__(VisaDriver)
+        drv.rm = MagicMock()
+        drv.address = "TCPIP::127.0.0.1::INSTR"
+        drv.inst = inst
+        return drv
+
+    def test_success_returns_stripped_string(self):
+        """A successful query returns the stripped response string."""
+        inst = MagicMock()
+        inst.query.return_value = " 3.300000E+00\n"
+        drv = self.make_driver(inst)
+
+        result = drv.query_value("MEAS:VOLT:DC?")
+        assert result == "3.300000E+00"
+        assert isinstance(result, str)
+        inst.query.assert_called_once_with("MEAS:VOLT:DC?")
+
+    def test_genuine_zero_reading_is_string(self):
+        """A real 0.0 reading from the instrument survives as the string '0.0'."""
+        inst = MagicMock()
+        inst.query.return_value = "0.0\n"
+        drv = self.make_driver(inst)
+
+        result = drv.query_value("MEAS:VOLT:DC?")
+        assert result == "0.0"
+
+    def test_query_error_returns_none_not_zero(self):
+        """A query that raises must return None, never a float 0.0."""
+        inst = MagicMock()
+        inst.query.side_effect = Exception("VISA timeout")
+        drv = self.make_driver(inst)
+
+        result = drv.query_value("MEAS:VOLT:DC?")
+        assert result is None
+
+    def test_never_connected_returns_none_not_zero(self):
+        """A driver with no open resource must return None, never float 0.0."""
+        drv = self.make_driver(None)
+
+        result = drv.query_value("MEAS:VOLT:DC?")
+        assert result is None

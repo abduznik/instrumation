@@ -49,6 +49,10 @@ class UUTHandler:
              return 3.3
 
         val_str = self.inst.query_value("MEAS:VOLT:DC?")
+        if val_str is None:
+            # query_value() returns None when the read failed or the driver
+            # never connected -- never a 0.0 that could pass for a real reading.
+            return 0.0
         try:
             return float(val_str)
         except ValueError:
