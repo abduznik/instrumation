@@ -9,7 +9,11 @@ class UUTHandler:
     """
     def __init__(self, serial_port, visa_address):
         import warnings
-        warnings.warn("UUTHandler is legacy and will be removed in v0.3.0. Use factory.get_instrument() instead.", DeprecationWarning, stacklevel=2)
+        warnings.warn(
+            "UUTHandler is legacy and will be removed in a future release "
+            "(see issue #127). Use factory.get_instrument() instead.",
+            DeprecationWarning, stacklevel=2,
+        )
         """Initializes the UUTHandler.
 
         We assume the user needs BOTH to test a UUT properly.
