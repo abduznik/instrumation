@@ -1,9 +1,13 @@
 import pyvisa
+import re
 import time
 from typing import List, Tuple
 from .base import InstrumentDriver
 from ..results import MeasurementResult
 from ..exceptions import ConnectionLost, ConfigurationError, InstrumentTimeout
+
+# Marker for real SCPI SYST:ERR responses: [+-]<code>,"<msg>"
+_SCPI_ERROR_RE = re.compile(r'^[+-]?\d+,"')
 
 class RealDriver(InstrumentDriver):
     """Refined RealDriver with Auto-Handshake Engine."""
@@ -26,6 +30,10 @@ class RealDriver(InstrumentDriver):
         self.inst = None
         self.is_simulated = False
         self.bridge_config: dict = {} # e.g. {"type": "prologix", "gpib_address": 1}
+        # Dependency-injection knob: test doubles that don't model the SCPI
+        # error queue disable error-checking explicitly (never via class-name
+        # sniffing of the instrument session).
+        self.check_errors_enabled = True
 
     def connect(self) -> None:
         """Connects, runs sync_config, and discovers identity/options."""
@@ -125,12 +133,15 @@ class RealDriver(InstrumentDriver):
 
     def check_errors(self) -> None:
         """Queries SYST:ERR? and updates local error_stack."""
-        # Avoid breaking unit tests using mocks
-        if "Mock" in type(self.inst).__name__:
+        if not self.check_errors_enabled:
             return
-        
         err = self.inst.query("SYST:ERR?").strip()
-        if '+0,"No error"' not in err and '0,"No error"' not in err:
+        if not isinstance(err, str):
+            return  # mock children / non-SCPI responses are not error-queue output
+        # Only genuine SCPI error-queue responses (e.g. '-221,"Settings conflict"')
+        # trigger a hardware error. Measurement values or mock children are not
+        # error-queue output and must not raise.
+        if _SCPI_ERROR_RE.match(err) and '+0,"No error"' not in err and '0,"No error"' not in err:
             self.error_stack.append(err)
             resource_name = self.identity.get("model") or self.resource
             raise ConfigurationError(f"Hardware Error on {resource_name}: {err}")

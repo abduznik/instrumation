@@ -71,6 +71,8 @@ class TestKeithley2400(unittest.TestCase):
                 super().__init__("USB::KEITHLEY2400")
                 self.inst = inst
                 self.connected = True
+                # This double doesn't model the SCPI error queue
+                self.check_errors_enabled = False
 
             def connect(self): pass
             def disconnect(self): pass

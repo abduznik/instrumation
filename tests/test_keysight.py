@@ -10,6 +10,8 @@ def mock_scope():
         driver.inst = MagicMock()
         # Ensure *OPC? returns 1 to avoid wait_ready timeouts
         driver.inst.query.return_value = "1"
+        # This double doesn't model the SCPI error queue
+        driver.check_errors_enabled = False
         yield driver
 
 def test_scope_run_stop(mock_scope):
@@ -51,6 +53,8 @@ def mock_34461a():
         driver = Keysight34461A("TCPIP::1.2.3.5::INSTR")
         driver.inst = MagicMock()
         driver.inst.query.return_value = "1"
+        # This double doesn't model the SCPI error queue
+        driver.check_errors_enabled = False
         yield driver
 
 def test_34461a_measure_dcv(mock_34461a):
