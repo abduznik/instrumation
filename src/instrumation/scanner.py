@@ -110,14 +110,20 @@ def find_duplicate_addresses(devices: List[Dict[str, str]]) -> List[Dict[str, An
     for device in devices:
         addr_to_descs[device["id"]].append(device["desc"])
 
+    addr_to_identities = defaultdict(set)
+    for device in devices:
+        # Identity = (type, desc), so two genuinely different physical devices
+        # that happen to share a description string are still detected.
+        addr_to_identities[device["id"]].add((device.get("type", ""), device["desc"]))
+
     conflicts = []
-    for addr, descs in addr_to_descs.items():
-        unique_descs = list(set(descs))
-        if len(unique_descs) > 1:
+    for addr, identities in addr_to_identities.items():
+        if len(identities) > 1:
+            unique_descs = sorted({desc for _, desc in identities})
             conflicts.append({
                 "address": addr,
                 "identities": unique_descs,
-                "count": len(descs),
+                "count": len(addr_to_descs[addr]),
             })
 
     return conflicts
