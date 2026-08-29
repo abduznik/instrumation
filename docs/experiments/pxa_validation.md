@@ -59,6 +59,10 @@ The session was recorded as a "Golden Master" for regression testing.
 ]
 ```
 
+## Update: Comprehensive SCPI Driver (v0.8.0, Issue #169)
+
+Following this validation, the `KeysightPXA` driver was expanded from 2 inherited methods to **29 PXA-specific SCPI methods** covering measurement configuration (sweep type, detector, averaging, coupling, impedance), advanced triggering (source, level, delay, slope), enhanced markers (frequency, position, next peak, threshold, noise), bandwidth and sweep control (RBW auto, VBW ratio, sweep time, IF gain), Real-Time Spectrum Analysis (RTSA enable, capture bandwidth, spoiled regions), and system queries (options, serial number, firmware, self-test). The expansion ships with 83 mock-based tests in `tests/test_pxa.py`.
+
 ## Step-by-Step Summary
 1. **Physical Connection**: Connect PXA via LAN cable to Mac.
 2. **IP Discovery**: Use `arp -a` to find the instrument's IP on `en2`.

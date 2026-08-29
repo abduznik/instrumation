@@ -8,7 +8,7 @@
 
 **Instrumation** is a Python Hardware Abstraction Layer (HAL) for RF test instruments — oscilloscopes, spectrum analyzers, signal generators, network analyzers, multimeters, power supplies, electronic loads, and frequency counters — built on PyVISA/SCPI, with a Digital Twin simulation mode for offline development.
 
-21 instrument drivers across 8 categories · 8 supported brands (Keysight, Rigol, Siglent, Tektronix, Rohde & Schwarz, Anritsu, Keithley, TDK-Lambda) · 353 tests · 6 real-hardware validation reports · MIT licensed
+21 instrument drivers across 8 categories · 8 supported brands (Keysight, Rigol, Siglent, Tektronix, Rohde & Schwarz, Anritsu, Keithley, TDK-Lambda) · 496 tests · 6 real-hardware validation reports · MIT licensed
 
 Actively maintained — see [release notes](release_notes.md) and the [development log](https://abduznik.github.io/instrumation/logs/) for the full history.
 
@@ -29,7 +29,7 @@ RF test bench automation is painful. Every instrument brand has its own quirks, 
 Instrumation has been validated against real lab hardware. See our experiment reports:
 
 - **Tektronix AFG3022C + Keysight DSOX2002A** — [Loopback Validation](https://abduznik.github.io/instrumation/experiments/afg_dso_loopback/) — plug-and-play AUTO discovery
-- **Keysight PXA N9030A** — [Spectrum Analyzer Validation](https://abduznik.github.io/instrumation/experiments/pxa_validation/) — 32-bit binary trace transfers at high speed
+- **Keysight PXA N9030A** — [Spectrum Analyzer Validation](https://abduznik.github.io/instrumation/experiments/pxa_validation/) — 32-bit binary trace transfers at high speed and comprehensive SCPI command coverage (29 driver methods)
 - **Keysight MXG N5183B** — [Signal Generator Validation](https://abduznik.github.io/instrumation/experiments/mxg_validation/) — pulse modulation and frequency sweeps
 - **Keysight PNA N5232A** — [Network Analyzer Validation](https://abduznik.github.io/instrumation/experiments/vna_validation/) — S-parameter measurements and Smith charts
 - **Rigol DS1054Z** — [Oscilloscope Validation](https://abduznik.github.io/instrumation/experiments/rigol_ds1054z/) — 4-channel calibrated waveform readout and edge trigger

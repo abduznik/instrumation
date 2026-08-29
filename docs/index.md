@@ -20,7 +20,7 @@
 Instrumation has been validated against real lab equipment. Check out our experiment reports:
 
 - **Tektronix AFG + Keysight DSOX** — [Loopback Validation](experiments/afg_dso_loopback.md) — plug-and-play AUTO discovery
-- **Keysight PXA N9030A** — [Spectrum Analyzer Validation](experiments/pxa_validation.md) — high-speed 32-bit binary trace transfers
+- **Keysight PXA N9030A** — [Spectrum Analyzer Validation](experiments/pxa_validation.md) — high-speed 32-bit binary trace transfers and comprehensive SCPI command coverage (29 driver methods)
 - **Keysight MXG N5183B** — [Signal Generator Validation](experiments/mxg_validation.md) — pulse modulation and frequency sweeps
 - **Keysight PNA N5232A** — [Network Analyzer Validation](experiments/vna_validation.md) — S-parameter measurements and Smith charts
 - **Rigol DS1054Z** — [Oscilloscope Integration](experiments/rigol_ds1054z.md) — 4-channel scope with calibrated waveform readout

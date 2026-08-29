@@ -2,6 +2,9 @@
 
 A quick look at how we've been building and breaking things. These logs track the architectural moves and performance wins as we push the HAL to production grade.
 
+## 2026-08-28
+- [v0.8.0 — PXA Expansion & Hardening Release](2026-08-28/v080_hardening_and_pxa.md) - 29 new PXA methods, station/transport/logging fixes, Python 3.9 CI restore.
+
 ## 2026-06-20
 - [v0.4.1 — Test Coverage Expansion & Multi-Python CI](2026-06-20/v041_testing_and_ci.md) - R&S and Prologix unit tests, 4-version CI matrix.
 

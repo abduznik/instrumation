@@ -67,6 +67,10 @@ Lab engineers currently copy-paste readings into spreadsheets. A live dashboard 
 | #143 | Unknown-IDN instrument could silently receive the wrong brand-specific driver | ~~High~~ ✅ Fixed in v0.8.0 |
 | #144 | `connect_instrument()` hardcoded DMM as fallback for any unrecognized instrument | ~~High~~ ✅ Fixed in v0.8.0 |
 | #145 | `factory.py`'s real-hardware IDN-routing and discovery paths were untested | ~~High~~ ✅ Fixed in v0.8.0 |
+| #146 | Real-mode `get_instrument()` silently falls back to `GENERIC` for unknown driver types like `SIM` | ✅ Fixed in v0.8.0 |
+| #152 | `_unsupported_feature` only prints a warning instead of using logging/raising | ✅ Fixed in v0.8.0 |
+| #153 | `VisaDriver.query_value` returns 0.0 on error, ambiguous with a genuine 0.0 reading | ✅ Fixed in v0.8.0 |
+| #156 | `Station.connect()` double-connects instruments already connected by `get_instrument()` | ✅ Fixed in v0.8.0 |
 | #120 | `connect_instrument()` swallows `ConfigurationError` — should propagate | ~~High~~ ✅ Fixed in v0.7.0 |
 | #121 | `find_duplicate_addresses` doesn't handle empty scan list | Medium |
 | #122 | Async wrapper leaks connections on `KeyboardInterrupt` | ~~High~~ ✅ Fixed in v0.7.0 |
@@ -99,5 +103,4 @@ Lab engineers currently copy-paste readings into spreadsheets. A live dashboard 
 | Version | Milestone |
 | --- | --- |
 | 0.7.0 | Dashboard prototype + bug fixes (released) |
-| 0.8.0-alpha | Generic driver fallback + factory routing fixes/tests |
-| 0.8.0 | Release |
+| 0.8.0 | Generic driver fallback, PXA N9030A expansion, station/transport/logging hardening (released) |

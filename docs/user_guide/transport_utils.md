@@ -107,7 +107,7 @@ vna.disconnect()
 
 ### find_duplicate_addresses()
 
-On shared buses (GPIB, RS-485), two instruments configured with the same address corrupt each other's responses. This function flags addresses that show up multiple times in a scan result with differing descriptions.
+On shared buses (GPIB, RS-485), two instruments configured with the same address corrupt each other's responses. This function flags addresses that show up multiple times in a scan result. Devices are keyed on `(type, desc)`, so a conflict is reported even when two genuinely different devices share an identical description string (e.g. two serial ports both labelled "USB Serial Port").
 
 ```python
 from instrumation.scanner import scan, find_duplicate_addresses

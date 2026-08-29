@@ -1,5 +1,39 @@
 ## Key Features in v0.8.0
 
+### New Driver: Comprehensive Keysight PXA N9030A SCPI (Issue #169)
+- **29 new PXA-specific methods** in `drivers/keysight.py` (up from 2 inherited), making `KeysightPXA` a first-class spectrum analyzer driver:
+  - *Measurement config (7)*: sweep type, detector, averaging, coupling, impedance
+  - *Advanced triggering (4)*: source, level, delay, slope
+  - *Enhanced markers (5)*: frequency, position, next peak, threshold, noise
+  - *Bandwidth & sweep (4)*: RBW auto, VBW ratio, sweep time, IF gain
+  - *Real-Time Spectrum Analysis (3)*: RTSA enable, capture bandwidth, spoiled regions
+  - *System queries (4)*: options, serial number, firmware, self-test
+- 83 new tests in `tests/test_pxa.py` with full mock coverage; all 14 existing Keysight tests remain green.
+
+### Station & Transport Fixes (Issues #153, #156)
+- **Issue #156 — `Station.connect()` no longer double-connects instruments**: `get_instrument()` already connects each driver before `Station._add_instrument()` stores it, so `Station.connect()` was redundantly calling `inst.connect()` again — re-opening the VISA resource and re-running `sync_config`/identity discovery. It now skips instruments whose `connected` flag is already set, making repeated `connect()` calls safe no-ops.
+- **Issue #153 — `VisaDriver.query_value` no longer returns an ambiguous `0.0` on failure**: A failed query or a never-connected driver previously returned `float 0.0`, indistinguishable from a genuine zero reading. It now returns `None`; the success path still returns a stripped `str`, so a real `0.0` reading survives as `"0.0"`. `UUTHandler.mes_voltage` handles the new `None` sentinel explicitly, and the signature is documented as `Optional[str]`.
+
+### Logging & Diagnostics (Issue #152)
+- **Issue #152 — `_unsupported_feature` warnings now go through logging**: Driver warnings were emitted via `print()`, bypassing logging configuration entirely — applications capturing log records never saw them, and they couldn't be filtered or formatted. All 38 call sites across 7 driver files now route through a module-level logger using `logger.warning()` with lazy `%`-formatting.
+- **DataBroadcaster send failures are logged**: `utils.py` now logs failed UDP broadcasts and warns after N consecutive failures instead of failing silently.
+- **Accurate `UUTHandler` deprecation notice**: `device.py`'s deprecation message now points to the correct replacement instead of a misleading class name.
+
+### Configuration
+- **`get_config()` now loads JSON/YAML config files**: `config.get_config()` resolves values with precedence *environment variables > config file > built-in defaults*. Config files are located via the `INSTRUMATION_CONFIG` env var, or `instrumation.json` / `instrumation.yaml` / `instrumation.yml` in the current directory or the user's home directory. YAML requires PyYAML (a clear error is raised if it's missing); JSON works with the standard library only.
+
+### Driver & Factory Hardening
+- **Real mode fails loudly for unknown driver types (Issue #146)**: `get_instrument()` now raises `ValueError` when `driver_type` is neither a registered driver nor a canonical category (e.g. `SIM`), mirroring simulation mode's loud failure, instead of silently falling back to `GENERIC`.
+- **Abstract contract enforced**: `safe_send`, `query_ascii`, and `query_binary_values` are now abstract on `InstrumentDriver`, and the async wrappers are validated against the sync signatures (`tests/test_async_wrapper_validation.py`). This immediately exposed that `ReplayDriver` was un-instantiable.
+- **`check_errors` no longer relies on a Mock class-name hack**: `RealDriver.check_errors` now detects simulated drivers robustly instead of string-matching a mocked class name (`tests/test_check_errors.py`).
+- **ASRL port parsing fixed**: `factory._skip_serial_probe` now parses the numeric port from an exact `ASRLn::INSTR` match instead of a naive substring skip, so `ASRL10` and digits inside TCPIP addresses are no longer misclassified as low-numbered legacy ports (`tests/test_serial_probe_filter.py`).
+- **Scanner detects same-address conflicts with identical descriptions**: `find_duplicate_addresses` now keys identities on `(type, desc)`, so two genuinely different devices that happen to share a description string are still reported (`tests/test_scanner.py`).
+
+### CI (Issue #182)
+- **Python 3.9 compatibility restored**: `config.py` used PEP 604 union syntax (`-> Path | None`) which raises `TypeError` at import time on Python 3.9; a `from __future__ import annotations` import makes it 3.9-safe with no behavior change.
+- **`ReplayDriver.query_binary_values` implemented**: the abstract-method change exposed that `ReplayDriver` couldn't be instantiated at all (breaking the golden-master tests); it now replays comma-separated floats, mirroring `query_ascii`.
+- Removed the duplicate `.github/workflows/publish-pypi.yml` workflow and bumped the release to **v0.8.0**.
+
 ### Bug Fixes: Generic/Fallback Instrument Driver Wired Up (Issues #142-#145, #147)
 - **Issue #142 — `GenericDriver`/`SimulatedGeneric` now fully wired, not just a skeleton**: v0.7.1 introduced `GenericDriver` (`drivers/generic.py`) and `SimulatedGeneric` (`drivers/simulated.py`) registered under `"GENERIC"`, but the factory routing still needed to prefer them. That wiring is now complete.
 - **Issue #143 — unrecognized IDN no longer receives the wrong brand driver**: When an instrument's `*IDN?` doesn't match a known brand, `get_instrument()` previously grabbed the first registered driver for the requested type regardless of brand (e.g. a non-Keithley DMM could get Keithley-specific SCPI). It now falls back to `GenericDriver` unless exactly one unambiguous driver is registered for that type (e.g. a single plugin driver), and logs a warning when it does.
@@ -8,6 +42,8 @@
 
 ### Tests
 - New `tests/test_factory_routing.py`: mocked-VISA coverage for unrecognized-IDN routing, ambiguous-brand fallback, known-brand routing, SIM-mode GENERIC, and the ASRL/TDK-Lambda smart probe on unrelated serial devices (Issue #145).
+- New regression suites this cycle: `tests/test_pxa.py` (83 tests), plus `test_async_wrapper_validation.py`, `test_check_errors.py`, `test_config.py`, `test_no_driver_consistency.py`, `test_serial_probe_filter.py`, `test_unsupported_feature.py`, and expanded `test_scanner.py`, `test_station.py`, `test_broadcaster.py`, `test_transport_utils.py`, `test_keithley.py`, `test_keysight.py`.
+- **496 tests passing** (up from 458 at the start of the v0.8.0 hardening cycle).
 
 ## Key Features in v0.7.1
 

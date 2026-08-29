@@ -68,6 +68,12 @@ the same SCPI command set.
 | `KeysightMXA` | MXA N9020A | MXA Series | `MXA` |
 | `KeysightPXA` | PXA N9030A | PXA Series | `N9030`, `PXA` |
 
+> [!NOTE]
+> `KeysightPXA` (v0.8.0+) ships 29 PXA-specific SCPI methods — measurement
+> configuration, advanced triggering, enhanced markers, bandwidth/sweep,
+> Real-Time Spectrum Analysis, and system queries — on top of the shared
+> spectrum analyzer base API.
+
 **Also likely compatible:**
 - MXA N9010A (EXA), N9020A, N9021A
 - PXA N9030A, N9040B
