@@ -78,6 +78,47 @@ class TestGoldenMaster(unittest.TestCase):
         self.assertEqual(result.unit, "V",
             msg="Unit must be 'V'")
 
+    def test_getters_read_from_master_not_hardcoded(self):
+        # #130: getters that used to return hardcoded defaults must read the
+        # recorded golden-master responses instead.
+        master = GoldenMaster(self.test_file)
+        master.add(":OUTP?", "ON")
+        master.add(":MEAS:DUTY?", "45.2")
+        master.add(":MEAS:VPP?", "1.5")
+        master.add(":TRAC?", "0.5,0.6,0.7")
+        master.add(":WAV:DATA?", "1.0,2.0")
+        master.add(":CALC:DATA:FDATA?", "0.1,0.2,0.3,0.4")
+        master.save()
+
+        replay = ReplayDriver("DUMMY", self.test_file)
+
+        self.assertTrue(replay.get_output(),
+            msg="get_output() must replay the recorded ON state")
+        self.assertAlmostEqual(replay.measure_duty_cycle().value, 45.2,
+            msg="measure_duty_cycle() must replay the recorded value")
+        self.assertAlmostEqual(replay.measure_v_peak_to_peak().value, 1.5,
+            msg="measure_v_peak_to_peak() must replay the recorded value")
+        self.assertEqual(replay.get_trace_data().value, [0.5, 0.6, 0.7],
+            msg="get_trace_data() must replay the recorded trace")
+        self.assertEqual(replay.get_waveform(1).value, [1.0, 2.0],
+            msg="get_waveform() must replay the recorded waveform")
+        self.assertEqual(replay.get_complex_trace().value, [complex(0.1, 0.2), complex(0.3, 0.4)],
+            msg="get_complex_trace() must replay recorded (re, im) pairs")
+
+    def test_unrecorded_getters_fall_back_to_defaults(self):
+        # #130: methods whose commands were never recorded still return
+        # sensible defaults (the previous hardcoded behaviour).
+        master = GoldenMaster(self.test_file)
+        master.save()  # empty master
+
+        replay = ReplayDriver("DUMMY", self.test_file)
+
+        self.assertFalse(replay.get_output())
+        self.assertEqual(replay.measure_duty_cycle().value, 0.0)
+        self.assertEqual(replay.measure_v_peak_to_peak().value, 0.0)
+        self.assertEqual(replay.get_trace_data().value, [0.0])
+        self.assertEqual(replay.get_smith_data().value, [complex(50, 0)])
+
 
 if __name__ == "__main__":
     unittest.main()

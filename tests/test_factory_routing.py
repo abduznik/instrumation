@@ -2,6 +2,8 @@ import os
 import unittest
 from unittest.mock import MagicMock, patch
 
+import pyvisa
+
 from instrumation.factory import get_instrument
 from instrumation.drivers.generic import GenericDriver
 from instrumation.drivers.simulated import SimulatedGeneric
@@ -93,6 +95,53 @@ class TestFactoryASRLSmartProbe(unittest.TestCase):
         with patch("instrumation.factory.get_rm", return_value=rm):
             drv = get_instrument("ASRL5::INSTR", "PSU")
         self.assertNotEqual(drv.__class__.__name__, "TDKLambdaZPlus")
+
+    def test_asrl_smart_probe_disabled_for_auto_discovery(self):
+        # #150: the TDK-specific INST:NSEL handshake must never be sent to
+        # arbitrary serial devices during AUTO discovery. probe_asrl=False
+        # is how the AUTO probe_resource path calls get_instrument.
+        rm = MagicMock()
+        inst = MagicMock()
+        inst.query.return_value = "UNRELATED,SERIAL-DEVICE,SN1,1.0"
+        rm.open_resource.return_value = inst
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("ASRL5::INSTR", "PSU", probe_asrl=False)
+        writes = [c.args[0] for c in inst.write.call_args_list]
+        self.assertNotIn("INST:NSEL 6", writes)
+
+
+class TestFactoryIDNErrorHandling(unittest.TestCase):
+    """Covers GH #149: broad except during IDN probing hides real errors."""
+
+    def setUp(self):
+        os.environ["INSTRUMATION_MODE"] = "REAL"
+
+    def tearDown(self):
+        os.environ["INSTRUMATION_MODE"] = "SIM"
+
+    def test_identification_programming_error_propagates(self):
+        # A genuine (non-transport) error during identification must surface
+        # instead of being swallowed into a silent GENERIC fallback.
+        rm = MagicMock()
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            with patch(
+                "instrumation.drivers.real.RealDriver.get_id",
+                side_effect=AttributeError("boom"),
+            ):
+                with self.assertRaises(AttributeError):
+                    get_instrument("TCPIP::10.0.0.8::INSTR", "DMM")
+
+    def test_identification_visa_error_is_swallowed(self):
+        # Expected transport failures (unreachable/timeout) degrade to
+        # unidentified and fall back to GENERIC, not a crash.
+        rm = MagicMock()
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            with patch(
+                "instrumation.drivers.real.RealDriver.get_id",
+                side_effect=pyvisa.VisaIOError(1073676294),  # VI_ERROR_TMO
+            ):
+                drv = get_instrument("TCPIP::10.0.0.9::INSTR", "DMM")
+        self.assertIsInstance(drv, GenericDriver)
 
 
 if __name__ == "__main__":

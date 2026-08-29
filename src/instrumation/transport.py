@@ -96,11 +96,19 @@ class VisaDriver:
 
         Notes
         -----
-        Silently does nothing if the driver never connected. Unlike
-        :meth:`query_value`, write errors are *not* caught and will propagate.
+        Silently does nothing if the driver never connected. Write errors are
+        caught and printed rather than raised -- so a successful return does
+        not guarantee the command reached the device. This matches the
+        forgiving contract of :meth:`query_value` (and
+        :class:`SerialDriver`): a failed connection leaves the object usable
+        but inert, and callers that must know a write landed should check
+        ``self.inst`` first and use the underlying resource directly.
         """
         if self.inst:
-            self.inst.write(command)
+            try:
+                self.inst.write(command)
+            except Exception as e:
+                print(f"VISA Write Error: {e}")
 
     def close(self) -> None:
         """Close the VISA resource, leaving the shared resource manager open.

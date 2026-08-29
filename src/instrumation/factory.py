@@ -15,6 +15,7 @@ from pathlib import Path
 from .drivers.real import RealDriver
 from .drivers.generic import GenericDriver
 from .drivers.registry import DriverRegistry
+from .exceptions import ConnectionLost
 from .drivers.base import Oscilloscope, SpectrumAnalyzer, SignalGenerator, FunctionGenerator, PowerSupply, Multimeter, NetworkAnalyzer, ElectronicLoad, FrequencyCounter
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,23 @@ def _skip_serial_probe(resource: str) -> bool:
     """
     port = _asrl_port_number(resource)
     return port is not None and 1 <= port <= 4
+
+
+def _discovery_priority(resource: str) -> int:
+    """Rank a VISA resource for AUTO-discovery ordering (higher = probed first).
+
+    Follows the documented preference: HiSLIP/TCPIP (LAN) first, then USB,
+    then GPIB, with serial (ASRL) and anything unrecognised last. Python's
+    stable sort keeps input (recency) order within the same tier.
+    """
+    r = resource.upper()
+    if "HISLIP" in r or "TCPIP" in r:
+        return 3
+    if "USB" in r:
+        return 2
+    if "GPIB" in r:
+        return 1
+    return 0
 
 # Global Resource Manager to prevent "Too many managers" errors on macOS
 _GLOBAL_RM = None
@@ -134,7 +152,7 @@ def _discover_mdns_resources() -> list:
             pass
     return resources
 
-def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
+def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_asrl: bool = True) -> any:
     """Connect to an instrument and return a driver instance for it.
 
     The address is resolved in priority order:
@@ -159,6 +177,12 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
         ``"SCOPE"``, ``"SA"``, ``"SG"``, ``"PSU"``, ``"DMM"``, ``"VNA"``,
         ``"NA"``, ``"LOAD"``, ``"ELOAD"``, ``"COUNTER"`` or ``"GENERIC"``.
         Defaults to ``"GENERIC"``, which accepts any instrument.
+    probe_asrl : bool, optional
+        When True (default), an explicit ASRL connection gets a best-effort
+        TDK-Lambda Z+ handshake (``INST:NSEL 6``) before ``*IDN?`` so the
+        unit can identify itself. During ``"AUTO"`` discovery this is
+        disabled: vendor-specific commands are never sent to arbitrary
+        serial devices (gh #150).
 
     Returns
     -------
@@ -244,8 +268,10 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
             if not candidates:
                 return None
             
-            # Sort: Priority first, then preserve order (recency)
-            candidates.sort(key=lambda x: "ASRL5" in x or "TCPIP" in x or "USB0" in x, reverse=True)
+            # Sort by transport priority tier (HiSLIP/TCPIP > USB > GPIB >
+            # serial), preserving input (recency) order within the same tier
+            # via the stable sort.
+            candidates.sort(key=_discovery_priority, reverse=True)
             
             logger.info(f"AUTO-Discovery checking {desc}: {candidates}")
             
@@ -280,7 +306,7 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
             try:
                 if _skip_serial_probe(res):
                     return None
-                dev = get_instrument(res, driver_type)
+                dev = get_instrument(res, driver_type, probe_asrl=False)
                 type_map = {"SCOPE": Oscilloscope, "SA": SpectrumAnalyzer, "SG": (SignalGenerator, FunctionGenerator), "PSU": PowerSupply, "DMM": Multimeter, "VNA": NetworkAnalyzer, "NA": NetworkAnalyzer, "LOAD": ElectronicLoad, "ELOAD": ElectronicLoad, "COUNTER": FrequencyCounter}
                 if driver_type == "GENERIC" or (type_map.get(driver_type) and isinstance(dev, type_map.get(driver_type))):
                     return dev
@@ -323,8 +349,10 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
         else:
             base_dev = RealDriver(resource_address, rm=get_rm())
             
-            # Smart Probe for Serial Ports (like TDK-Lambda)
-            if "ASRL" in resource_address:
+            # Smart Probe for Serial Ports (like TDK-Lambda). Runs only on
+            # explicit connections -- during AUTO discovery vendor-specific
+            # commands must never be sent to arbitrary serial devices (#150).
+            if "ASRL" in resource_address and probe_asrl:
                 try:
                     base_dev.inst = base_dev.rm.open_resource(resource_address)
                     base_dev.inst.baud_rate = 9600
@@ -344,7 +372,10 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC") -> any:
                 base_dev.inst.timeout = 2000
                 idn = base_dev.get_id().upper()
                 base_dev.disconnect()
-    except Exception as e:
+    except (pyvisa.Error, TimeoutError, ConnectionLost) as e:
+        # Expected transport failures (device unreachable, VISA timeout) are
+        # logged and degrade to "unidentified". Genuine programming errors are
+        # NOT swallowed -- they propagate so regressions surface loudly (#149).
         logger.warning(f"Identification failed for {resource_address}: {e}")
         idn = ""
 

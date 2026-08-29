@@ -106,6 +106,28 @@ class ReplayDriver(SignalGenerator, SpectrumAnalyzer, NetworkAnalyzer, Oscillosc
         self.check_errors()
         return [float(v) for v in resp.split(",") if v.strip()]
 
+    def _query_float_list(self, command: str, default: List[float]) -> List[float]:
+        """Replay a recorded list-of-floats response, falling back to a default.
+
+        Accepts comma- or space-separated numbers (e.g. ``"0.5,0.6,0.7"``).
+        Returns the fallback when the response is unrecorded, empty, or not
+        numeric -- binary/multi-line trace payloads cannot be reconstructed
+        from an SCPI log, so complex data is best-effort.
+        """
+        resp = self.query(command)
+        try:
+            vals = [float(v) for v in resp.replace(",", " ").split() if v.strip()]
+        except ValueError:
+            return list(default)
+        return vals or list(default)
+
+    def _query_complex_list(self, command: str, default: complex) -> List[complex]:
+        """Replay a recorded complex trace as (re, im) pairs, else the default."""
+        vals = self._query_float_list(command, [])
+        if len(vals) < 2 or len(vals) % 2:
+            return [default]
+        return [complex(vals[i], vals[i + 1]) for i in range(0, len(vals), 2)]
+
     def get_id(self) -> str: return self.query("*IDN?")
     def preset(self, automation_optimized: bool = True) -> None: pass
     def clear_status(self) -> None: pass
@@ -122,8 +144,8 @@ class ReplayDriver(SignalGenerator, SpectrumAnalyzer, NetworkAnalyzer, Oscillosc
     def measure_resistance(self, four_wire: bool = False) -> MeasurementResult: return MeasurementResult(float(self.query("MEAS:RES?")), "Ohm")
     def measure_current(self, ac: bool = False) -> MeasurementResult: return MeasurementResult(float(self.query("MEAS:CURR?")), "A")
     def measure_frequency(self, channel: int = 1) -> MeasurementResult: return MeasurementResult(float(self.query("MEAS:FREQ?")), "Hz")
-    def measure_duty_cycle(self, channel: int = 1) -> MeasurementResult: return MeasurementResult(0.0, "%")
-    def measure_v_peak_to_peak(self, channel: int = 1) -> MeasurementResult: return MeasurementResult(0.0, "V")
+    def measure_duty_cycle(self, channel: int = 1) -> MeasurementResult: return MeasurementResult(float(self.query(":MEAS:DUTY?")), "%")
+    def measure_v_peak_to_peak(self, channel: int = 1) -> MeasurementResult: return MeasurementResult(float(self.query(":MEAS:VPP?")), "V")
 
     # --- PowerSupply / FunctionGenerator Overlap ---
     def set_voltage(self, voltage: float) -> None: self.write(f":VOLT {voltage}")
@@ -131,7 +153,7 @@ class ReplayDriver(SignalGenerator, SpectrumAnalyzer, NetworkAnalyzer, Oscillosc
     def set_current_limit(self, current: float) -> None: self.write(f":CURR {current}")
     def get_current(self) -> MeasurementResult: return MeasurementResult(0.0, "A")
     def set_output(self, state: bool) -> None: self.write(f":OUTP {'ON' if state else 'OFF'}")
-    def get_output(self) -> bool: return False
+    def get_output(self) -> bool: return self.query(":OUTP?").strip().upper() in ("ON", "1", "TRUE")
     def set_ovp(self, voltage: float) -> None: self.write(f":VOLT:PROT {voltage}")
     def set_ocp(self, current: float) -> None: self.write(f":CURR:PROT {current}")
     def measure_voltage_actual(self) -> MeasurementResult: return self.measure_voltage()
@@ -146,24 +168,24 @@ class ReplayDriver(SignalGenerator, SpectrumAnalyzer, NetworkAnalyzer, Oscillosc
     def get_span(self) -> float: return float(self.query(":SENS:FREQ:SPAN?"))
     def set_rbw(self, hz: float) -> None: self.write(f":SENS:BAND {hz}")
     def set_vbw(self, hz: float) -> None: self.write(f":SENS:BAND:VID {hz}")
-    def get_trace_data(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult: return MeasurementResult([0.0], "dB")
+    def get_trace_data(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult: return MeasurementResult(self._query_float_list(":TRAC?", [0.0]), "dB")
 
     # --- NetworkAnalyzer Specific ---
     def set_start_frequency(self, freq_hz: float) -> None: self.write(f"SENS:FREQ:STAR {freq_hz}")
     def set_stop_frequency(self, freq_hz: float) -> None: self.write(f"SENS:FREQ:STOP {freq_hz}")
     def set_points(self, num_points: int) -> None: self.write(f"SENS:SWE:POIN {num_points}")
     def set_parameter(self, parameter: str) -> None: self.write(f"CALC:PAR:MOD {parameter}")
-    def get_complex_trace(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult: return MeasurementResult([complex(0,0)], "IQ")
-    def get_smith_data(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult: return MeasurementResult([complex(50,0)], "Z")
+    def get_complex_trace(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult: return MeasurementResult(self._query_complex_list(":CALC:DATA:FDATA?", complex(0, 0)), "IQ")
+    def get_smith_data(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult: return MeasurementResult(self._query_complex_list(":CALC:DATA:SMITH?", complex(50, 0)), "Z")
 
     # --- Oscilloscope ---
     def run(self) -> None: self.write(":RUN")
     def stop(self) -> None: self.write(":STOP")
     def single(self) -> None: self.write(":SINGLE")
-    def get_waveform(self, channel: int) -> MeasurementResult: return MeasurementResult([0.0], "V")
+    def get_waveform(self, channel: int) -> MeasurementResult: return MeasurementResult(self._query_float_list(":WAV:DATA?", [0.0]), "V")
     def auto_scale(self) -> None: self.write(":AUT")
     def set_trigger(self, source: str, level: float, slope: str) -> None: self.write(":TRIG")
-    def get_screenshot(self) -> bytes: return b""
+    def get_screenshot(self) -> bytes: return b""  # binary screenshots cannot be reconstructed from an SCPI log
 
     # --- SignalGenerator ---
     def set_frequency(self, hz: float) -> None: self.write(f":FREQ {hz}")

@@ -439,3 +439,44 @@ class TestVisaDriverQueryValue:
 
         result = drv.query_value("MEAS:VOLT:DC?")
         assert result is None
+
+
+# ── VisaDriver.write ───────────────────────────────────────
+
+class TestVisaDriverWrite:
+    """Tests for VisaDriver.write() error contract (gh #163).
+
+    write() must follow the same forgiving contract as query_value() and
+    SerialDriver.send_command: a failed write is caught and printed, never
+    raised, and a never-connected driver is a silent no-op.
+    """
+
+    @staticmethod
+    def make_driver(inst):
+        drv = object.__new__(VisaDriver)
+        drv.rm = MagicMock()
+        drv.address = "TCPIP::127.0.0.1::INSTR"
+        drv.inst = inst
+        return drv
+
+    def test_success_forwards_to_resource(self):
+        """A successful write must reach the underlying VISA resource."""
+        inst = MagicMock()
+        drv = self.make_driver(inst)
+
+        drv.write("OUTP ON")
+        inst.write.assert_called_once_with("OUTP ON")
+
+    def test_write_error_is_caught_not_raised(self):
+        """A VISA write error must be caught (printed), not propagated."""
+        inst = MagicMock()
+        inst.write.side_effect = Exception("VISA bus error")
+        drv = self.make_driver(inst)
+
+        drv.write("OUTP ON")  # must not raise
+
+    def test_write_never_connected_is_noop(self):
+        """A driver with no open resource must silently do nothing."""
+        drv = self.make_driver(None)
+
+        drv.write("OUTP ON")  # must not raise
