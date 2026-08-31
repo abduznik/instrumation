@@ -10,10 +10,18 @@ logger = logging.getLogger(__name__)
 
 class InstrumentDriver(ABC):
     """Abstract Base Class for all instrument drivers following the 'Abstract Hardware' spec."""
+
+    # Explicit simulated-driver marker (GH #160). Simulated/digital-twin
+    # driver classes set this True; real drivers leave it False. Factory
+    # filtering MUST use this flag instead of string-matching class names.
+    is_simulated = False
+
     def __init__(self, resource: str) -> None:
         self.resource = resource
         self.connected = False
-        self.is_simulated = False
+        # Instance flag mirrors the class-level simulated marker so both
+        # class- and instance-level checks agree (GH #160).
+        self.is_simulated = type(self).is_simulated
         
         # Identity & Capabilities
         self.identity: Dict[str, str] = {"manufacturer": "", "model": "", "serial": "", "version": ""}

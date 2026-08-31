@@ -15,6 +15,7 @@ from instrumation.results import MeasurementResult
 
 @register_driver("PLUGIN_DMM")
 class MyPluginDMM(SimulatedBaseDriver, Multimeter):
+    is_simulated = False  # real driver; base only used for abstract-method convenience
     def measure_voltage(self, ac=False): return MeasurementResult(123.45, "V")
     def measure_resistance(self, four_wire=False): return MeasurementResult(0, "Ohm")
     def measure_current(self, ac=False): return MeasurementResult(0, "A")

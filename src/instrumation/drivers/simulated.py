@@ -7,6 +7,10 @@ from .registry import register_driver
 from ..results import MeasurementResult
 
 class SimulatedBaseDriver(InstrumentDriver):
+    # GH #160: explicit marker — simulated classes are identified by this
+    # flag, never by "Simulated" appearing in the class name.
+    is_simulated = True
+
     def __init__(self, resource: str, latency: float = 0.01) -> None:
         super().__init__(resource)
         self.latency = latency

@@ -1,5 +1,6 @@
 import time
 from .transport import VisaDriver, SerialDriver
+from .exceptions import InstrumentError
 
 class UUTHandler:
     """[LEGACY] The main object the user interacts with.
@@ -39,7 +40,12 @@ class UUTHandler:
             port_number (int): The port number on the multiplexer to switch to.
 
         Returns:
-            float: The measured voltage in Volts. Returns 0.0 if value conversion fails.
+            float: The measured voltage in Volts.
+
+        Raises:
+            InstrumentError: If the instrument response is missing (None)
+                or cannot be parsed as a float. A bad response is never
+                silently reported as a real ``0.0`` reading (GH #154).
         """
         # 1. Switch the Multiplexer/Box to the correct port
         print(f"Switching Relay to Port {port_number}...")
@@ -53,14 +59,14 @@ class UUTHandler:
              return 3.3
 
         val_str = self.inst.query_value("MEAS:VOLT:DC?")
-        if val_str is None:
-            # query_value() returns None when the read failed or the driver
-            # never connected -- never a 0.0 that could pass for a real reading.
-            return 0.0
         try:
             return float(val_str)
-        except ValueError:
-            return 0.0
+        except (TypeError, ValueError) as e:
+            # GH #154: never mask a garbage/failed response as a real zero.
+            raise InstrumentError(
+                f"Invalid voltage response from instrument at port {port_number}: "
+                f"{val_str!r}"
+            ) from e
 
     def send_command(self, cmd: bytes):
         """Sends a raw serial command to the UUT."""

@@ -219,7 +219,7 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
         from .drivers.simulated import SimulatedGeneric
         drivers = DriverRegistry.get_drivers_by_type(driver_type)
         for drv_cls in drivers:
-            if "Simulated" in drv_cls.__name__:
+            if drv_cls.is_simulated:
                 # Use the requested address or a mock one
                 addr = resource_address if resource_address != "AUTO" else "USB0::SIM::INSTR"
                 drv = drv_cls(addr)
@@ -455,7 +455,7 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
         # no ambiguity and it's safe to use it. If multiple candidates exist,
         # picking one would be guessing a brand's SCPI dialect for an
         # unidentified instrument, so fall back to the explicit GENERIC driver.
-        candidates = [d for d in DriverRegistry.get_drivers_by_type(driver_type) if "Simulated" not in d.__name__]
+        candidates = [d for d in DriverRegistry.get_drivers_by_type(driver_type) if not d.is_simulated]
         if len(candidates) == 1:
             final_drv = candidates[0](resource_address)
         elif not candidates and driver_type not in KNOWN_DRIVER_TYPES:
