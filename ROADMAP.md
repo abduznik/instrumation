@@ -68,7 +68,7 @@ All issue numbers below were reconciled against actual code + issue state (gh #1
 | #124 | Add `write_then_read` pattern to `batch_query` | ✅ Fixed (`batch_query(..., write_then_read=...)` in `transport.py`) |
 | #125 | CI: Add Python 3.13 to test matrix | ✅ Fixed (`main.yml` matrix runs 3.9–3.13) |
 | #126 | CI: Add ruff linting | ✅ Fixed (ruff check in `main.yml`) |
-| #127 | Remove deprecated `UUTHandler` (device.py) | Open (cleanup) |
+| #127 | Remove deprecated `UUTHandler` (device.py) | ✅ Fixed in v0.9.0 (`device.py` deleted; top-level `connect()` removed with it) |
 | #128 | Add type hints to `utils`, `scanner`, `transport` | ✅ Fixed |
 | #129 | Add NumPy-style docstrings to public API | ✅ Fixed |
 | #130 | ReplayDriver: read values from golden master | ✅ Fixed (`replay://` resource scheme in `factory.py`) |
@@ -94,13 +94,13 @@ All issue numbers below were reconciled against actual code + issue state (gh #1
 | #158 | ROADMAP.md bug table entries stale vs. actual code state | ✅ Fixed (this document) |
 | #159 | AUTO-discovery candidate sort key is a naive boolean, not a transport-tier rank | ✅ Fixed in v0.9.0 |
 | #160 | Simulated-driver filtering relies on fragile class-name string matching | ✅ Fixed in v0.9.x (`is_simulated` class flag) |
-| #161 | Global VISA resource-manager singleton has no close/reset API | Open (enhancement) |
+| #161 | Global VISA resource-manager singleton has no close/reset API | ✅ Fixed in v0.9.0 (`factory.close_rm()`) |
 | #162 | `InstrumentDriver` non-abstract methods raise `NotImplementedError` at runtime instead of instantiation | ✅ Fixed in v0.8.0 |
 | #163 | `VisaDriver.write` and `query_value` have inconsistent error-handling | ✅ Fixed in v0.9.0 |
 | #164 | UUTHandler deprecation notice is stale (promised removal in v0.3.0) | ✅ Fixed in v0.8.0 |
 | #165 | `config.py get_config()` is an unfinished stub that doesn't load files | ✅ Fixed in v0.8.0 (loads JSON/YAML) |
 | #166 | Dynamic `async_` attribute wrapper has no validation, can mask typos | ✅ Fixed in v0.8.0 |
-| #167 | Shared driver classes across models lack a documented compatibility matrix | Open (documentation) |
+| #167 | Shared driver classes across models lack a documented compatibility matrix | ✅ Fixed in v0.9.0 (`docs/supported_instruments.md`) |
 | #168 | `find_duplicate_addresses` edge cases beyond empty-list (identical descriptions, type-aware identity) | ✅ Fixed in v0.8.0 |
 
 ---

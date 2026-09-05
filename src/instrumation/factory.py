@@ -100,6 +100,25 @@ def get_rm():
         _GLOBAL_RM = pyvisa.ResourceManager(rm_args)
     return _GLOBAL_RM
 
+
+def close_rm() -> None:
+    """Close and release the process-wide PyVISA resource manager, if open.
+
+    :func:`get_rm` caches a single :class:`pyvisa.ResourceManager` for the
+    life of the process. Call ``close_rm()`` to release its underlying VISA
+    session -- e.g. to switch VISA backends at runtime, to free the OS-level
+    handle in a long-running process that no longer needs instrument access,
+    or between tests that require full isolation of VISA state. The next
+    call to :func:`get_rm` transparently creates a fresh manager.
+
+    Safe to call even if no resource manager has been created yet (no-op).
+    """
+    global _GLOBAL_RM
+    if _GLOBAL_RM is not None:
+        _GLOBAL_RM.close()
+        _GLOBAL_RM = None
+
+
 def is_sim_mode() -> bool:
     """Report whether simulation (digital twin) mode is enabled.
 

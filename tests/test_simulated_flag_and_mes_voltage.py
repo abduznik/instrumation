@@ -1,18 +1,17 @@
-"""Regression tests for GH #154 and GH #160.
+"""Regression tests for GH #160.
 
 - #160: simulated-driver filtering must use the explicit ``is_simulated``
   marker, never string-matching "Simulated" in the class name.
-- #154: ``UUTHandler.mes_voltage`` must raise on a bad instrument response
-  instead of silently returning ``0.0``.
+
+(GH #154's ``UUTHandler.mes_voltage`` coverage was removed along with
+``UUTHandler`` itself in #127.)
 """
 import os
 import unittest
 from unittest.mock import MagicMock, patch
 
-from instrumation.device import UUTHandler
 from instrumation.drivers.registry import DriverRegistry
 from instrumation.drivers.simulated import SimulatedBaseDriver
-from instrumation.exceptions import InstrumentError
 from instrumation.factory import get_instrument
 
 
@@ -96,42 +95,6 @@ class TestSimulatedFlagFiltering(unittest.TestCase):
             drv = get_instrument("DUMMY", "DMM")
         self.assertIsInstance(drv, SimulatedGeneric)
         self.assertTrue(drv.is_simulated)
-
-
-class TestMesVoltageNoSilentZero(unittest.TestCase):
-    """GH #154: mes_voltage raises instead of masking bad reads as 0.0."""
-
-    def _handler(self, query_value):
-        h = UUTHandler.__new__(UUTHandler)
-        h.box = MagicMock()
-        inst = MagicMock()
-        inst.inst = MagicMock()  # truthy -> real measurement path
-        inst.query_value.return_value = query_value
-        h.inst = inst
-        return h
-
-    def test_valid_response_returns_float(self):
-        h = self._handler("3.300000E+00")
-        self.assertEqual(h.mes_voltage(2), 3.3)
-        h.box.send_command.assert_called_once_with("RELAY:CH2")
-
-    def test_garbage_response_raises(self):
-        h = self._handler("NOT_A_NUMBER")
-        with self.assertRaises(InstrumentError):
-            h.mes_voltage(1)
-
-    def test_none_response_raises(self):
-        h = self._handler(None)
-        with self.assertRaises(InstrumentError):
-            h.mes_voltage(1)
-
-    def test_sim_path_still_returns_dummy(self):
-        h = UUTHandler.__new__(UUTHandler)
-        h.box = MagicMock()
-        inst = MagicMock()
-        inst.inst = None  # falsy -> simulation path
-        h.inst = inst
-        self.assertEqual(h.mes_voltage(3), 3.3)
 
 
 if __name__ == "__main__":

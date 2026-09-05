@@ -4,6 +4,19 @@ This page lists all instrument models that Instrumation supports — both the
 specific models that have been validated and the broader families that share
 the same SCPI command set.
 
+> [!NOTE]
+> **Compatibility matrix convention** (see issue #167): every driver
+> section lists a **Validated Model** — the specific unit tested against
+> real hardware — and an **Also likely compatible** list of sibling
+> models that share the same SCPI command set but have not been verified
+> in-lab. When one driver class is routed from multiple distinct IDN
+> branches in `factory.py` (e.g. `Keysight34461A` serving both the
+> Truevolt and legacy 34401-series families), each branch's models are
+> called out explicitly with their own compatibility status, since a
+> sub-model's SCPI dialect can diverge silently. Treat "assumed
+> compatible" as best-effort: fall back to `"GENERIC"` passthrough if an
+> untested model raises SCPI errors on a typed command.
+
 ---
 
 ## Oscilloscopes
@@ -180,10 +193,29 @@ the same SCPI command set.
 
 | Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
 |:---|:---|:---|:---|
-| `Keysight34461A` | 34461A | Truevolt DMM | `34461`, `34460` |
+| `Keysight34461A` | 34461A | Truevolt DMM | `34461`, `34460`, `34401`, `34410`, `34411`, `34420` |
 
-**Also likely compatible:**
-- 34460A (6.5 digit), 34461A (6.5 digit), 34410A (6.5 digit), 34411A (6.5 digit), 34420A (μV/μΩ)
+`Keysight34461A` is shared across two IDN branches in `factory.py`
+(`~line 423` and `~line 429`, see issue #167): the Truevolt 34460/34461
+family and the older 34401/34410/34411/34420 family. Only 34461A has been
+tested against real hardware; the rest are **assumed compatible** based
+on their published SCPI command references, not verified in-lab:
+
+| Model | Family | Status |
+|:---|:---|:---|
+| 34461A | Truevolt | ✅ Validated |
+| 34460A | Truevolt | Assumed compatible (6.5 digit, same SCPI set as 34461A) |
+| 34401A | Legacy | Assumed compatible (base `MEAS:`/`CONF:` subset only) |
+| 34410A | Legacy | Assumed compatible (6.5 digit) |
+| 34411A | Legacy | Assumed compatible (6.5 digit) |
+| 34420A | Legacy | Assumed compatible (μV/μΩ nanovolt commands untested) |
+
+> [!WARNING]
+> The 34401/34410/34411/34420 family predates Truevolt and may not
+> support every SCPI command `Keysight34461A` sends (e.g. newer
+> `SENSe` subsystem extensions). If you hit an SCPI error on one of
+> these models, prefer `"GENERIC"` passthrough or file an issue with
+> the failing command.
 
 ### Keithley 2000
 

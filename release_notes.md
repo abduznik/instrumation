@@ -1,3 +1,33 @@
+## Key Features in v0.9.0
+
+### Cleanup: Deprecated `UUTHandler` Removed (Issue #127)
+- **`src/instrumation/device.py` deleted.** `UUTHandler` was deprecated since v0.2.0 with a warning promising removal in v0.3.0; it was still shipping at v0.8.0. It, and the top-level `connect()` convenience wrapper in `__init__.py` that existed only to construct it, are both gone.
+- `search_devices()`/`scan()` are unaffected — they don't depend on `UUTHandler`. Use `factory.get_instrument()` / `Station` for VISA instruments and `transport.SerialDriver` directly for a serial box.
+- `examples/common/my_test_bench.py` updated to use `SerialDriver` directly instead of `UUTHandler`.
+- **Breaking change**: any code still importing `instrumation.UUTHandler` or calling `instrumation.connect()` must migrate to `factory.get_instrument()` (VISA) and `transport.SerialDriver` (serial) directly.
+
+### VISA Resource Manager Lifecycle (Issue #161)
+- **New `factory.close_rm()` API**: releases the process-wide cached `pyvisa.ResourceManager` created by `get_rm()`. Useful for long-running processes that need to switch VISA backends, release the OS-level VISA handle when instrument access is no longer needed, or give tests full isolation of VISA state between runs. Safe no-op if no resource manager has been created yet; the next `get_rm()` call transparently creates a fresh one.
+
+### Documentation: Driver Compatibility Matrix (Issue #167)
+- **`docs/supported_instruments.md`** now states the Validated/Assumed-compatible convention explicitly up front, and calls out `Keysight34461A`'s two distinct IDN-routed model families (Truevolt 34460/34461 vs. legacy 34401/34410/34411/34420) with a per-model compatibility table, since only 34461A has been verified against real hardware.
+
+### Registry Discoverability (Issue #148)
+- `DriverRegistry`'s docstring now documents the canonical type-key concept and explicitly describes `"GENERIC"` as an always-registered fallback key. `docs/supported_instruments.md` gained a GENERIC section.
+
+### Roadmap Accuracy (Issue #158)
+- `ROADMAP.md`'s bug table reconciled against actual code and issue state: corrected issue-number mappings, closed items that were still listed open, the v0.8.0/v0.9.0 fix batch, and the Dashboard section reframed as "Planned" (no dashboard module exists yet).
+
+### Carried from the pre-release v0.9.0 fix batch
+- **#149** — IDN-probe exception handling narrowed to expected transport errors instead of a broad `except Exception`.
+- **#150** — TDK-Lambda ASRL handshake gated to explicit connections; AUTO discovery no longer sends vendor-specific commands to arbitrary serial devices.
+- **#159** — AUTO-discovery candidate ordering now uses real transport priority tiers instead of a naive boolean sort key.
+- **#163** — `VisaDriver.write` harmonized with `query_value`'s forgiving error contract.
+- **#130** — `ReplayDriver` getters read golden-master responses with fallbacks.
+- **#160** — Simulated-driver filtering uses the explicit `is_simulated` class flag instead of fragile class-name string matching.
+
+---
+
 ## Key Features in v0.8.0
 
 ### New Driver: Comprehensive Keysight PXA N9030A SCPI (Issue #169)

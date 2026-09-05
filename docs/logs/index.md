@@ -2,6 +2,9 @@
 
 A quick look at how we've been building and breaking things. These logs track the architectural moves and performance wins as we push the HAL to production grade.
 
+## 2026-09-05
+- [v0.9.0 — Discovery Hardening & Legacy Cleanup](2026-09-05/v090_hardening_and_cleanup.md) - UUTHandler removed, close_rm() API, AUTO-discovery hardening, compatibility-matrix docs.
+
 ## 2026-08-28
 - [v0.8.0 — PXA Expansion & Hardening Release](2026-08-28/v080_hardening_and_pxa.md) - 29 new PXA methods, station/transport/logging fixes, Python 3.9 CI restore.
 

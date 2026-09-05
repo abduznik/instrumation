@@ -1,8 +1,7 @@
 from .scanner import scan
-from .device import UUTHandler
 from .station import Station
 from .utils import DataBroadcaster
-from .factory import get_instrument, get_instrument_from_config
+from .factory import get_instrument, get_instrument_from_config, close_rm
 from .exceptions import ConfigurationError
 
 import logging
@@ -10,7 +9,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-__all__ = ["scan", "UUTHandler", "Station", "DataBroadcaster", "get_instrument", "get_instrument_from_config", "search_devices"]
+__all__ = ["scan", "Station", "DataBroadcaster", "get_instrument", "get_instrument_from_config", "close_rm", "search_devices"]
 
 # Global storage for the last found devices to help with auto-connect
 _discovered_devices = []
@@ -19,31 +18,12 @@ def search_devices():
     """Returns a user-friendly list of available devices."""
     global _discovered_devices
     _discovered_devices = scan()
-    
+
     print(f"Found {len(_discovered_devices)} devices:")
     for i, dev in enumerate(_discovered_devices):
         print(f"[{i}] {dev['id']} ({dev['desc']})")
-    
+
     return _discovered_devices
-
-def connect(serial_id=None, visa_id=None):
-    """Creates the connection object for the full test station (Serial + VISA)."""
-    if not _discovered_devices and (serial_id is None or visa_id is None):
-        search_devices()
-
-    if serial_id is None:
-        for dev in _discovered_devices:
-            if dev['type'] == 'serial':
-                serial_id = dev['id']
-                break 
-    
-    if visa_id is None:
-        for dev in _discovered_devices:
-            if dev['type'] == 'visa':
-                visa_id = dev['id']
-                break 
-    
-    return UUTHandler(serial_port=serial_id, visa_address=visa_id)
 
 def connect_instrument(visa_address: str, driver_type: str = None):
     """Smart Factory: Connects to a specific instrument and loads the correct driver.

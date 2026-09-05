@@ -6,7 +6,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
 
 from instrumation.factory import get_instrument
-from instrumation import UUTHandler
+from instrumation.transport import SerialDriver
 from instrumation.exceptions import InstrumentError
 
 def main():
@@ -14,27 +14,32 @@ def main():
     A modern example of a production test sequence using the Instrumation HAL.
     """
     print("--- Starting Production Test Sequence ---")
-    
+
     try:
         with get_instrument("AUTO", "DMM") as dmm:
             print(f"Connected to DMM: {dmm.get_id()}")
-            
+
+            box = None
             try:
                 # Use a dummy port for demonstration
-                with UUTHandler(serial_port="DUMMY_SERIAL", visa_address="DUMMY_VISA"):
-                    print("Powering on UUT...")
-                    time.sleep(0.5)
-                    
-                    print("Measuring 5V Rail...")
-                    res = dmm.measure_voltage()
-                    print(f"Measured Voltage: {res.value} {res.unit}")
-                    
-                    if 4.75 <= res.value <= 5.25:
-                        print("RESULT: PASS")
-                    else:
-                        print(f"RESULT: FAIL (Value {res.value} out of range)")
+                box = SerialDriver("DUMMY_SERIAL")
+                print("Powering on UUT...")
+                box.send_command("RELAY:CH1")
+                time.sleep(0.5)
+
+                print("Measuring 5V Rail...")
+                res = dmm.measure_voltage()
+                print(f"Measured Voltage: {res.value} {res.unit}")
+
+                if 4.75 <= res.value <= 5.25:
+                    print("RESULT: PASS")
+                else:
+                    print(f"RESULT: FAIL (Value {res.value} out of range)")
             except Exception:
                 print(f"UUT connection skipped (No hardware). Measurement only: {dmm.measure_voltage()}")
+            finally:
+                if box is not None:
+                    box.close()
 
     except InstrumentError as e:
         print(f"Hardware Error: {e}")

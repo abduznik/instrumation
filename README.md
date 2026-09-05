@@ -229,7 +229,6 @@ instrumation station measure sa_main get_peak_value
 | Command | Description |
 | :--- | :--- |
 | `scan()` | Lists all connected Serial and VISA devices |
-| `connect()` | Auto-connects to a generic Test Station (Box + Instrument) |
 | `connect_instrument(addr)` | Connects to a specific instrument with auto driver detection |
 
 ---
