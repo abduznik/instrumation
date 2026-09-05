@@ -5,7 +5,19 @@ from .base import InstrumentDriver
 logger = logging.getLogger(__name__)
 
 class DriverRegistry:
-    """Registry to keep track of available instrument drivers."""
+    """Registry to keep track of available instrument drivers.
+
+    Drivers register themselves against a canonical instrument *type* key
+    (e.g. ``"DMM"``, ``"SA"``, ``"SCOPE"``). The full set of known keys is
+    defined in :data:`instrumation.factory.KNOWN_DRIVER_TYPES`.
+
+    ``"GENERIC"`` is a special, always-registered key: both
+    :class:`instrumation.drivers.generic.GenericDriver` and
+    :class:`instrumation.drivers.simulated.SimulatedGeneric` register
+    against it, so ``get_drivers_by_type("GENERIC")`` never returns an
+    empty list in a normal import. It is the universal fallback used when
+    an instrument cannot be identified (see issue #148).
+    """
     
     # Map of type -> list of driver classes
     _drivers: Dict[str, List[Type[InstrumentDriver]]] = {}

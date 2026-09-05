@@ -236,6 +236,22 @@ the same SCPI command set.
 
 ---
 
+## GENERIC (Universal Fallback)
+
+| Driver | Purpose | Auto-Detect IDN Keywords |
+|:---|:---|:---|
+| `GenericDriver` | Catch-all driver for unidentified instruments; accepts any model | none (explicit `"GENERIC"` request or unrecognized `*IDN?`) |
+
+`"GENERIC"` is a first-class, always-registered key in
+`DriverRegistry` — `get_drivers_by_type("GENERIC")` always returns
+`GenericDriver` (real mode) and `SimulatedGeneric` (SIM mode). It is used
+when `connect_instrument()` cannot identify an instrument, or when you
+explicitly pass `driver_type="GENERIC"` to `get_instrument()`. It exposes
+only generic SCPI passthrough (no typed measurement API), so it is a safe
+default, never a silent DMM/SA misread — see issue #148.
+
+---
+
 ## Summary
 
 | Category | Drivers | Validated Models |
