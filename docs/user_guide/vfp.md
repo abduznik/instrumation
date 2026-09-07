@@ -24,16 +24,26 @@ python -m instrumation.vfp_bridge
 ```
 
 ### 2. Stream Data from your Code
-Use the `DataBroadcaster` (or let the drivers handle it automatically in future versions):
+Use the `DataBroadcaster` (or let the drivers handle it automatically in future versions).
+Include `instrument_id` (and optionally `driver`) in `metadata` so the
+dashboard can tell multiple instruments apart and render one card per
+instrument instead of overwriting a single "last message" view:
 
 ```python
 from instrumation.utils import DataBroadcaster
 from instrumation.results import MeasurementResult
 
 with DataBroadcaster() as b:
-    res = MeasurementResult(value=3.3, unit="V")
+    res = MeasurementResult(
+        value=3.3,
+        unit="V",
+        metadata={"instrument_id": "DMM1@TCPIP::10.0.0.6::INSTR", "driver": "Keysight34461A"},
+    )
     b.send(res.to_dict())
 ```
+
+See `examples/common/vfp_telemetry_stream.py` for a runnable multi-instrument
+example.
 
 ### 3. Open the Dashboard
 The dashboard is located in the `vfp-dashboard` directory. To run it locally:
@@ -46,6 +56,7 @@ Then open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ## Features
 - **Real-time Traces**: Live plotting of measurement values.
-- **Status Indicators**: Instant feedback on instrument health.
+- **Status Indicators**: Instant feedback on instrument health (connected, warning, error, offline).
+- **Multi-Instrument Grid**: One card per `instrument_id`, auto-discovered from the stream -- no hardcoded instrument list.
 - **Multi-Channel Support**: View data from different channels or pods simultaneously.
 - **Zero Impact**: UDP broadcasting is non-blocking and does not slow down your test execution.
