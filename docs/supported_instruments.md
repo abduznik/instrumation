@@ -291,6 +291,23 @@ plain `VOLT`/`CURR`/`OUTP`/`MEAS:*?` command. `set_tracking_mode()` is
 **Also likely compatible:**
 - SDL1020X, SDL1030X, SDL1060X
 
+### BK Precision 8600 Series
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `BKPrecision8600` | 8600 | 8600 Series | `B&K`/`BK PRECISION` + (`8600`, `8601`, `8602`, `8610`, `8612`, `8614`, `8620`) |
+
+Not yet validated against real hardware. Supports CC/CV/CR/CP modes,
+OVP/OCP/OPP protection, and BK-specific battery discharge test mode
+(`set_battery_test_mode`, `set_battery_cutoff_voltage`,
+`get_battery_test_capacity`). List-mode and transient-stepping
+programming from the 8600 Series manual are not yet implemented.
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ---
 
 ## Frequency Counters
@@ -332,7 +349,7 @@ default, never a silent DMM/SA misread — see issue #148.
 | Network Analyzers | 3 | N5232A, N9913A, MS2035B |
 | Multimeters | 3 | 34461A, 2000, 8846A |
 | Power Supplies | 2 | Z+100-2, 9130B |
-| Electronic Loads | 1 | SDL1000X |
+| Electronic Loads | 2 | SDL1000X, 8600 |
 | Frequency Counters | 1 | 53230A |
 | **Total** | **21** | |
 
