@@ -467,6 +467,10 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
     elif "PROLOGIX" in idn:
         from .drivers.prologix import PrologixDriver
         final_drv = PrologixDriver(resource_address)
+    elif "FLUKE" in idn:
+        if any(m in idn for m in ["8845", "8846"]):
+            from .drivers.fluke import Fluke8846A
+            final_drv = Fluke8846A(resource_address)
 
     if not final_drv:
         # No brand matched the IDN. If exactly one driver is registered for the

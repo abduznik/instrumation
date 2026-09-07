@@ -16,6 +16,7 @@ from .simulated import (
 from .generic import GenericDriver
 from .keysight import Keysight53230A, KeysightPXA
 from .rigol import RigolDS1054Z
+from .fluke import Fluke8846A
 from .async_driver import (
     AsyncInstrumentDriver,
     AsyncMultimeter,
@@ -48,6 +49,7 @@ __all__ = [
     "Keysight53230A",
     "KeysightPXA",
     "RigolDS1054Z",
+    "Fluke8846A",
     "AsyncInstrumentDriver",
     "AsyncMultimeter",
     "AsyncPowerSupply",
