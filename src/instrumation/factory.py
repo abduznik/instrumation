@@ -478,6 +478,10 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
         elif any(m in idn for m in ["8600", "8601", "8602", "8610", "8612", "8614", "8620"]):
             from .drivers.bk_precision import BKPrecision8600
             final_drv = BKPrecision8600(resource_address)
+    elif "HAMEG" in idn or "ROHDE" in idn or "ROHDE&SCHWARZ" in idn:
+        if "HMO" in idn:
+            from .drivers.rs_scope import RohdeSchwarzHMOCompact
+            final_drv = RohdeSchwarzHMOCompact(resource_address)
 
     if not final_drv:
         # No brand matched the IDN. If exactly one driver is registered for the

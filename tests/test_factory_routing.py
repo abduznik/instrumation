@@ -75,6 +75,18 @@ class TestFactoryGenericFallback(unittest.TestCase):
             drv = get_instrument("TCPIP::10.0.0.11::INSTR", "LOAD")
         self.assertEqual(drv.__class__.__name__, "BKPrecision8600")
 
+    def test_hameg_hmo_idn_routes_to_rs_hmo_compact(self):
+        rm = _mock_rm("HAMEG,HMO722,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("TCPIP::10.0.0.12::INSTR", "SCOPE")
+        self.assertEqual(drv.__class__.__name__, "RohdeSchwarzHMOCompact")
+
+    def test_rohde_schwarz_hmo_idn_routes_to_rs_hmo_compact(self):
+        rm = _mock_rm("ROHDE&SCHWARZ,HMO2024,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("TCPIP::10.0.0.13::INSTR", "SCOPE")
+        self.assertEqual(drv.__class__.__name__, "RohdeSchwarzHMOCompact")
+
 
 class TestFactoryGenericSimMode(unittest.TestCase):
     """Covers GH #142/#147: SIM-mode GENERIC must not secretly be a DMM."""

@@ -65,6 +65,25 @@ the same SCPI command set.
 |:---|:---|:---|:---|
 | `TektronixTDS` | TDS Series | Tek TDS/TPS/MDO | `TEKTRONIX` (non-AFG) |
 
+### Rohde & Schwarz / Hameg HMO Compact
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `RohdeSchwarzHMOCompact` | HMO722 | HMO Compact Series | `HAMEG`/`ROHDE`/`ROHDE&SCHWARZ` + `HMO` |
+
+**Also likely compatible** (same HMO Compact SCPI set):
+- HMO724, HMO1022, HMO1024, HMO1522, HMO1524, HMO2022, HMO2024
+
+> [!NOTE]
+> Edge trigger only. Math functions (FFT, add/subtract/multiply), protocol
+> decode, and mask-test features from the Programmer's Manual are not yet
+> implemented.
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 **Also likely compatible:**
 - TDS1001C–TDS1012C, TDS2001C–TDS2024C, TDS2012B, TDS2022B
 - TPS2002B–TPS2024B
@@ -343,7 +362,7 @@ default, never a silent DMM/SA misread — see issue #148.
 
 | Category | Drivers | Validated Models |
 |:---|:---|:---|
-| Oscilloscopes | 4 | DSOX2002A, DS1054Z, SDS Series, TDS Series |
+| Oscilloscopes | 5 | DSOX2002A, DS1054Z, SDS Series, TDS Series, HMO722 |
 | Spectrum Analyzers | 4 | MXA N9020A, PXA N9030A, DSA800, MS2830A |
 | Signal Generators | 5 | N5183B, AFG3022C, SMA100B, MG3700A, SMA100A |
 | Network Analyzers | 3 | N5232A, N9913A, MS2035B |

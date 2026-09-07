@@ -18,6 +18,7 @@ from .keysight import Keysight53230A, KeysightPXA
 from .rigol import RigolDS1054Z
 from .fluke import Fluke8846A
 from .bk_precision import BKPrecision9130B, BKPrecision8600
+from .rs_scope import RohdeSchwarzHMOCompact
 from .async_driver import (
     AsyncInstrumentDriver,
     AsyncMultimeter,
@@ -53,6 +54,7 @@ __all__ = [
     "Fluke8846A",
     "BKPrecision9130B",
     "BKPrecision8600",
+    "RohdeSchwarzHMOCompact",
     "AsyncInstrumentDriver",
     "AsyncMultimeter",
     "AsyncPowerSupply",
