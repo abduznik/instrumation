@@ -1,6 +1,13 @@
-# Roadmap — v0.9.0
+# Roadmap — v0.10.0
 
-**Status:** Released 2026-09-05 (v0.9.0)
+**Status:** Released 2026-09-07 (v0.10.0)
+
+---
+
+## v0.10.0 Highlights
+
+- **New drivers:** Fluke 8845A/8846A DMM (#170), BK Precision 9130B triple-output PSU (#173), BK Precision 8600 electronic load (#172), Rohde & Schwarz/Hameg HMO Compact oscilloscope (#175). None yet validated against real hardware — see `docs/supported_instruments.md` for per-model compatibility status.
+- **Live Instrument Dashboard delivered:** `vfp-dashboard` now renders a live-updating grid of instrument cards (one per `instrument_id`), closing out issue #119. See "Planned: Live Instrument Dashboard" below for what's still open (#118 Python launch helper, #120 CSV/JSON export).
 
 ---
 
@@ -28,17 +35,27 @@ Sending a brand's vendor-specific SCPI commands to an instrument that never clai
 
 ---
 
-## Planned: Live Instrument Dashboard
+## Live Instrument Dashboard
 
-The dashboard (issues #118 launch, #119 React status cards, #120 CSV/JSON export) is **planned, not yet shipped** — tracked by the open enhancement issues. The current `DataBroadcaster` (UDP/JSON, `utils.py`) provides the streaming foundation, and `examples/common/broadcast_demo.py` shows a zero-dependency receiver. The `launch_dashboard()` module described below is the target design once #118–#120 are implemented.
+React status cards (#119) **shipped in v0.10.0**: `vfp-dashboard` renders a
+live-updating grid of `InstrumentCard`s, one per `metadata.instrument_id`
+seen on the WebSocket stream, with color-coded status (connected/warning/
+error/offline-stale), live value/unit, and a rolling sparkline. See
+`docs/user_guide/vfp.md` for the `instrument_id` metadata convention
+producers must follow.
 
-### Target design
+Still **planned, not yet shipped**:
+- **#118** — `launch_dashboard(port=8080)` Python helper to start the bridge + dashboard from a script instead of running `python -m instrumation.vfp_bridge` and `npm run dev` by hand.
+- **#120** — CSV/JSON export of readings from the dashboard UI.
 
-- Auto-discovers instruments and shows them in a clean table
-- Streams live readings (voltage, current, frequency, etc.) to the browser in real-time
-- Color-coded status indicators (connected, measuring, error, idle)
-- Export readings to CSV/JSON with one click (#120)
-- Works in SIM mode for demos and development
+### Target design (remaining scope)
+
+- Auto-discovers instruments and shows them in a clean table — ✅ done via `instrument_id` grouping
+- Streams live readings (voltage, current, frequency, etc.) to the browser in real-time — ✅ done
+- Color-coded status indicators (connected, measuring, error, idle) — ✅ done
+- Export readings to CSV/JSON with one click (#120) — not yet implemented
+- Works in SIM mode for demos and development — ✅ done (`examples/common/vfp_telemetry_stream.py`)
+- Single-call Python launcher (#118) — not yet implemented
 
 ### Architecture (target)
 
@@ -129,3 +146,5 @@ All issue numbers below were reconciled against actual code + issue state (gh #1
 | 0.7.0 | Bug fixes + hardening (released) |
 | 0.8.0 | Generic driver fallback, PXA N9030A expansion, station/transport/logging hardening (released) |
 | 0.9.0 | Driver-factory + simulation fixes (#149–#168 batch), ROADMAP reconciliation, v0.9.0 release (released 2026-09-05) |
+| 0.10.0 | New drivers (Fluke 8845A/8846A, BK Precision 9130B/8600, R&S HMO Compact), React dashboard status cards (#119) (released 2026-09-07) |
+| 0.11.0 | New drivers: SRS SR830 lock-in (#180), GW Instek MFG-2000 (#176), Mini-Circuits RFS (#174), GW Instek GPP (#171); dashboard launcher (#118) and CSV/JSON export (#120) (planned) |

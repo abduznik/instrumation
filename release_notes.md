@@ -1,3 +1,23 @@
+## Key Features in v0.10.0
+
+### New Drivers
+- **Fluke 8845A/8846A Digital Multimeter** (Issue #170) — `Fluke8846A` in `drivers/fluke.py`, registered under `DMM`, routed from `*IDN?` containing `FLUKE` + (`8845`|`8846`). Full DCV/ACV/DCI/ACI, 2W/4W resistance, frequency, period, temperature, capacitance, and diode support via the `:MEAS:*?`/`:CONF:*` SCPI subset.
+- **BK Precision 9130B Triple Output Power Supply** (Issue #173) — `BKPrecision9130B` in `drivers/bk_precision.py`, registered under `PSU`. Three independent channels addressed via `INST:NSEL`; every `PowerSupply` method accepts an optional `channel=` (default 1). Adds `set_tracking_mode()` for linked CH2/CH3 output.
+- **BK Precision 8600 Series Electronic Load** (Issue #172) — `BKPrecision8600` in the same module, registered under `LOAD`/`ELOAD`. CC/CV/CR/CP modes, OVP/OCP/OPP protection, and BK-specific battery discharge test mode.
+- **Rohde & Schwarz / Hameg HMO Compact Oscilloscope** (Issue #175) — `RohdeSchwarzHMOCompact` in `drivers/rs_scope.py`, registered under `SCOPE`, routed from `HAMEG`/`ROHDE`/`ROHDE&SCHWARZ` + `HMO`. Channel/timebase configuration, edge trigger, waveform readout (HMO's pre-scaled ASCII data format), and Vpp/frequency/period/rise/fall-time measurements.
+- None of the four new drivers have been validated against real hardware yet; each is documented as "assumed compatible" in `docs/supported_instruments.md` per the project's compatibility-matrix convention.
+
+### Live Instrument Dashboard: React Status Cards (Issue #119)
+- The `vfp-dashboard` React app now renders a **grid of one card per instrument** instead of a single "last message" view. A new `useInstrumentData` hook manages the WebSocket connection to the VFP Bridge with auto-reconnect and groups incoming packets by `metadata.instrument_id`.
+- Each `InstrumentCard` shows a color-coded status badge (connected/warning/error/offline-stale, derived from packet `status` and recency), driver name, live value/unit, channel, and a rolling sparkline trace.
+- Establishes the `instrument_id` metadata convention (documented in `docs/user_guide/vfp.md`) since `MeasurementResult` had no persistent instrument identity before this change; `examples/common/vfp_telemetry_stream.py` now simulates two concurrent instruments to exercise it.
+- Fixed missing layout utility CSS (the dashboard referenced Tailwind-style class names with no Tailwind dependency and no local definitions — the original single-card view was rendering unstyled).
+
+### Test Infrastructure
+- Fixed a pre-existing test-isolation bug in `test_close_rm.py`: `factory._GLOBAL_RM` could be left populated by an earlier test module in a full-suite run, causing `get_rm()` to return a stale cached instance instead of the freshly-patched mock.
+
+---
+
 ## Key Features in v0.9.0
 
 ### Cleanup: Deprecated `UUTHandler` Removed (Issue #127)
