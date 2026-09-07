@@ -217,6 +217,26 @@ on their published SCPI command references, not verified in-lab:
 > these models, prefer `"GENERIC"` passthrough or file an issue with
 > the failing command.
 
+### Fluke 8845A/8846A
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `Fluke8846A` | 8846A | Fluke 884x Series | `FLUKE` + (`8845`, `8846`) |
+
+`Fluke8846A` is not validated against real hardware yet; it targets the
+`:MEAS:*?`/`:CONF:*` SCPI subset documented in the Fluke 8845A/8846A
+Programmer's Manual, mirroring `Keysight34461A`'s command shapes:
+
+| Model | Status |
+|:---|:---|
+| 8846A | Assumed compatible (6.5 digit, same measurement subsystem as 8845A) |
+| 8845A | Assumed compatible (5.5 digit, same command set as 8846A) |
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ### Keithley 2000
 
 | Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
@@ -292,7 +312,7 @@ default, never a silent DMM/SA misread — see issue #148.
 | Spectrum Analyzers | 4 | MXA N9020A, PXA N9030A, DSA800, MS2830A |
 | Signal Generators | 5 | N5183B, AFG3022C, SMA100B, MG3700A, SMA100A |
 | Network Analyzers | 3 | N5232A, N9913A, MS2035B |
-| Multimeters | 2 | 34461A, 2000 |
+| Multimeters | 3 | 34461A, 2000, 8846A |
 | Power Supplies | 1 | Z+100-2 |
 | Electronic Loads | 1 | SDL1000X |
 | Frequency Counters | 1 | 53230A |
