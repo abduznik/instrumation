@@ -6,6 +6,13 @@ import instrumation.factory as factory
 
 
 class TestCloseRm(unittest.TestCase):
+    def setUp(self):
+        # Other test modules (e.g. test_cli.py) can leave a real singleton
+        # cached in factory._GLOBAL_RM; reset it so get_rm() below actually
+        # exercises the patched pyvisa.ResourceManager instead of returning
+        # a stale instance from a prior test.
+        factory._GLOBAL_RM = None
+
     def tearDown(self):
         factory._GLOBAL_RM = None
 

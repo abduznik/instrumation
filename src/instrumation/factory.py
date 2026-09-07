@@ -471,6 +471,10 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
         if any(m in idn for m in ["8845", "8846"]):
             from .drivers.fluke import Fluke8846A
             final_drv = Fluke8846A(resource_address)
+    elif "B&K" in idn or "BK PRECISION" in idn:
+        if "9130" in idn:
+            from .drivers.bk_precision import BKPrecision9130B
+            final_drv = BKPrecision9130B(resource_address)
 
     if not final_drv:
         # No brand matched the IDN. If exactly one driver is registered for the

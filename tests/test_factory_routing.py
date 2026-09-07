@@ -63,6 +63,12 @@ class TestFactoryGenericFallback(unittest.TestCase):
             drv = get_instrument("TCPIP::10.0.0.9::INSTR", "DMM")
         self.assertEqual(drv.__class__.__name__, "Fluke8846A")
 
+    def test_bk_precision_idn_routes_to_9130b(self):
+        rm = _mock_rm("B&K PRECISION,9130B,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("TCPIP::10.0.0.10::INSTR", "PSU")
+        self.assertEqual(drv.__class__.__name__, "BKPrecision9130B")
+
 
 class TestFactoryGenericSimMode(unittest.TestCase):
     """Covers GH #142/#147: SIM-mode GENERIC must not secretly be a DMM."""

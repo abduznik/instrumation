@@ -260,6 +260,24 @@ Programmer's Manual, mirroring `Keysight34461A`'s command shapes:
 > Z+ units must be switched to USB mode on the front panel and
 > wake up with `INST:NSEL 6` before SCPI communication.
 
+### BK Precision 9130B
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `BKPrecision9130B` | 9130B | 9130B Series (Triple Output) | `B&K`/`BK PRECISION` + `9130` |
+
+Not yet validated against real hardware. Three independent output
+channels are addressed via `INST:NSEL {1\|2\|3}`; every `PowerSupply`
+interface method accepts an optional `channel=` argument (defaults to
+channel 1) to select which output it targets before sending the
+plain `VOLT`/`CURR`/`OUTP`/`MEAS:*?` command. `set_tracking_mode()` is
+9130B-specific and links CH2/CH3 outputs.
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ---
 
 ## Electronic Loads
@@ -313,7 +331,7 @@ default, never a silent DMM/SA misread — see issue #148.
 | Signal Generators | 5 | N5183B, AFG3022C, SMA100B, MG3700A, SMA100A |
 | Network Analyzers | 3 | N5232A, N9913A, MS2035B |
 | Multimeters | 3 | 34461A, 2000, 8846A |
-| Power Supplies | 1 | Z+100-2 |
+| Power Supplies | 2 | Z+100-2, 9130B |
 | Electronic Loads | 1 | SDL1000X |
 | Frequency Counters | 1 | 53230A |
 | **Total** | **21** | |
