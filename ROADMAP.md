@@ -1,6 +1,6 @@
 # Roadmap — v0.9.0
 
-**Target Release:** Q3 2026
+**Status:** Released 2026-09-05 (v0.9.0)
 
 ---
 
@@ -57,7 +57,7 @@ The dashboard (issues #118 launch, #119 React status cards, #120 CSV/JSON export
 
 ## Bug Fixes & Improvements
 
-All issue numbers below were reconciled against actual code + issue state (gh #158).
+All issue numbers below were reconciled against actual code + issue state (gh #158); re-verified after the v0.9.0 release (gh #188).
 
 | Issue | Description | Priority |
 | --- | --- | --- |
@@ -81,7 +81,7 @@ All issue numbers below were reconciled against actual code + issue state (gh #1
 | #145 | `factory.py`'s real-hardware IDN-routing and discovery paths were untested | ~~High~~ ✅ Fixed in v0.8.0 |
 | #146 | Real-mode `get_instrument()` silently falls back to `GENERIC` for unknown driver types like `SIM` | ✅ Fixed in v0.8.0 |
 | #147 | SIM-mode `driver_type="GENERIC"` silently mapped to `SimulatedMultimeter` | ✅ Fixed in v0.8.0 (`SimulatedGeneric` registered under `GENERIC`; `test_sim_generic_is_not_multimeter`) |
-| #148 | No `GENERIC` key documented/discoverable in `DriverRegistry` | Open (partially addressed — GENERIC is registered; discoverability docs pending) |
+| #148 | No `GENERIC` key documented/discoverable in `DriverRegistry` | ✅ Fixed in v0.9.0 (`docs/supported_instruments.md` "GENERIC (Universal Fallback)" section + `DriverRegistry` docstring; PR #186) |
 | #149 | Broad `except Exception` during IDN probing hides real connection errors | ✅ Fixed in v0.9.0 |
 | #150 | ASRL smart-probe sends vendor-specific TDK-Lambda commands to arbitrary serial devices | ✅ Fixed in v0.9.0 |
 | #151 | `probe_resource` ASRL port-number filter uses naive substring match | ✅ Fixed in v0.8.0 |
@@ -128,4 +128,4 @@ All issue numbers below were reconciled against actual code + issue state (gh #1
 | --- | --- |
 | 0.7.0 | Bug fixes + hardening (released) |
 | 0.8.0 | Generic driver fallback, PXA N9030A expansion, station/transport/logging hardening (released) |
-| 0.9.0 | Driver-factory + simulation fixes (#149–#168 batch), ROADMAP reconciliation (in progress) |
+| 0.9.0 | Driver-factory + simulation fixes (#149–#168 batch), ROADMAP reconciliation, v0.9.0 release (released 2026-09-05) |
