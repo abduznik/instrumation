@@ -72,7 +72,15 @@ class RohdeSchwarzHMOCompact(RealDriver, Oscilloscope):
 
     def get_channel_display(self, channel: int) -> bool:
         self._validate_channel(channel)
-        return self.query(f"CHAN{channel}:STAT?").strip() == "1"
+        resp = self.query(f"CHAN{channel}:STAT?").strip().upper()
+        # HMO reports boolean state as ON/OFF (SCPI); fall back to 1/0
+        # so drivers mocking/test-harness backends that return numeric
+        # booleans keep working.
+        if resp in ("ON", "1"):
+            return True
+        if resp in ("OFF", "0"):
+            return False
+        raise ValueError(f"Unrecognized CHAN{channel}:STAT? response: {resp!r}")
 
     def set_channel_scale(self, channel: int, scale: float) -> None:
         self._validate_channel(channel)
