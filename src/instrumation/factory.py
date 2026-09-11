@@ -451,6 +451,9 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
                                    "DS1000Z", "MSO1000Z"]):
             from .drivers.rigol import RigolDS1054Z
             final_drv = RigolDS1054Z(resource_address)
+        elif "MSO5" in idn:
+            from .drivers.rigol_mso5000 import RigolMSO5000
+            final_drv = RigolMSO5000(resource_address)
         elif "DM3" in idn:
             from .drivers.rigol_dmm import RigolDM3068
             final_drv = RigolDM3068(resource_address)

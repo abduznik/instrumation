@@ -49,6 +49,30 @@ the same SCPI command set.
 > commands are reserved for the -S variants or paid options and are not
 > covered.
 
+### Rigol MSO5000 Series
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `RigolMSO5000` | MSO5354 | MSO5000 Series | `RIGOL` + `MSO5` |
+
+Basic control (`:RUN`/`:STOP`/`:SINGle`/`:AUTOscale`) matches the
+MSO1000Z/DS1000Z family, but the measurement subsystem differs:
+`:MEASure:ITEM? <item>,<src>` takes the source as an explicit second
+argument on every query rather than DS1000Z's per-item
+`:MEASure:FREQuency? CHANnel<n>` form.
+
+**Also likely compatible** (same MSO5000 command set):
+- MSO5072, MSO5074, MSO5102, MSO5104, MSO5204, MSO5354
+
+> [!NOTE]
+> LA (logic analyzer), protocol decode, and mask-test features from
+> the Programming Guide are not implemented here.
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ### Siglent SDS
 
 | Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
@@ -611,7 +635,7 @@ default, never a silent DMM/SA misread — see issue #148.
 
 | Category | Drivers | Validated Models |
 |:---|:---|:---|
-| Oscilloscopes | 6 | DSOX2002A, DS1054Z, SDS Series, TDS Series, HMO722, SDS2102X Plus |
+| Oscilloscopes | 7 | DSOX2002A, DS1054Z, SDS Series, TDS Series, HMO722, SDS2102X Plus, MSO5354 |
 | Spectrum Analyzers | 4 | MXA N9020A, PXA N9030A, DSA800, MS2830A |
 | Signal Generators | 5 | N5183B, AFG3022C, SMA100B, MG3700A, SMA100A |
 | Network Analyzers | 3 | N5232A, N9913A, MS2035B |
@@ -619,7 +643,7 @@ default, never a silent DMM/SA misread — see issue #148.
 | Power Supplies | 7 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P, GPP-4323 |
 | Electronic Loads | 5 | SDL1000X, 8600, DL3021, IT8512+, 63200A |
 | Frequency Counters | 1 | 53230A |
-| **Total** | **33** | |
+| **Total** | **34** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed
