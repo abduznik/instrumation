@@ -512,6 +512,26 @@ subsystem in its base command set — front-panel OCP/OPP are test
 > prefer `"GENERIC"` passthrough or file an issue with the failing
 > command.
 
+### ITECH IT8500+ Series
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `ItechIT8512Plus` | IT8512+ | IT8500+ Series | `ITECH` + `IT85` |
+
+Supports CC/CV/CR/CP modes plus `CURRent:PROTection`/`POWer:PROTection`
+(OCP/OPP trip levels) and a simulated short-circuit input
+(`set_short_circuit`). The IT8500+ series has no dedicated software OVP
+trip-point command in its base command set, so `set_ovp`/
+`clear_protection` log an unsupported-feature warning here.
+
+**Also likely compatible** (same IT8500+ command set):
+- IT8511+, IT8513+, IT8511A+, IT8512A+, IT8513A+
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ---
 
 ## Frequency Counters
@@ -553,9 +573,9 @@ default, never a silent DMM/SA misread — see issue #148.
 | Network Analyzers | 3 | N5232A, N9913A, MS2035B |
 | Multimeters | 6 | 34461A, 2000, 8846A, SDM3055, DM3068, DMM6500 |
 | Power Supplies | 7 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P, GPP-4323 |
-| Electronic Loads | 3 | SDL1000X, 8600, DL3021 |
+| Electronic Loads | 4 | SDL1000X, 8600, DL3021, IT8512+ |
 | Frequency Counters | 1 | 53230A |
-| **Total** | **30** | |
+| **Total** | **31** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed

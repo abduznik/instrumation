@@ -511,6 +511,10 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
         if "GPP" in idn:
             from .drivers.gwinstek_psu import GWInstekGPP4323
             final_drv = GWInstekGPP4323(resource_address)
+    elif "ITECH" in idn:
+        if "IT85" in idn:
+            from .drivers.itech_load import ItechIT8512Plus
+            final_drv = ItechIT8512Plus(resource_address)
 
     if not final_drv:
         # No brand matched the IDN. If exactly one driver is registered for the
