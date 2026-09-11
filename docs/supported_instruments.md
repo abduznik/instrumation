@@ -416,6 +416,27 @@ channel-select round-trip and the Rigol/Siglent `CH<n>` prefix style.
 > prefer `"GENERIC"` passthrough or file an issue with the failing
 > command.
 
+### Korad KA3005P
+
+| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `KoradKA3005P` | KA3005P | Korad flat ASCII (non-SCPI) | `KORAD` |
+
+**Not a SCPI instrument.** Speaks Korad's own flat ASCII command set
+over serial (9600 8N1, no line termination, no error queue, no
+`*RST`/`*CLS`/`*OPC?`) -- this driver overrides `check_errors`,
+`sync_config`, and `clear_status` as no-ops and skips the
+`SYST:ERR?` round-trip in `safe_send`/`query_ascii` entirely.
+`preset()` emulates a reset by forcing output off, 0V, 0A limit since
+the hardware has no reset command. `get_output()` decodes bit 6 of the
+single-byte `STATUS?` response. Widely cloned by Tenma, RS, Velleman,
+and Stamos under different model numbers with an identical protocol.
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit a protocol error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ---
 
 ## Electronic Loads
@@ -486,10 +507,10 @@ default, never a silent DMM/SA misread — see issue #148.
 | Signal Generators | 5 | N5183B, AFG3022C, SMA100B, MG3700A, SMA100A |
 | Network Analyzers | 3 | N5232A, N9913A, MS2035B |
 | Multimeters | 6 | 34461A, 2000, 8846A, SDM3055, DM3068, DMM6500 |
-| Power Supplies | 5 | Z+100-2, 9130B, DP832, SPD3303X, E36313A |
+| Power Supplies | 6 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P |
 | Electronic Loads | 2 | SDL1000X, 8600 |
 | Frequency Counters | 1 | 53230A |
-| **Total** | **27** | |
+| **Total** | **28** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed

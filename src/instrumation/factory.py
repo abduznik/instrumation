@@ -470,6 +470,9 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
     elif "TDK-LAMBDA" in idn or "Z+" in idn:
         from .drivers.tdk import TDKLambdaZPlus
         final_drv = TDKLambdaZPlus(resource_address)
+    elif "KORAD" in idn:
+        from .drivers.korad import KoradKA3005P
+        final_drv = KoradKA3005P(resource_address)
     elif "ANRITSU" in idn:
         if "MS2035" in idn:
             from .drivers.anritsu import AnritsuMS2035B
