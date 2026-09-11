@@ -59,6 +59,26 @@ the same SCPI command set.
 - SDS1002X-E, SDS1004X-E, SDS1102X-E, SDS1104X-E, SDS1202X-E, SDS1204X-E
 - SDS2002X, SDS2004X, SDS2102X, SDS2104X, SDS2202X, SDS2204X
 
+### Siglent SDS2000X Plus
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `SiglentSDS2000XPlus` | SDS2102X Plus | SDS Series (newer command set) | `SIGLENT` + `PLUS` (with `SDS1`/`SDS2`/`SDS5`) |
+
+Uses the newer standard `:SUBsystem:keyword` command set from the SDS
+Series Programming Guide (EN11D+) -- `:TRIGger:RUN`/`:TRIGger:STOP`/
+`:TRIGger:MODE SINGle` and `:MEASure:SIMPle:VALue? <type>` -- distinct
+from the legacy `SiglentSDS` driver's older `ARM`/`TRSE`/`C<n>:PAVA?`
+command shapes still used by the original SDS1000/SDS2000X(-E).
+
+**Also likely compatible** (same newer command set):
+- SDS1000X HD, SDS5000X, SDS2000X Plus family models (any `...Plus`/`HD` variant)
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ### Tektronix TDS
 
 | Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
@@ -591,7 +611,7 @@ default, never a silent DMM/SA misread — see issue #148.
 
 | Category | Drivers | Validated Models |
 |:---|:---|:---|
-| Oscilloscopes | 5 | DSOX2002A, DS1054Z, SDS Series, TDS Series, HMO722 |
+| Oscilloscopes | 6 | DSOX2002A, DS1054Z, SDS Series, TDS Series, HMO722, SDS2102X Plus |
 | Spectrum Analyzers | 4 | MXA N9020A, PXA N9030A, DSA800, MS2830A |
 | Signal Generators | 5 | N5183B, AFG3022C, SMA100B, MG3700A, SMA100A |
 | Network Analyzers | 3 | N5232A, N9913A, MS2035B |
@@ -599,7 +619,7 @@ default, never a silent DMM/SA misread — see issue #148.
 | Power Supplies | 7 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P, GPP-4323 |
 | Electronic Loads | 5 | SDL1000X, 8600, DL3021, IT8512+, 63200A |
 | Frequency Counters | 1 | 53230A |
-| **Total** | **32** | |
+| **Total** | **33** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed

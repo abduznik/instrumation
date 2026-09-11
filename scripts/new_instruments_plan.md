@@ -34,7 +34,7 @@ Process per instrument:
 11. [x] Chroma 63200 series — DC electronic load
 
 ### Oscilloscopes (4)
-12. [ ] Siglent SDS2000X Plus
+12. [x] Siglent SDS2000X Plus
 13. [ ] Rigol MSO5000 series
 14. [ ] Keysight DSOX1204G
 15. [ ] PicoScope 2208B (USB scope, PicoSDK-style)

@@ -439,6 +439,9 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
         elif "SPD" in idn:
             from .drivers.siglent_psu import SiglentSPD3303X
             final_drv = SiglentSPD3303X(resource_address)
+        elif "PLUS" in idn and any(m in idn for m in ["SDS1", "SDS2", "SDS5"]):
+            from .drivers.siglent_scope import SiglentSDS2000XPlus
+            final_drv = SiglentSDS2000XPlus(resource_address)
         else:
             from .drivers.siglent import SiglentSDS
             final_drv = SiglentSDS(resource_address)
