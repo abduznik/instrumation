@@ -281,6 +281,26 @@ diode, and RTD/thermistor temperature. `set_nplc()` is SDM3000-specific.
 > prefer `"GENERIC"` passthrough or file an issue with the failing
 > command.
 
+### Rigol DM3000 Series
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `RigolDM3068` | DM3068 | DM3000 Series | `RIGOL` + `DM3` |
+
+Unlike the SCPI-99 `CONFigure`/`MEASure?` split used elsewhere in this
+library, the DM3000 dialect selects the active function with
+`:FUNCtion:*` and reads it back with a bare `:MEASure:<FUNC>?` query;
+`:MEASure {AUTO|MANU}` toggles ranging globally instead of a per-function
+`RANG:AUTO`. `set_digits()` (5/6/7/INC/DEC) is DM3000-specific.
+
+**Also likely compatible** (same DM3000 command set):
+- DM3058, DM3058E, DM3062, DM3064
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ---
 
 ## Power Supplies
@@ -385,11 +405,11 @@ default, never a silent DMM/SA misread — see issue #148.
 | Spectrum Analyzers | 4 | MXA N9020A, PXA N9030A, DSA800, MS2830A |
 | Signal Generators | 5 | N5183B, AFG3022C, SMA100B, MG3700A, SMA100A |
 | Network Analyzers | 3 | N5232A, N9913A, MS2035B |
-| Multimeters | 4 | 34461A, 2000, 8846A, SDM3055 |
+| Multimeters | 5 | 34461A, 2000, 8846A, SDM3055, DM3068 |
 | Power Supplies | 2 | Z+100-2, 9130B |
 | Electronic Loads | 2 | SDL1000X, 8600 |
 | Frequency Counters | 1 | 53230A |
-| **Total** | **22** | |
+| **Total** | **23** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed

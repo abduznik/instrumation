@@ -81,6 +81,18 @@ class TestFactoryGenericFallback(unittest.TestCase):
             drv = get_instrument("TCPIP::10.0.0.12::INSTR", "SCOPE")
         self.assertEqual(drv.__class__.__name__, "SiglentSDS")
 
+    def test_rigol_dm3068_idn_routes_to_rigol_dmm(self):
+        rm = _mock_rm("RIGOL TECHNOLOGIES,DM3068,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("TCPIP::10.0.0.13::INSTR", "DMM")
+        self.assertEqual(drv.__class__.__name__, "RigolDM3068")
+
+    def test_rigol_scope_idn_still_routes_to_ds1054z(self):
+        rm = _mock_rm("RIGOL TECHNOLOGIES,DS1054Z,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("TCPIP::10.0.0.14::INSTR", "SCOPE")
+        self.assertEqual(drv.__class__.__name__, "RigolDS1054Z")
+
     def test_bk_precision_idn_routes_to_8600_load(self):
         rm = _mock_rm("B&K PRECISION,8600,SN1,1.0")
         with patch("instrumation.factory.get_rm", return_value=rm):

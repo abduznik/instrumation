@@ -18,7 +18,7 @@ Process per instrument:
 
 ### Multimeters (3)
 1. [x] Siglent SDM3055 — 5.5-digit bench DMM
-2. [ ] Rigol DM3068 — 6.5-digit DMM
+2. [x] Rigol DM3068 — 6.5-digit DMM
 3. [ ] Keithley DMM6500 — graphical sampling DMM
 
 ### Power Supplies (5)
