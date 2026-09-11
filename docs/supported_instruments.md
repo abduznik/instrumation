@@ -354,6 +354,27 @@ plain `VOLT`/`CURR`/`OUTP`/`MEAS:*?` command. `set_tracking_mode()` is
 > prefer `"GENERIC"` passthrough or file an issue with the failing
 > command.
 
+### Rigol DP800 Series
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `RigolDP832` | DP832 | DP800 Series (Triple Output) | `RIGOL` + `DP8` |
+
+Unlike the BK Precision 9130B's `INST:NSEL`-then-plain-command style,
+DP800 series commands address a channel directly via a `[:SOURce<n>]`
+numeric suffix or an explicit `CH1|CH2|CH3` argument on
+`:OUTPut`/`:MEASure` — no channel-select round-trip required. Every
+`PowerSupply` interface method accepts an optional `channel=` (defaults
+to 1). `set_tracking_mode()` is DP800-specific and links CH2/CH3.
+
+**Also likely compatible** (same DP800 command set):
+- DP831, DP831A, DP832A, DP821, DP821A, DP811, DP811A
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ---
 
 ## Electronic Loads
@@ -424,10 +445,10 @@ default, never a silent DMM/SA misread — see issue #148.
 | Signal Generators | 5 | N5183B, AFG3022C, SMA100B, MG3700A, SMA100A |
 | Network Analyzers | 3 | N5232A, N9913A, MS2035B |
 | Multimeters | 6 | 34461A, 2000, 8846A, SDM3055, DM3068, DMM6500 |
-| Power Supplies | 2 | Z+100-2, 9130B |
+| Power Supplies | 3 | Z+100-2, 9130B, DP832 |
 | Electronic Loads | 2 | SDL1000X, 8600 |
 | Frequency Counters | 1 | 53230A |
-| **Total** | **24** | |
+| **Total** | **25** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed

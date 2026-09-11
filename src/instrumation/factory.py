@@ -445,6 +445,9 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
         elif "DM3" in idn:
             from .drivers.rigol_dmm import RigolDM3068
             final_drv = RigolDM3068(resource_address)
+        elif "DP8" in idn:
+            from .drivers.rigol_psu import RigolDP832
+            final_drv = RigolDP832(resource_address)
         else:
             from .drivers.rigol import RigolDSA
             final_drv = RigolDSA(resource_address)
