@@ -24,7 +24,7 @@ Process per instrument:
 ### Power Supplies (5)
 4. [x] Rigol DP832 — triple-output PSU
 5. [x] Siglent SPD3303X — triple-output PSU
-6. [ ] Keysight E36313A — triple-output PSU
+6. [x] Keysight E36313A — triple-output PSU
 7. [ ] Korad KA3005P — single-output hobbyist PSU
 8. [ ] GW Instek GPP-4323 — quad-output PSU (roadmap #171)
 

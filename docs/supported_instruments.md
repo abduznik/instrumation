@@ -396,6 +396,26 @@ independent/series/parallel CH1+CH2 coupling.
 > prefer `"GENERIC"` passthrough or file an issue with the failing
 > command.
 
+### Keysight E36300 Series
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `KeysightE36313A` | E36313A | E36300 Series (Triple Output) | `KEYSIGHT`/`AGILENT` + (`E3631`, `E36313`, `E3633`) |
+
+Uses the SCPI-99 channel-list syntax `(@<chanlist>)` shared with other
+Keysight instruments -- every setpoint/measurement command takes an
+explicit `(@<n>)` argument, distinct from the BK Precision 9130B's
+channel-select round-trip and the Rigol/Siglent `CH<n>` prefix style.
+`set_output_pairing()` is E36300-specific (OFF/series/parallel CH1+CH2).
+
+**Also likely compatible:**
+- E36311A, E36312A
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ---
 
 ## Electronic Loads
@@ -466,10 +486,10 @@ default, never a silent DMM/SA misread — see issue #148.
 | Signal Generators | 5 | N5183B, AFG3022C, SMA100B, MG3700A, SMA100A |
 | Network Analyzers | 3 | N5232A, N9913A, MS2035B |
 | Multimeters | 6 | 34461A, 2000, 8846A, SDM3055, DM3068, DMM6500 |
-| Power Supplies | 4 | Z+100-2, 9130B, DP832, SPD3303X |
+| Power Supplies | 5 | Z+100-2, 9130B, DP832, SPD3303X, E36313A |
 | Electronic Loads | 2 | SDL1000X, 8600 |
 | Frequency Counters | 1 | 53230A |
-| **Total** | **26** | |
+| **Total** | **27** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed
