@@ -31,7 +31,7 @@ Process per instrument:
 ### Electronic Loads (3)
 9. [x] Rigol DL3021 — programmable DC load
 10. [x] ITECH IT8512+ — DC electronic load
-11. [ ] Chroma 63200 series — DC electronic load
+11. [x] Chroma 63200 series — DC electronic load
 
 ### Oscilloscopes (4)
 12. [ ] Siglent SDS2000X Plus

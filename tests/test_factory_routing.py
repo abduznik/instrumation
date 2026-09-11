@@ -147,6 +147,12 @@ class TestFactoryGenericFallback(unittest.TestCase):
             drv = get_instrument("TCPIP::10.0.0.23::INSTR", "LOAD")
         self.assertEqual(drv.__class__.__name__, "ItechIT8512Plus")
 
+    def test_chroma_63204a_idn_routes_correctly(self):
+        rm = _mock_rm("CHROMA,63204A,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("TCPIP::10.0.0.24::INSTR", "LOAD")
+        self.assertEqual(drv.__class__.__name__, "Chroma63200A")
+
     def test_bk_precision_idn_routes_to_8600_load(self):
         rm = _mock_rm("B&K PRECISION,8600,SN1,1.0")
         with patch("instrumation.factory.get_rm", return_value=rm):

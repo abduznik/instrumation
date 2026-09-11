@@ -532,6 +532,30 @@ trip-point command in its base command set, so `set_ovp`/
 > prefer `"GENERIC"` passthrough or file an issue with the failing
 > command.
 
+### Chroma 63200A Series
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `Chroma63200A` | 63200A series | 63200A Series (High Power) | `CHROMA` + `632` |
+
+The most distinctive load dialect in this library: a single `MODE`
+mnemonic encodes BOTH the operating mode and measurement range
+(`MODE CCH` = CC High range, `MODE CVL` = CV Low range, etc.).
+`set_mode()` always selects the **High**-range variant as the safest
+default for an unknown DUT — send `write("MODE CCL")`/`"MODE CCM"`
+directly for Low/Middle range. Setpoints use the `<FUNC>:STATic:L1`
+level-1 static value (the front panel's "A" state); the `L2` ("B"
+state) and slew-rate parameters are not wired up. No dedicated
+software OVP/OCP/OPP trip-level commands exist — OCP/OPP are
+selectable `MODE`s, not settable protection levels — and there is no
+direct `MEASure:RESistance?` query, so those methods log an
+unsupported-feature warning.
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ---
 
 ## Frequency Counters
@@ -573,9 +597,9 @@ default, never a silent DMM/SA misread — see issue #148.
 | Network Analyzers | 3 | N5232A, N9913A, MS2035B |
 | Multimeters | 6 | 34461A, 2000, 8846A, SDM3055, DM3068, DMM6500 |
 | Power Supplies | 7 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P, GPP-4323 |
-| Electronic Loads | 4 | SDL1000X, 8600, DL3021, IT8512+ |
+| Electronic Loads | 5 | SDL1000X, 8600, DL3021, IT8512+, 63200A |
 | Frequency Counters | 1 | 53230A |
-| **Total** | **31** | |
+| **Total** | **32** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed

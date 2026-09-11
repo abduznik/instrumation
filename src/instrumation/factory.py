@@ -515,6 +515,10 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
         if "IT85" in idn:
             from .drivers.itech_load import ItechIT8512Plus
             final_drv = ItechIT8512Plus(resource_address)
+    elif "CHROMA" in idn:
+        if "632" in idn:
+            from .drivers.chroma_load import Chroma63200A
+            final_drv = Chroma63200A(resource_address)
 
     if not final_drv:
         # No brand matched the IDN. If exactly one driver is registered for the
