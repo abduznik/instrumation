@@ -375,6 +375,27 @@ to 1). `set_tracking_mode()` is DP800-specific and links CH2/CH3.
 > prefer `"GENERIC"` passthrough or file an issue with the failing
 > command.
 
+### Siglent SPD3303X
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `SiglentSPD3303X` | SPD3303X | SPD3303X Series | `SIGLENT` + `SPD` |
+
+CH1/CH2 are independently controlled outputs addressed with a `CH1`/
+`CH2` command prefix; CH3 is a fixed 5V/2.5A logic supply with
+output-enable control only (no settable voltage/current, and
+`set_ovp`/`set_ocp`/`clear_protection` are unsupported — the SPD3303X
+has no software OVP/OCP command). `set_track_mode()` selects
+independent/series/parallel CH1+CH2 coupling.
+
+**Also likely compatible:**
+- SPD3303X-E, SPD3303C
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ---
 
 ## Electronic Loads
@@ -445,10 +466,10 @@ default, never a silent DMM/SA misread — see issue #148.
 | Signal Generators | 5 | N5183B, AFG3022C, SMA100B, MG3700A, SMA100A |
 | Network Analyzers | 3 | N5232A, N9913A, MS2035B |
 | Multimeters | 6 | 34461A, 2000, 8846A, SDM3055, DM3068, DMM6500 |
-| Power Supplies | 3 | Z+100-2, 9130B, DP832 |
+| Power Supplies | 4 | Z+100-2, 9130B, DP832, SPD3303X |
 | Electronic Loads | 2 | SDL1000X, 8600 |
 | Frequency Counters | 1 | 53230A |
-| **Total** | **25** | |
+| **Total** | **26** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed
