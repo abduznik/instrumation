@@ -29,7 +29,7 @@ Process per instrument:
 8. [x] GW Instek GPP-4323 — quad-output PSU (roadmap #171)
 
 ### Electronic Loads (3)
-9. [ ] Rigol DL3021 — programmable DC load
+9. [x] Rigol DL3021 — programmable DC load
 10. [ ] ITECH IT8512+ — DC electronic load
 11. [ ] Chroma 63200 series — DC electronic load
 

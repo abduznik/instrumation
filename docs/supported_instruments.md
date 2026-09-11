@@ -490,6 +490,28 @@ programming from the 8600 Series manual are not yet implemented.
 > prefer `"GENERIC"` passthrough or file an issue with the failing
 > command.
 
+### Rigol DL3000 Series
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `RigolDL3021` | DL3021 | DL3000 Series | `RIGOL` + `DL3` |
+
+Supports CC/CV/CR/CP modes and battery discharge test mode
+(`set_battery_test_mode`, `get_battery_test_capacity`,
+`get_watt_hours`, `get_discharging_time`). Unlike the BK Precision
+8600, the DL3000 series has no software OVP/OCP/OPP trip-point
+subsystem in its base command set — front-panel OCP/OPP are test
+*modes*, not simple protection levels — so `set_ovp`/`set_ocp`/
+`set_opp`/`clear_protection` log an unsupported-feature warning here.
+
+**Also likely compatible** (same DL3000 command set):
+- DL3031, DL3031A
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ---
 
 ## Frequency Counters
@@ -531,9 +553,9 @@ default, never a silent DMM/SA misread — see issue #148.
 | Network Analyzers | 3 | N5232A, N9913A, MS2035B |
 | Multimeters | 6 | 34461A, 2000, 8846A, SDM3055, DM3068, DMM6500 |
 | Power Supplies | 7 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P, GPP-4323 |
-| Electronic Loads | 2 | SDL1000X, 8600 |
+| Electronic Loads | 3 | SDL1000X, 8600, DL3021 |
 | Frequency Counters | 1 | 53230A |
-| **Total** | **29** | |
+| **Total** | **30** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed
