@@ -26,7 +26,7 @@ Process per instrument:
 5. [x] Siglent SPD3303X — triple-output PSU
 6. [x] Keysight E36313A — triple-output PSU
 7. [x] Korad KA3005P — single-output hobbyist PSU
-8. [ ] GW Instek GPP-4323 — quad-output PSU (roadmap #171)
+8. [x] GW Instek GPP-4323 — quad-output PSU (roadmap #171)
 
 ### Electronic Loads (3)
 9. [ ] Rigol DL3021 — programmable DC load

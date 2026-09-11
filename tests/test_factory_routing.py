@@ -129,6 +129,12 @@ class TestFactoryGenericFallback(unittest.TestCase):
             drv = get_instrument("TCPIP::10.0.0.20::INSTR", "PSU")
         self.assertEqual(drv.__class__.__name__, "KoradKA3005P")
 
+    def test_gwinstek_gpp4323_idn_routes_correctly(self):
+        rm = _mock_rm("GW INSTEK,GPP-4323,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("TCPIP::10.0.0.21::INSTR", "PSU")
+        self.assertEqual(drv.__class__.__name__, "GWInstekGPP4323")
+
     def test_bk_precision_idn_routes_to_8600_load(self):
         rm = _mock_rm("B&K PRECISION,8600,SN1,1.0")
         with patch("instrumation.factory.get_rm", return_value=rm):

@@ -437,6 +437,29 @@ and Stamos under different model numbers with an identical protocol.
 > prefer `"GENERIC"` passthrough or file an issue with the failing
 > command.
 
+### GW Instek GPP Series
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `GWInstekGPP4323` | GPP-4323 | GPP Series (4 independent channels) | `GW`/`GW INSTEK` + `GPP` |
+
+The GPP dialect puts the channel number directly as a numeric suffix
+on the keyword itself (`SOURce2:VOLTage`, `OUTPut2:STATe`,
+`MEASure2:CURRent?`), distinct from every other multi-channel PSU
+dialect already in this library (Keysight `(@<n>)`, Rigol/Siglent
+`CH<n>:` prefix, BK Precision channel-select round-trip). Channel 1's
+suffix may be omitted on real hardware but this driver always sends it
+explicitly for clarity. `set_series_mode()`/`set_parallel_mode()` link
+CH1+CH2 (and CH3+CH4 where present).
+
+**Also likely compatible** (same GPP command set):
+- GPP-1326, GPP-2323, GPP-3323
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ---
 
 ## Electronic Loads
@@ -507,10 +530,10 @@ default, never a silent DMM/SA misread — see issue #148.
 | Signal Generators | 5 | N5183B, AFG3022C, SMA100B, MG3700A, SMA100A |
 | Network Analyzers | 3 | N5232A, N9913A, MS2035B |
 | Multimeters | 6 | 34461A, 2000, 8846A, SDM3055, DM3068, DMM6500 |
-| Power Supplies | 6 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P |
+| Power Supplies | 7 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P, GPP-4323 |
 | Electronic Loads | 2 | SDL1000X, 8600 |
 | Frequency Counters | 1 | 53230A |
-| **Total** | **28** | |
+| **Total** | **29** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed
