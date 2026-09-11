@@ -69,6 +69,18 @@ class TestFactoryGenericFallback(unittest.TestCase):
             drv = get_instrument("TCPIP::10.0.0.10::INSTR", "PSU")
         self.assertEqual(drv.__class__.__name__, "BKPrecision9130B")
 
+    def test_siglent_sdm_idn_routes_to_sdm3055(self):
+        rm = _mock_rm("Siglent Technologies,SDM3055,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("TCPIP::10.0.0.11::INSTR", "DMM")
+        self.assertEqual(drv.__class__.__name__, "SiglentSDM3055")
+
+    def test_siglent_scope_idn_still_routes_to_sds(self):
+        rm = _mock_rm("Siglent Technologies,SDS1104X-E,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("TCPIP::10.0.0.12::INSTR", "SCOPE")
+        self.assertEqual(drv.__class__.__name__, "SiglentSDS")
+
     def test_bk_precision_idn_routes_to_8600_load(self):
         rm = _mock_rm("B&K PRECISION,8600,SN1,1.0")
         with patch("instrumation.factory.get_rm", return_value=rm):

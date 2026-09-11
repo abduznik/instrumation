@@ -430,8 +430,12 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
             from .drivers.keysight import Keysight34461A
             final_drv = Keysight34461A(resource_address)
     elif "SIGLENT" in idn:
-        from .drivers.siglent import SiglentSDS
-        final_drv = SiglentSDS(resource_address)
+        if "SDM" in idn:
+            from .drivers.siglent_dmm import SiglentSDM3055
+            final_drv = SiglentSDM3055(resource_address)
+        else:
+            from .drivers.siglent import SiglentSDS
+            final_drv = SiglentSDS(resource_address)
     elif "RIGOL" in idn:
         if any(m in idn for m in ["DS1054Z", "DS1104Z", "DS1074Z", "DS1102Z",
                                    "MSO1054Z", "MSO1104Z", "MSO1074Z",

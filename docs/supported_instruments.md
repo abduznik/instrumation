@@ -262,6 +262,25 @@ Programmer's Manual, mirroring `Keysight34461A`'s command shapes:
 |:---|:---|:---|:---|
 | `Keithley2000` | 2000 | Keithley 2000 Series | `KEITHLEY` + `2000` |
 
+### Siglent SDM3000 Series
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `SiglentSDM3055` | SDM3055 | SDM3000 Series | `SIGLENT` + `SDM` |
+
+Standard SCPI-99 `MEASure`/`CONFigure` multimeter subsystem, the same
+command shape as the Keysight 34401A family and Fluke 884x — DCV, ACV,
+DCI, ACI, 2W/4W resistance, frequency, period, capacitance, continuity,
+diode, and RTD/thermistor temperature. `set_nplc()` is SDM3000-specific.
+
+**Also likely compatible** (same SDM series command set):
+- SDM3045X, SDM3065X, SDM3055A
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ---
 
 ## Power Supplies
@@ -366,11 +385,11 @@ default, never a silent DMM/SA misread — see issue #148.
 | Spectrum Analyzers | 4 | MXA N9020A, PXA N9030A, DSA800, MS2830A |
 | Signal Generators | 5 | N5183B, AFG3022C, SMA100B, MG3700A, SMA100A |
 | Network Analyzers | 3 | N5232A, N9913A, MS2035B |
-| Multimeters | 3 | 34461A, 2000, 8846A |
+| Multimeters | 4 | 34461A, 2000, 8846A, SDM3055 |
 | Power Supplies | 2 | Z+100-2, 9130B |
 | Electronic Loads | 2 | SDL1000X, 8600 |
 | Frequency Counters | 1 | 53230A |
-| **Total** | **21** | |
+| **Total** | **22** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed
