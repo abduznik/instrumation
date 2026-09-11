@@ -455,6 +455,9 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
         elif "2000" in idn:
             from .drivers.keithley import Keithley2000
             final_drv = Keithley2000(resource_address)
+        elif "DMM6500" in idn or "6500" in idn:
+            from .drivers.keithley_dmm6500 import KeithleyDMM6500
+            final_drv = KeithleyDMM6500(resource_address)
     elif "TDK-LAMBDA" in idn or "Z+" in idn:
         from .drivers.tdk import TDKLambdaZPlus
         final_drv = TDKLambdaZPlus(resource_address)

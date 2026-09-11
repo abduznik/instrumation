@@ -301,6 +301,24 @@ library, the DM3000 dialect selects the active function with
 > prefer `"GENERIC"` passthrough or file an issue with the failing
 > command.
 
+### Keithley DMM6500
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `KeithleyDMM6500` | DMM6500 | DMM6500 native SCPI | `KEITHLEY` + (`DMM6500`, `6500`) |
+
+Targets the DMM6500's native SCPI command set (function selection via
+`:SENSe:FUNCtion "<FUNC>"` then `:READ?`), not the `SCPI2000`/`SCPI34401`
+compatibility personalities or TSP scripting. `set_nplc()`,
+`set_auto_range()` and `set_offset_compensation()` take an explicit
+SCPI function-name argument since ranging/NPLC live under
+`:SENSe:<FUNC>:*`, not a single global subsystem.
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ---
 
 ## Power Supplies
@@ -405,11 +423,11 @@ default, never a silent DMM/SA misread — see issue #148.
 | Spectrum Analyzers | 4 | MXA N9020A, PXA N9030A, DSA800, MS2830A |
 | Signal Generators | 5 | N5183B, AFG3022C, SMA100B, MG3700A, SMA100A |
 | Network Analyzers | 3 | N5232A, N9913A, MS2035B |
-| Multimeters | 5 | 34461A, 2000, 8846A, SDM3055, DM3068 |
+| Multimeters | 6 | 34461A, 2000, 8846A, SDM3055, DM3068, DMM6500 |
 | Power Supplies | 2 | Z+100-2, 9130B |
 | Electronic Loads | 2 | SDL1000X, 8600 |
 | Frequency Counters | 1 | 53230A |
-| **Total** | **23** | |
+| **Total** | **24** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed
