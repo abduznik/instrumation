@@ -281,6 +281,24 @@ set, so `configure_list_sweep()` logs an unsupported-feature warning.
 > prefer `"GENERIC"` passthrough or file an issue with the failing
 > command.
 
+### GW Instek MFG-2000 Series
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `GWInstekMFG2000` | MFG-2120 | MFG-2000 Series | `GW`/`GW INSTEK` + `MFG` |
+
+Combines Rigol-style `SOURce<n>:APPLy:<shape>` waveform selection with
+a separate per-parameter SCPI subtree for frequency/amplitude/offset/
+phase (`SOURce<n>:FREQuency`, `SOURce<n>:AMPLitude`,
+`SOURce<n>:DCOffset`, `SOURce<n>:PHASe`) -- unlike Rigol's single
+combined-argument `APPLy` call, MFG-2000 setpoints are each sent
+independently after selecting the waveform shape. Roadmap #176.
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ---
 
 ## Network Analyzers
@@ -698,13 +716,13 @@ default, never a silent DMM/SA misread — see issue #148.
 |:---|:---|:---|
 | Oscilloscopes | 7 | DSOX2002A, DS1054Z, SDS Series, TDS Series, HMO722, SDS2102X Plus, MSO5354 |
 | Spectrum Analyzers | 5 | MXA N9020A, PXA N9030A, DSA800, MS2830A, SSA3021X |
-| Signal Generators | 7 | N5183B, AFG3022C, SMA100B, MG3700A, SMA100A, SDG2042X, DG4062 |
+| Signal Generators | 8 | N5183B, AFG3022C, SMA100B, MG3700A, SMA100A, SDG2042X, DG4062, MFG-2120 |
 | Network Analyzers | 3 | N5232A, N9913A, MS2035B |
 | Multimeters | 6 | 34461A, 2000, 8846A, SDM3055, DM3068, DMM6500 |
 | Power Supplies | 7 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P, GPP-4323 |
 | Electronic Loads | 5 | SDL1000X, 8600, DL3021, IT8512+, 63200A |
 | Frequency Counters | 1 | 53230A |
-| **Total** | **37** | |
+| **Total** | **38** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed

@@ -526,6 +526,9 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
         if "GPP" in idn:
             from .drivers.gwinstek_psu import GWInstekGPP4323
             final_drv = GWInstekGPP4323(resource_address)
+        elif "MFG" in idn:
+            from .drivers.gwinstek_awg import GWInstekMFG2000
+            final_drv = GWInstekMFG2000(resource_address)
     elif "ITECH" in idn:
         if "IT85" in idn:
             from .drivers.itech_load import ItechIT8512Plus
