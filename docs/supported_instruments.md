@@ -152,7 +152,7 @@ command shapes still used by the original SDS1000/SDS2000X(-E).
 > spectrum analyzer base API.
 
 **Also likely compatible:**
-- MXA N9010A (EXA), N9020A, N9021A
+- MXA N9010A/B (EXA), N9020A/B, N9021A
 - PXA N9030A, N9040B
 
 ### Rigol DSA

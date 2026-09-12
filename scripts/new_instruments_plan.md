@@ -37,9 +37,10 @@ Process per instrument:
 12. [x] Siglent SDS2000X Plus
 13. [x] Rigol MSO5000 series
 14. [x] Keysight DSOX1204G (already covered by existing KeysightInfiniiVision driver; added compat docs+test)
-15. [ ] PicoScope 2208B (USB scope, PicoSDK-style)
+15. [x] ~~PicoScope 2208B~~ SKIPPED: uses PicoSDK ctypes DLL API (ps2000a.dll), not VISA/SCPI -- incompatible with this library's RealDriver/PyVISA transport model. Replaced with Keysight N9010B EXA (moved up from spectrum analyzer list).
 
 ### Spectrum Analyzers (3)
+15b. [x] Keysight N9010B EXA (already covered by existing KeysightPXA X-Series driver; added compat docs+test)
 16. [ ] Siglent SSA3000X
 17. [ ] Rigol DSA875
 18. [ ] Keysight N9010B EXA
