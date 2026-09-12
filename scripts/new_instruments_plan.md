@@ -42,7 +42,7 @@ Process per instrument:
 ### Spectrum Analyzers (3)
 15b. [x] Keysight N9010B EXA (already covered by existing KeysightPXA X-Series driver; added compat docs+test)
 16. [x] Siglent SSA3000X
-17. [ ] Rigol DSA875
+17. [x] Rigol DSA875 (already covered by existing RigolDSA driver; added compat test)
 18. [ ] Keysight N9010B EXA
 
 ### Signal/Function Generators (4)
