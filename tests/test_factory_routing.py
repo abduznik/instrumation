@@ -135,6 +135,12 @@ class TestFactoryGenericFallback(unittest.TestCase):
             drv = get_instrument("TCPIP::10.0.0.33::INSTR", "SG")
         self.assertEqual(drv.__class__.__name__, "GWInstekMFG2000")
 
+    def test_srs_ds345_idn_routes_correctly(self):
+        rm = _mock_rm("StanfordResearchSystems,DS345,12345,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("GPIB0::19::INSTR", "SG")
+        self.assertEqual(drv.__class__.__name__, "SRSDS345")
+
     def test_rigol_dm3068_idn_routes_to_rigol_dmm(self):
         rm = _mock_rm("RIGOL TECHNOLOGIES,DM3068,SN1,1.0")
         with patch("instrumation.factory.get_rm", return_value=rm):

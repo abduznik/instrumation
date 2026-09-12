@@ -48,7 +48,7 @@ Process per instrument:
 19. [x] Siglent SDG2000X AWG
 20. [x] Rigol DG4000 series AWG
 21. [x] GW Instek MFG-2000 (roadmap #176)
-22. [ ] SRS DS345
+22. [x] SRS DS345
 
 ### Network/Impedance Analyzers (3)
 23. [ ] Siglent SNA5000A VNA

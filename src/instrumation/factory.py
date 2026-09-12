@@ -491,6 +491,10 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
     elif "KORAD" in idn:
         from .drivers.korad import KoradKA3005P
         final_drv = KoradKA3005P(resource_address)
+    elif "STANFORD" in idn:
+        if "DS345" in idn:
+            from .drivers.srs_ds345 import SRSDS345
+            final_drv = SRSDS345(resource_address)
     elif "ANRITSU" in idn:
         if "MS2035" in idn:
             from .drivers.anritsu import AnritsuMS2035B

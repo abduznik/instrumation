@@ -299,6 +299,25 @@ independently after selecting the waveform shape. Roadmap #176.
 > prefer `"GENERIC"` passthrough or file an issue with the failing
 > command.
 
+### Stanford Research Systems DS345
+
+| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `SRSDS345` | DS345 | SRS terse mnemonics (non-SCPI-subtree) | `STANFORD` + `DS345` |
+
+Uses SRS's distinctively terse, colon-free command mnemonics (`FREQ`,
+`AMPL`, `OFFS`, `FUNC`, `PHSE`) rather than a SCPI `:SOURce:*` subtree;
+waveform shape is a numeric code (0=sine, 1=square, 2=triangle,
+3=ramp, 4=noise, 5=arbitrary) instead of a mnemonic string. The DS345
+has **no software output-enable command** -- the configured waveform
+is always live on the output BNC -- so `set_output()` logs an
+unsupported-feature warning and `get_output()` always reports `True`.
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit a command error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ---
 
 ## Network Analyzers
@@ -716,13 +735,13 @@ default, never a silent DMM/SA misread — see issue #148.
 |:---|:---|:---|
 | Oscilloscopes | 7 | DSOX2002A, DS1054Z, SDS Series, TDS Series, HMO722, SDS2102X Plus, MSO5354 |
 | Spectrum Analyzers | 5 | MXA N9020A, PXA N9030A, DSA800, MS2830A, SSA3021X |
-| Signal Generators | 8 | N5183B, AFG3022C, SMA100B, MG3700A, SMA100A, SDG2042X, DG4062, MFG-2120 |
+| Signal Generators | 9 | N5183B, AFG3022C, SMA100B, MG3700A, SMA100A, SDG2042X, DG4062, MFG-2120, DS345 |
 | Network Analyzers | 3 | N5232A, N9913A, MS2035B |
 | Multimeters | 6 | 34461A, 2000, 8846A, SDM3055, DM3068, DMM6500 |
 | Power Supplies | 7 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P, GPP-4323 |
 | Electronic Loads | 5 | SDL1000X, 8600, DL3021, IT8512+, 63200A |
 | Frequency Counters | 1 | 53230A |
-| **Total** | **38** | |
+| **Total** | **39** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed
