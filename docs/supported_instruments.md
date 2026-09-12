@@ -238,6 +238,28 @@ Standard SCPI-99 spectrum-analyzer subsystem, the same command shape as
 **Also likely compatible:**
 - AFG3011C, AFG3021C, AFG3022C, AFG3102C, AFG3252C
 
+### Siglent SDG2000X
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `SiglentSDG2000X` | SDG2042X | SDG Series AWG | `SIGLENT` + `SDG` |
+
+Uses Siglent's `C<n>:BSWV` (Basic Wave) command: a single keyword
+takes comma-separated `PARAM,value` pairs (`C1:BSWV FRQ,1000`,
+`C1:BSWV AMP,1`) rather than one SCPI subtree per parameter --
+distinct from the Tektronix AFG3000's
+`SOURce<n>:FREQuency:FIXed`-per-parameter dialect. Has no
+frequency-list sweep mode, so `configure_list_sweep()` logs an
+unsupported-feature warning.
+
+**Also likely compatible** (same BSWV/OUTP command set):
+- SDG1000X, SDG2000X Plus, SDG6000X
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ---
 
 ## Network Analyzers
@@ -655,13 +677,13 @@ default, never a silent DMM/SA misread — see issue #148.
 |:---|:---|:---|
 | Oscilloscopes | 7 | DSOX2002A, DS1054Z, SDS Series, TDS Series, HMO722, SDS2102X Plus, MSO5354 |
 | Spectrum Analyzers | 5 | MXA N9020A, PXA N9030A, DSA800, MS2830A, SSA3021X |
-| Signal Generators | 5 | N5183B, AFG3022C, SMA100B, MG3700A, SMA100A |
+| Signal Generators | 6 | N5183B, AFG3022C, SMA100B, MG3700A, SMA100A, SDG2042X |
 | Network Analyzers | 3 | N5232A, N9913A, MS2035B |
 | Multimeters | 6 | 34461A, 2000, 8846A, SDM3055, DM3068, DMM6500 |
 | Power Supplies | 7 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P, GPP-4323 |
 | Electronic Loads | 5 | SDL1000X, 8600, DL3021, IT8512+, 63200A |
 | Frequency Counters | 1 | 53230A |
-| **Total** | **35** | |
+| **Total** | **36** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed

@@ -43,10 +43,9 @@ Process per instrument:
 15b. [x] Keysight N9010B EXA (already covered by existing KeysightPXA X-Series driver; added compat docs+test)
 16. [x] Siglent SSA3000X
 17. [x] Rigol DSA875 (already covered by existing RigolDSA driver; added compat test)
-18. [ ] Keysight N9010B EXA
 
 ### Signal/Function Generators (4)
-19. [ ] Siglent SDG2000X AWG
+19. [x] Siglent SDG2000X AWG
 20. [ ] Rigol DG4000 series AWG
 21. [ ] GW Instek MFG-2000 (roadmap #176)
 22. [ ] SRS DS345

@@ -445,6 +445,9 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
         elif "SSA" in idn:
             from .drivers.siglent_sa import SiglentSSA3000X
             final_drv = SiglentSSA3000X(resource_address)
+        elif "SDG" in idn:
+            from .drivers.siglent_awg import SiglentSDG2000X
+            final_drv = SiglentSDG2000X(resource_address)
         else:
             from .drivers.siglent import SiglentSDS
             final_drv = SiglentSDS(resource_address)
