@@ -742,6 +742,24 @@ source.
 > prefer `"GENERIC"` passthrough or file an issue with the failing
 > command.
 
+### Hioki IM3536
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `HiokiIM3536` | IM3536 | IM3523/IM3533/IM3536/IM3570/IM3590 family | `HIOKI` + `IM35` |
+
+SCPI-style command set shared across the IM35xx/IM3570/IM3590
+family. `:FREQuency`/`:FREQuency?` confirmed against Hioki's own
+PLC-integration examples; parameter-type selection and measurement
+readback follow the same `:FUNC:IMP`/`:MEASure?` shape as the
+Keysight E4980A LCR meter class.
+
+> [!WARNING]
+> Best-effort: the full IM3536 command reference requires a
+> Hioki-issued LCR Application Disc not published as a standalone
+> PDF. Not yet verified against real hardware -- prefer `"GENERIC"`
+> passthrough or file an issue with the failing command.
+
 ---
 
 ## Frequency Counters
@@ -784,9 +802,9 @@ default, never a silent DMM/SA misread — see issue #148.
 | Multimeters | 6 | 34461A, 2000, 8846A, SDM3055, DM3068, DMM6500 |
 | Power Supplies | 7 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P, GPP-4323 |
 | Electronic Loads | 5 | SDL1000X, 8600, DL3021, IT8512+, 63200A |
-| LCR Meters | 1 | E4980A |
+| LCR Meters | 2 | E4980A, IM3536 |
 | Frequency Counters | 1 | 53230A |
-| **Total** | **41** | |
+| **Total** | **42** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed

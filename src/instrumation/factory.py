@@ -501,6 +501,10 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
         if "DS345" in idn:
             from .drivers.srs_ds345 import SRSDS345
             final_drv = SRSDS345(resource_address)
+    elif "HIOKI" in idn:
+        if "IM35" in idn:
+            from .drivers.hioki_lcr import HiokiIM3536
+            final_drv = HiokiIM3536(resource_address)
     elif "ANRITSU" in idn:
         if "MS2035" in idn:
             from .drivers.anritsu import AnritsuMS2035B
