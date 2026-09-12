@@ -828,6 +828,30 @@ mode uses the same standard SCPI-99 counter subsystem shape as
 
 ---
 
+## USB Power Sensors
+
+New instrument category (issue #204). `"SENSOR"` is a new canonical
+`driver_type` key registered in `factory.KNOWN_DRIVER_TYPES`.
+
+### Keysight U2000 Series
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `KeysightU2000` | U2004A | U2000 Series USB Power Sensor | `KEYSIGHT`/`AGILENT`/`HP` + (`U2000`, `U200`) |
+
+Headless USBTMC-only sensor (no front panel); standard SCPI power-
+sensor command set (`FETCh?`/`MEASure?`, `SENSe:FREQuency`,
+`SENSe:CORRection:GAIN2` for external gain/loss offset,
+`CALibration:ZERO`). `set_frequency()` sets the CW frequency used for
+the sensor's internal cal-factor table lookup, not an output.
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
+---
+
 ## RF Switches
 
 New instrument category (issue #204). `"SWITCH"` is a new canonical
@@ -885,7 +909,8 @@ default, never a silent DMM/SA misread — see issue #148.
 | LCR Meters | 2 | E4980A, IM3536 |
 | Frequency Counters | 2 | 53230A, PM6690 |
 | RF Switches | 1 | RC-4SPDT-A18 |
-| **Total** | **45** | |
+| USB Power Sensors | 1 | U2004A |
+| **Total** | **46** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed
