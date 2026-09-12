@@ -182,6 +182,23 @@ command shapes still used by the original SDS1000/SDS2000X(-E).
 **Also likely compatible:**
 - MS2830A, MS2690A, MS2691A, MS2692A
 
+### Siglent SSA3000X
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `SiglentSSA3000X` | SSA3021X | SSA3000X Series | `SIGLENT` + `SSA` |
+
+Standard SCPI-99 spectrum-analyzer subsystem, the same command shape as
+`RigolDSA`/`AnritsuSA`.
+
+**Also likely compatible:**
+- SSA3011X, SSA3015X, SSA3032X, SSA3000X Plus, SSA3000X-R, SVA1000X
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ---
 
 ## Signal Generators
@@ -637,14 +654,14 @@ default, never a silent DMM/SA misread — see issue #148.
 | Category | Drivers | Validated Models |
 |:---|:---|:---|
 | Oscilloscopes | 7 | DSOX2002A, DS1054Z, SDS Series, TDS Series, HMO722, SDS2102X Plus, MSO5354 |
-| Spectrum Analyzers | 4 | MXA N9020A, PXA N9030A, DSA800, MS2830A |
+| Spectrum Analyzers | 5 | MXA N9020A, PXA N9030A, DSA800, MS2830A, SSA3021X |
 | Signal Generators | 5 | N5183B, AFG3022C, SMA100B, MG3700A, SMA100A |
 | Network Analyzers | 3 | N5232A, N9913A, MS2035B |
 | Multimeters | 6 | 34461A, 2000, 8846A, SDM3055, DM3068, DMM6500 |
 | Power Supplies | 7 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P, GPP-4323 |
 | Electronic Loads | 5 | SDL1000X, 8600, DL3021, IT8512+, 63200A |
 | Frequency Counters | 1 | 53230A |
-| **Total** | **34** | |
+| **Total** | **35** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed
