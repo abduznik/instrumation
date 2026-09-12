@@ -36,7 +36,7 @@ Process per instrument:
 ### Oscilloscopes (4)
 12. [x] Siglent SDS2000X Plus
 13. [x] Rigol MSO5000 series
-14. [ ] Keysight DSOX1204G
+14. [x] Keysight DSOX1204G (already covered by existing KeysightInfiniiVision driver; added compat docs+test)
 15. [ ] PicoScope 2208B (USB scope, PicoSDK-style)
 
 ### Spectrum Analyzers (3)
