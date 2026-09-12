@@ -51,7 +51,7 @@ Process per instrument:
 22. [x] SRS DS345
 
 ### Network/Impedance Analyzers (3)
-23. [ ] Siglent SNA5000A VNA
+23. [x] Siglent SNA5000A VNA
 24. [ ] Keysight E4980A LCR meter
 25. [ ] Hioki IM3536 LCR meter
 

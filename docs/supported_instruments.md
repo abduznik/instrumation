@@ -346,6 +346,24 @@ unsupported-feature warning and `get_output()` always reports `True`.
 **Also likely compatible:**
 - MS2034B, MS2035B, MS2036A, MS2037A, MS2038C, MS2039C, MS2047A, MS2060A
 
+### Siglent SNA5000A
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `SiglentSNA5000A` | SNA5012A | SNA5000A/X Series | `SIGLENT` + `SNA` |
+
+Standard SCPI-99 network-analyzer subsystem, the same command shape as
+`KeysightPNA` -- Siglent's SNA5000A documentation is explicitly
+SCPI-99 compliant for this measurement class.
+
+**Also likely compatible:**
+- SNA5014A, SNA5024A, SNA5044A, SNA5000X series
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ---
 
 ## Multimeters
@@ -736,12 +754,12 @@ default, never a silent DMM/SA misread — see issue #148.
 | Oscilloscopes | 7 | DSOX2002A, DS1054Z, SDS Series, TDS Series, HMO722, SDS2102X Plus, MSO5354 |
 | Spectrum Analyzers | 5 | MXA N9020A, PXA N9030A, DSA800, MS2830A, SSA3021X |
 | Signal Generators | 9 | N5183B, AFG3022C, SMA100B, MG3700A, SMA100A, SDG2042X, DG4062, MFG-2120, DS345 |
-| Network Analyzers | 3 | N5232A, N9913A, MS2035B |
+| Network Analyzers | 4 | N5232A, N9913A, MS2035B, SNA5012A |
 | Multimeters | 6 | 34461A, 2000, 8846A, SDM3055, DM3068, DMM6500 |
 | Power Supplies | 7 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P, GPP-4323 |
 | Electronic Loads | 5 | SDL1000X, 8600, DL3021, IT8512+, 63200A |
 | Frequency Counters | 1 | 53230A |
-| **Total** | **39** | |
+| **Total** | **40** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed
