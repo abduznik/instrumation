@@ -159,6 +159,12 @@ class TestFactoryGenericFallback(unittest.TestCase):
             drv = get_instrument("GPIB0::18::INSTR", "LCR")
         self.assertEqual(drv.__class__.__name__, "HiokiIM3536")
 
+    def test_srs_sr830_idn_routes_correctly(self):
+        rm = _mock_rm("StanfordResearchSystems,SR830,12345,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("GPIB0::8::INSTR", "LOCKIN")
+        self.assertEqual(drv.__class__.__name__, "SRSSR830")
+
     def test_rigol_dm3068_idn_routes_to_rigol_dmm(self):
         rm = _mock_rm("RIGOL TECHNOLOGIES,DM3068,SN1,1.0")
         with patch("instrumation.factory.get_rm", return_value=rm):

@@ -718,6 +718,36 @@ unsupported-feature warning.
 
 ---
 
+## Lock-In Amplifiers
+
+New instrument category (issue #204). `LockInAmplifier` is a new
+abstract base in `drivers/base.py`; `"LOCKIN"` is a new canonical
+`driver_type` key registered in `factory.KNOWN_DRIVER_TYPES`, with a
+`SimulatedLockInAmplifier` registered for SIM mode.
+
+### Stanford Research Systems SR830
+
+| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `SRSSR830` | SR830 | SRS terse mnemonics (non-SCPI-subtree) | `STANFORD` + `SR830` |
+
+Like the SRS DS345, uses terse colon-free command mnemonics (`FREQ`,
+`PHAS`, `SLVL`, `SENS`, `OFLT`, `HARM`) rather than a
+`:SOURce:*`/`:SENSe:*` subtree. Sensitivity and time-constant values
+are indexed by integer code, not physical units directly --
+`set_sensitivity()`/`set_time_constant()` accept a physical value and
+round it to the nearest supported code. `measure_xy()`/
+`measure_r_theta()` use `SNAP?` to read multiple parameters at a
+single instant, avoiding the time skew that separate `OUTP?` queries
+would introduce for a fast time constant. Roadmap #180.
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit a command error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
+---
+
 ## LCR Meters
 
 New instrument category (issue #204). `LCRMeter` is a new abstract
@@ -802,9 +832,10 @@ default, never a silent DMM/SA misread — see issue #148.
 | Multimeters | 6 | 34461A, 2000, 8846A, SDM3055, DM3068, DMM6500 |
 | Power Supplies | 7 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P, GPP-4323 |
 | Electronic Loads | 5 | SDL1000X, 8600, DL3021, IT8512+, 63200A |
+| Lock-In Amplifiers | 1 | SR830 |
 | LCR Meters | 2 | E4980A, IM3536 |
 | Frequency Counters | 1 | 53230A |
-| **Total** | **42** | |
+| **Total** | **43** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed

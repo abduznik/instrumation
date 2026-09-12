@@ -377,6 +377,70 @@ class LCRMeter(InstrumentDriver):
     def measure_v_peak_to_peak(self) -> MeasurementResult:
         return MeasurementResult(0.0, "V")
 
+class LockInAmplifier(InstrumentDriver):
+    """Abstract Base for Lock-In Amplifiers."""
+
+    @abstractmethod
+    def set_reference_frequency(self, hz: float) -> None:
+        """Sets the internal oscillator reference frequency."""
+        pass
+
+    @abstractmethod
+    def get_reference_frequency(self) -> float:
+        """Returns the reference frequency (internal or external)."""
+        pass
+
+    @abstractmethod
+    def set_reference_phase(self, degrees: float) -> None:
+        """Sets the reference phase shift."""
+        pass
+
+    @abstractmethod
+    def set_sine_output_amplitude(self, volts: float) -> None:
+        """Sets the internal oscillator sine output amplitude."""
+        pass
+
+    @abstractmethod
+    def set_time_constant(self, seconds: float) -> None:
+        """Sets the low-pass filter time constant."""
+        pass
+
+    @abstractmethod
+    def set_sensitivity(self, volts_or_amps: float) -> None:
+        """Sets the input full-scale sensitivity."""
+        pass
+
+    @abstractmethod
+    def measure_xy(self) -> MeasurementResult:
+        """Returns a simultaneous (X, Y) reading as a MeasurementResult."""
+        pass
+
+    @abstractmethod
+    def measure_r_theta(self) -> MeasurementResult:
+        """Returns a simultaneous (R, theta) reading as a MeasurementResult."""
+        pass
+
+    def set_harmonic(self, n: int) -> None:
+        """Sets the detection harmonic (default 1st harmonic)."""
+        self._unsupported_feature("set_harmonic")
+
+    def auto_gain(self) -> None:
+        """Triggers an auto-gain/auto-sensitivity routine."""
+        self._unsupported_feature("auto_gain")
+
+    def auto_phase(self) -> None:
+        """Triggers an auto-phase routine."""
+        self._unsupported_feature("auto_phase")
+
+    def measure_frequency(self) -> MeasurementResult:
+        return MeasurementResult(self.get_reference_frequency(), "Hz")
+
+    def measure_duty_cycle(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "%")
+
+    def measure_v_peak_to_peak(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "V")
+
 class Multimeter(InstrumentDriver):
     @abstractmethod
     def configure_voltage_dc(self) -> None: pass

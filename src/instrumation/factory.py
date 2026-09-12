@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 # never heard of.
 KNOWN_DRIVER_TYPES = frozenset({
     "SCOPE", "SA", "SG", "PSU", "DMM", "VNA", "NA", "LOAD", "ELOAD",
-    "COUNTER", "LCR", "GENERIC",
+    "COUNTER", "LCR", "LOCKIN", "GENERIC",
 })
 
 # ASRL resources look like "ASRL1::INSTR", "ASRL10::INSTR", "ASRL21::INSTR".
@@ -501,6 +501,9 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
         if "DS345" in idn:
             from .drivers.srs_ds345 import SRSDS345
             final_drv = SRSDS345(resource_address)
+        elif "SR830" in idn:
+            from .drivers.srs_sr830 import SRSSR830
+            final_drv = SRSSR830(resource_address)
     elif "HIOKI" in idn:
         if "IM35" in idn:
             from .drivers.hioki_lcr import HiokiIM3536

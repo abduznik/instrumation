@@ -2,7 +2,7 @@ import random
 import time
 import math
 from typing import Optional, List, Tuple, Union
-from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, FunctionGenerator, ElectronicLoad, FrequencyCounter, LCRMeter
+from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, FunctionGenerator, ElectronicLoad, FrequencyCounter, LCRMeter, LockInAmplifier
 from .registry import register_driver
 from ..results import MeasurementResult
 
@@ -696,3 +696,48 @@ class SimulatedLCRMeter(SimulatedBaseDriver, LCRMeter):
         time.sleep(self.latency)
         noise = random.gauss(0, 1e-9 * 0.01)
         return MeasurementResult((1e-9 + noise, 0.01), self._function)
+
+@register_driver("LOCKIN")
+class SimulatedLockInAmplifier(SimulatedBaseDriver, LockInAmplifier):
+    """Simulated Lock-In Amplifier."""
+
+    def __init__(self, resource: str) -> None:
+        super().__init__(resource)
+        self._ref_freq = 1000.0
+        self._ref_phase = 0.0
+
+    def connect(self) -> None:
+        super().connect()
+        self.identity = {"manufacturer": "SIM", "model": "SIM_LOCKIN", "serial": "777", "version": "1.0"}
+
+    def get_id(self) -> str: return "SIM_LOCKIN"
+
+    def set_reference_frequency(self, hz: float) -> None:
+        self._ref_freq = hz
+        print(f"[SIM] Lock-In Reference Frequency: {hz} Hz")
+
+    def get_reference_frequency(self) -> float:
+        return self._ref_freq
+
+    def set_reference_phase(self, degrees: float) -> None:
+        self._ref_phase = degrees
+        print(f"[SIM] Lock-In Reference Phase: {degrees} deg")
+
+    def set_sine_output_amplitude(self, volts: float) -> None:
+        print(f"[SIM] Lock-In Sine Output Amplitude: {volts} V")
+
+    def set_time_constant(self, seconds: float) -> None:
+        print(f"[SIM] Lock-In Time Constant: {seconds} s")
+
+    def set_sensitivity(self, volts_or_amps: float) -> None:
+        print(f"[SIM] Lock-In Sensitivity: {volts_or_amps}")
+
+    def measure_xy(self) -> MeasurementResult:
+        time.sleep(self.latency)
+        noise = random.gauss(0, 1e-6)
+        return MeasurementResult((1e-3 + noise, 0.5e-3 + noise), "V")
+
+    def measure_r_theta(self) -> MeasurementResult:
+        time.sleep(self.latency)
+        noise = random.gauss(0, 1e-6)
+        return MeasurementResult((1.1e-3 + noise, 26.57), "V,deg")

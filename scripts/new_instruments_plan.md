@@ -56,7 +56,7 @@ Process per instrument:
 25. [x] Hioki IM3536 LCR meter
 
 ### Lock-in Amplifiers (2)
-26. [ ] Stanford Research Systems SR830 (roadmap #180)
+26. [x] Stanford Research Systems SR830 (roadmap #180, new LockInAmplifier base class + "LOCKIN" driver_type added)
 27. [ ] Zurich Instruments MFLI
 
 ### Frequency Counters (2)
