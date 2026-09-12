@@ -2,7 +2,7 @@ import random
 import time
 import math
 from typing import Optional, List, Tuple, Union
-from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, FunctionGenerator, ElectronicLoad, FrequencyCounter
+from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, FunctionGenerator, ElectronicLoad, FrequencyCounter, LCRMeter
 from .registry import register_driver
 from ..results import MeasurementResult
 
@@ -659,3 +659,40 @@ class SimulatedFrequencyCounter(SimulatedBaseDriver, FrequencyCounter):
     def set_auto_range(self, state: bool) -> None:
         self._auto_range = state
         print(f"[SIM] Counter Auto Range: {'ON' if state else 'OFF'}")
+
+@register_driver("LCR")
+class SimulatedLCRMeter(SimulatedBaseDriver, LCRMeter):
+    """Simulated LCR Meter / Impedance Analyzer."""
+
+    def __init__(self, resource: str) -> None:
+        super().__init__(resource)
+        self._frequency = 1000.0
+        self._function = "CPD"
+
+    def connect(self) -> None:
+        super().connect()
+        self.identity = {"manufacturer": "SIM", "model": "SIM_LCR", "serial": "888", "version": "1.0"}
+
+    def get_id(self) -> str: return "SIM_LCR"
+
+    def set_frequency(self, hz: float) -> None:
+        self._frequency = hz
+        print(f"[SIM] LCR Frequency: {hz} Hz")
+
+    def get_frequency(self) -> float:
+        return self._frequency
+
+    def set_voltage_level(self, volts: float) -> None:
+        print(f"[SIM] LCR Voltage Level: {volts} V")
+
+    def set_measurement_function(self, function: str) -> None:
+        self._function = function.upper()
+        print(f"[SIM] LCR Function: {self._function}")
+
+    def get_measurement_function(self) -> str:
+        return self._function
+
+    def measure(self) -> MeasurementResult:
+        time.sleep(self.latency)
+        noise = random.gauss(0, 1e-9 * 0.01)
+        return MeasurementResult((1e-9 + noise, 0.01), self._function)

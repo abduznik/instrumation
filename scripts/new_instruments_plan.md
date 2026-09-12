@@ -52,7 +52,7 @@ Process per instrument:
 
 ### Network/Impedance Analyzers (3)
 23. [x] Siglent SNA5000A VNA
-24. [ ] Keysight E4980A LCR meter
+24. [x] Keysight E4980A LCR meter (new LCRMeter base class + "LCR" driver_type added)
 25. [ ] Hioki IM3536 LCR meter
 
 ### Lock-in Amplifiers (2)

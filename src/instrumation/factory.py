@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 # never heard of.
 KNOWN_DRIVER_TYPES = frozenset({
     "SCOPE", "SA", "SG", "PSU", "DMM", "VNA", "NA", "LOAD", "ELOAD",
-    "COUNTER", "GENERIC",
+    "COUNTER", "LCR", "GENERIC",
 })
 
 # ASRL resources look like "ASRL1::INSTR", "ASRL10::INSTR", "ASRL21::INSTR".
@@ -432,6 +432,9 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
         elif "E3631" in idn or "E36313" in idn or "E3633" in idn:
             from .drivers.keysight_psu import KeysightE36313A
             final_drv = KeysightE36313A(resource_address)
+        elif "E4980" in idn:
+            from .drivers.keysight_lcr import KeysightE4980A
+            final_drv = KeysightE4980A(resource_address)
     elif "SIGLENT" in idn:
         if "SDM" in idn:
             from .drivers.siglent_dmm import SiglentSDM3055

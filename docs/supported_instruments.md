@@ -718,6 +718,32 @@ unsupported-feature warning.
 
 ---
 
+## LCR Meters
+
+New instrument category (issue #204). `LCRMeter` is a new abstract
+base in `drivers/base.py`; `"LCR"` is a new canonical `driver_type`
+key registered in `factory.KNOWN_DRIVER_TYPES`, with a
+`SimulatedLCRMeter` registered for SIM mode.
+
+### Keysight E4980A/AL
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `KeysightE4980A` | E4980A | E4980A/AL Precision LCR Meter | `KEYSIGHT`/`AGILENT` + `E4980` |
+
+`set_measurement_function()` selects the impedance parameter type
+(`CPD`, `CPQ`, `CSD`, `LSD`, `RX`, `ZTD`, etc.); `measure()` returns a
+`(primary, secondary)` tuple, e.g. capacitance and dissipation factor
+for `CPD`. `set_bias_voltage`/`set_bias_state` control the DC bias
+source.
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
+---
+
 ## Frequency Counters
 
 ### Keysight 53230A
@@ -758,8 +784,9 @@ default, never a silent DMM/SA misread — see issue #148.
 | Multimeters | 6 | 34461A, 2000, 8846A, SDM3055, DM3068, DMM6500 |
 | Power Supplies | 7 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P, GPP-4323 |
 | Electronic Loads | 5 | SDL1000X, 8600, DL3021, IT8512+, 63200A |
+| LCR Meters | 1 | E4980A |
 | Frequency Counters | 1 | 53230A |
-| **Total** | **40** | |
+| **Total** | **41** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed

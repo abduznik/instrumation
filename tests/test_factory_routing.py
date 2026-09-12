@@ -147,6 +147,12 @@ class TestFactoryGenericFallback(unittest.TestCase):
             drv = get_instrument("TCPIP::10.0.0.34::INSTR", "VNA")
         self.assertEqual(drv.__class__.__name__, "SiglentSNA5000A")
 
+    def test_keysight_e4980a_idn_routes_correctly(self):
+        rm = _mock_rm("KEYSIGHT TECHNOLOGIES,E4980A,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("GPIB0::17::INSTR", "LCR")
+        self.assertEqual(drv.__class__.__name__, "KeysightE4980A")
+
     def test_rigol_dm3068_idn_routes_to_rigol_dmm(self):
         rm = _mock_rm("RIGOL TECHNOLOGIES,DM3068,SN1,1.0")
         with patch("instrumation.factory.get_rm", return_value=rm):

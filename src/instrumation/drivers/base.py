@@ -319,6 +319,64 @@ class FrequencyCounter(InstrumentDriver):
         """Enables or disables auto-ranging."""
         pass
 
+class LCRMeter(InstrumentDriver):
+    """Abstract Base for LCR Meters / Impedance Analyzers."""
+
+    @abstractmethod
+    def set_frequency(self, hz: float) -> None:
+        """Sets the test signal frequency."""
+        pass
+
+    @abstractmethod
+    def get_frequency(self) -> float:
+        """Returns the test signal frequency."""
+        pass
+
+    @abstractmethod
+    def set_voltage_level(self, volts: float) -> None:
+        """Sets the AC test signal voltage level."""
+        pass
+
+    @abstractmethod
+    def set_measurement_function(self, function: str) -> None:
+        """Sets the impedance parameter type, e.g. 'CPD', 'CSD', 'LSD', 'RX'."""
+        pass
+
+    @abstractmethod
+    def get_measurement_function(self) -> str:
+        """Returns the active impedance parameter type."""
+        pass
+
+    @abstractmethod
+    def measure(self) -> MeasurementResult:
+        """Triggers and fetches the primary/secondary measurement pair.
+
+        Returns a MeasurementResult whose value is a (primary, secondary)
+        tuple, e.g. (capacitance, dissipation_factor) for CPD.
+        """
+        pass
+
+    def set_bias_voltage(self, volts: float) -> None:
+        """Sets the DC bias voltage level (if supported)."""
+        self._unsupported_feature("set_bias_voltage")
+
+    def set_bias_state(self, state: bool) -> None:
+        """Enables/disables the DC bias output (if supported)."""
+        self._unsupported_feature("set_bias_state")
+
+    def set_auto_range(self, state: bool) -> None:
+        """Enables or disables auto-ranging."""
+        self._unsupported_feature("set_auto_range")
+
+    def measure_frequency(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "Hz")
+
+    def measure_duty_cycle(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "%")
+
+    def measure_v_peak_to_peak(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "V")
+
 class Multimeter(InstrumentDriver):
     @abstractmethod
     def configure_voltage_dc(self) -> None: pass
