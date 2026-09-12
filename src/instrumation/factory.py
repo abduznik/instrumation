@@ -528,6 +528,9 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
         if any(m in idn for m in ["8845", "8846"]):
             from .drivers.fluke import Fluke8846A
             final_drv = Fluke8846A(resource_address)
+        elif "PM6690" in idn:
+            from .drivers.fluke_counter import FlukePM6690
+            final_drv = FlukePM6690(resource_address)
     elif "B&K" in idn or "BK PRECISION" in idn:
         if "9130" in idn:
             from .drivers.bk_precision import BKPrecision9130B

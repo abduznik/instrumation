@@ -803,6 +803,23 @@ Keysight E4980A LCR meter class.
 **Also likely compatible:**
 - 53220A (350 MHz), 53230A (350 MHz, 12 digits/s)
 
+### Fluke PM6690
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `FlukePM6690` | PM6690 | PM6690 native SCPI | `FLUKE` + `PM6690` |
+
+The PM6690 has two GPIB personalities: a native SCPI mode (targeted
+here) with a command set optimized for its own capabilities, and a
+compatible mode that emulates a Keysight/HP 53131A/53132A. Native
+mode uses the same standard SCPI-99 counter subsystem shape as
+`Keysight53230A`.
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ---
 
 ## GENERIC (Universal Fallback)
@@ -834,8 +851,8 @@ default, never a silent DMM/SA misread — see issue #148.
 | Electronic Loads | 5 | SDL1000X, 8600, DL3021, IT8512+, 63200A |
 | Lock-In Amplifiers | 1 | SR830 |
 | LCR Meters | 2 | E4980A, IM3536 |
-| Frequency Counters | 1 | 53230A |
-| **Total** | **43** | |
+| Frequency Counters | 2 | 53230A, PM6690 |
+| **Total** | **44** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed

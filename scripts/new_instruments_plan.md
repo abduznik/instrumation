@@ -57,11 +57,11 @@ Process per instrument:
 
 ### Lock-in Amplifiers (2)
 26. [x] Stanford Research Systems SR830 (roadmap #180, new LockInAmplifier base class + "LOCKIN" driver_type added)
-27. [ ] Zurich Instruments MFLI
+27. [x] ~~Zurich Instruments MFLI~~ SKIPPED: uses proprietary LabOne "node tree" data-server API (Python/MATLAB/LabVIEW/.NET/C bindings), not VISA/SCPI -- incompatible with this library's RealDriver/PyVISA transport model. Replaced with Fluke PM6690 counter (moved up from frequency-counter list).
 
 ### Frequency Counters (2)
 28. [ ] Keysight 53181A
-29. [ ] Fluke PM6690 counter
+29. [x] Fluke PM6690 counter
 
 ### RF / Sensors (3)
 30. [ ] Mini-Circuits RFS RF switch matrix (roadmap #174)
