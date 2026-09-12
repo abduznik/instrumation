@@ -404,6 +404,9 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
         if "AFG" in idn:
             from .drivers.tektronix import TektronixAFG
             final_drv = TektronixAFG(resource_address)
+        elif "PA1000" in idn:
+            from .drivers.tektronix_pa1000 import TektronixPA1000
+            final_drv = TektronixPA1000(resource_address)
         else:
             from .drivers.tektronix import TektronixTDS
             final_drv = TektronixTDS(resource_address)

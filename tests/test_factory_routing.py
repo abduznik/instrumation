@@ -207,6 +207,18 @@ class TestFactoryGenericFallback(unittest.TestCase):
             drv = get_instrument("GPIB0::1::INSTR", "POWERMETER")
         self.assertEqual(drv.__class__.__name__, "YokogawaWT310")
 
+    def test_tektronix_pa1000_idn_routes_correctly(self):
+        rm = _mock_rm("TEKTRONIX,PA1000,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("TCPIP::10.0.0.40::INSTR", "POWERMETER")
+        self.assertEqual(drv.__class__.__name__, "TektronixPA1000")
+
+    def test_tektronix_afg_idn_still_routes_correctly(self):
+        rm = _mock_rm("TEKTRONIX,AFG3022C,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("GPIB0::10::INSTR", "SG")
+        self.assertEqual(drv.__class__.__name__, "TektronixAFG")
+
     def test_ambiguous_counter_idn_falls_back_to_generic(self):
         # Both COUNTER drivers register lazily on first import inside
         # factory.py branches; force both imports so this test doesn't

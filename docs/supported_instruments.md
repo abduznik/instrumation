@@ -922,6 +922,32 @@ and read it back in one call.
 > prefer `"GENERIC"` passthrough or file an issue with the failing
 > command.
 
+### Tektronix PA1000
+
+| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `TektronixPA1000` | PA1000 | Community-verified quirky SCPI | `TEKTRONIX` + `PA1000` |
+
+Tektronix's published PA1000 manual omits the SCPI programming
+chapter; this driver is built from community-verified, hands-on
+PyVISA usage notes and documents several real quirks:
+
+- Every command requires the leading `:` root designator.
+- Semicolon-separated command chaining is **not** supported.
+- No `*OPC?` support -- `wait_ready()` sleeps a fixed 0.5s settle
+  time instead of polling; `*RST` needs a fixed 5s delay.
+- Uses `:SEL:*` to choose which readings appear in `:FRD?` output,
+  then `:FRD?` fetches them as a comma-separated list -- `clear_selection()`
+  + `select_*()` + `fetch_readings()` compose into the
+  `measure_voltage_rms`/`measure_current_rms`/`measure_active_power`/
+  `measure_frequency` convenience wrappers.
+- Non-LXI-compliant Ethernet: raw socket on port 5025, no VXI-11.
+
+> [!WARNING]
+> Not yet verified against real hardware by this project. If you hit
+> a command error, prefer `"GENERIC"` passthrough or file an issue
+> with the failing command.
+
 ---
 
 ## GENERIC (Universal Fallback)
@@ -956,8 +982,8 @@ default, never a silent DMM/SA misread — see issue #148.
 | Frequency Counters | 2 | 53230A, PM6690 |
 | RF Switches | 1 | RC-4SPDT-A18 |
 | USB Power Sensors | 2 | U2004A, NRP-Z21 |
-| Power Analyzers | 1 | WT310 |
-| **Total** | **48** | |
+| Power Analyzers | 2 | WT310, PA1000 |
+| **Total** | **49** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed

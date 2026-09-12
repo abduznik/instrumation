@@ -70,7 +70,7 @@ Process per instrument:
 
 ### Power Analyzers (2)
 33. [x] Yokogawa WT310 (new "POWERMETER" driver_type added)
-34. [ ] Tektronix PA1000
+34. [x] Tektronix PA1000
 
 ---
 
