@@ -894,6 +894,36 @@ Roadmap #174.
 
 ---
 
+## Power Analyzers
+
+New instrument category (issue #204). `"POWERMETER"` is a new
+canonical `driver_type` key registered in
+`factory.KNOWN_DRIVER_TYPES`.
+
+### Yokogawa WT310 Series
+
+| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `YokogawaWT310` | WT310 | WT310/WT310HC/WT332/WT333 | `YOKOGAWA` + `WT3` |
+
+Uses Yokogawa's `:NUMeric[:NORMal]:ITEM<x>` output-item configuration
+model: each numeric output slot (1-255) is assigned a function
+(`U`=voltage, `I`=current, `P`=active power, `S`=apparent, `Q`=reactive,
+`LAMBda`=power factor) and element (1-3 for multi-element models),
+then `:NUMeric[:NORMal]:VALue?` reads back all configured items as a
+single comma-separated response -- distinct from a per-quantity
+`MEASure:<FUNC>?` query used by DMM-style instruments.
+`measure_voltage`/`measure_current`/`measure_active_power`/
+`measure_power_factor` are convenience wrappers that configure slot 1
+and read it back in one call.
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
+---
+
 ## GENERIC (Universal Fallback)
 
 | Driver | Purpose | Auto-Detect IDN Keywords |
@@ -926,7 +956,8 @@ default, never a silent DMM/SA misread — see issue #148.
 | Frequency Counters | 2 | 53230A, PM6690 |
 | RF Switches | 1 | RC-4SPDT-A18 |
 | USB Power Sensors | 2 | U2004A, NRP-Z21 |
-| **Total** | **47** | |
+| Power Analyzers | 1 | WT310 |
+| **Total** | **48** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed

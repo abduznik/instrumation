@@ -201,6 +201,12 @@ class TestFactoryGenericFallback(unittest.TestCase):
             drv = get_instrument("USB0::0x0AAD::0x0138::100001::INSTR", "SENSOR")
         self.assertEqual(drv.__class__.__name__, "RohdeSchwarzNRPZ")
 
+    def test_yokogawa_wt310_idn_routes_correctly(self):
+        rm = _mock_rm("YOKOGAWA,WT310,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("GPIB0::1::INSTR", "POWERMETER")
+        self.assertEqual(drv.__class__.__name__, "YokogawaWT310")
+
     def test_ambiguous_counter_idn_falls_back_to_generic(self):
         # Both COUNTER drivers register lazily on first import inside
         # factory.py branches; force both imports so this test doesn't

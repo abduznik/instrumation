@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 # never heard of.
 KNOWN_DRIVER_TYPES = frozenset({
     "SCOPE", "SA", "SG", "PSU", "DMM", "VNA", "NA", "LOAD", "ELOAD",
-    "COUNTER", "LCR", "LOCKIN", "SWITCH", "SENSOR", "GENERIC",
+    "COUNTER", "LCR", "LOCKIN", "SWITCH", "SENSOR", "POWERMETER", "GENERIC",
 })
 
 # ASRL resources look like "ASRL1::INSTR", "ASRL10::INSTR", "ASRL21::INSTR".
@@ -517,6 +517,10 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
     elif "MINI-CIRCUITS" in idn or "MINICIRCUITS" in idn:
         from .drivers.minicircuits_switch import MiniCircuitsRCSwitch
         final_drv = MiniCircuitsRCSwitch(resource_address)
+    elif "YOKOGAWA" in idn:
+        if "WT3" in idn:
+            from .drivers.yokogawa_wt import YokogawaWT310
+            final_drv = YokogawaWT310(resource_address)
     elif "ANRITSU" in idn:
         if "MS2035" in idn:
             from .drivers.anritsu import AnritsuMS2035B

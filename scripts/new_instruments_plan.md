@@ -69,7 +69,7 @@ Process per instrument:
 32. [x] Rohde & Schwarz NRP-Z USB power sensor
 
 ### Power Analyzers (2)
-33. [ ] Yokogawa WT310
+33. [x] Yokogawa WT310 (new "POWERMETER" driver_type added)
 34. [ ] Tektronix PA1000
 
 ---
