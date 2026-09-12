@@ -828,6 +828,32 @@ mode uses the same standard SCPI-99 counter subsystem shape as
 
 ---
 
+## RF Switches
+
+New instrument category (issue #204). `"SWITCH"` is a new canonical
+`driver_type` key registered in `factory.KNOWN_DRIVER_TYPES`.
+
+### Mini-Circuits RC/RFS Series
+
+| Driver | Purpose | Auto-Detect IDN Keywords |
+|:---|:---|:---|
+| `MiniCircuitsRCSwitch` | RF switch matrix control (RC-4SPDT, RC-1SP4T, RC-2SP4T, etc.) | `MINI-CIRCUITS`/`MINICIRCUITS` |
+
+**Not a SCPI instrument.** Uses Mini-Circuits' own flat ASCII command
+set over USB/Ethernet: `SET{switch}={0|1}` for individual SPDT
+switches (A-H), `SP{n}T:STATE:PORT {port}` for SPnT port selection.
+Roadmap #174.
+
+> [!WARNING]
+> Could not be verified against Mini-Circuits' official Programming
+> Manual PDF at write time (host was unreachable from this
+> environment). Confirmed only via third-party summaries of the
+> `SET[switch]=[state]` command. Not yet verified against real
+> hardware -- prefer `"GENERIC"` passthrough or file an issue with
+> the failing command.
+
+---
+
 ## GENERIC (Universal Fallback)
 
 | Driver | Purpose | Auto-Detect IDN Keywords |
@@ -858,7 +884,8 @@ default, never a silent DMM/SA misread — see issue #148.
 | Lock-In Amplifiers | 1 | SR830 |
 | LCR Meters | 2 | E4980A, IM3536 |
 | Frequency Counters | 2 | 53230A, PM6690 |
-| **Total** | **44** | |
+| RF Switches | 1 | RC-4SPDT-A18 |
+| **Total** | **45** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed

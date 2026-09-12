@@ -64,7 +64,7 @@ Process per instrument:
 29. [x] Fluke PM6690 counter
 
 ### RF / Sensors (3)
-30. [ ] Mini-Circuits RFS RF switch matrix (roadmap #174)
+30. [x] Mini-Circuits RFS RF switch matrix (roadmap #174, new "SWITCH" driver_type added)
 31. [ ] Keysight U2004A USB power sensor
 32. [ ] Rohde & Schwarz NRP-Z USB power sensor
 

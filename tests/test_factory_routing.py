@@ -183,6 +183,12 @@ class TestFactoryGenericFallback(unittest.TestCase):
             drv = get_instrument("GPIB0::5::INSTR", "COUNTER")
         self.assertEqual(drv.__class__.__name__, "Keysight53230A")
 
+    def test_minicircuits_switch_idn_routes_correctly(self):
+        rm = _mock_rm("Mini-Circuits,RC-4SPDT-A18,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("TCPIP::10.0.0.35::INSTR", "SWITCH")
+        self.assertEqual(drv.__class__.__name__, "MiniCircuitsRCSwitch")
+
     def test_ambiguous_counter_idn_falls_back_to_generic(self):
         # Both COUNTER drivers register lazily on first import inside
         # factory.py branches; force both imports so this test doesn't
