@@ -260,6 +260,27 @@ unsupported-feature warning.
 > prefer `"GENERIC"` passthrough or file an issue with the failing
 > command.
 
+### Rigol DG4000 Series
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `RigolDG4000` | DG4062 | DG1000Z/DG4000/DG5000 Series | `RIGOL` + (`DG4`, `DG5`, `DG1000Z`) |
+
+Uses the Agilent/Keysight-33500-derived
+`[:SOURce[<n>]]:APPLy:<shape>` single-command style shared across the
+DG1000Z/DG4000/DG5000 families -- distinct from Tektronix AFG3000's
+subtree-per-parameter dialect and Siglent SDG's comma-separated
+`BSWV` keyword. Has no frequency-list sweep mode in this base command
+set, so `configure_list_sweep()` logs an unsupported-feature warning.
+
+**Also likely compatible** (same APPLy/SOURce command set):
+- DG4102, DG4162, DG4202, DG1022Z, DG1032Z, DG5071, DG5102, DG5252
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ---
 
 ## Network Analyzers
@@ -677,13 +698,13 @@ default, never a silent DMM/SA misread — see issue #148.
 |:---|:---|:---|
 | Oscilloscopes | 7 | DSOX2002A, DS1054Z, SDS Series, TDS Series, HMO722, SDS2102X Plus, MSO5354 |
 | Spectrum Analyzers | 5 | MXA N9020A, PXA N9030A, DSA800, MS2830A, SSA3021X |
-| Signal Generators | 6 | N5183B, AFG3022C, SMA100B, MG3700A, SMA100A, SDG2042X |
+| Signal Generators | 7 | N5183B, AFG3022C, SMA100B, MG3700A, SMA100A, SDG2042X, DG4062 |
 | Network Analyzers | 3 | N5232A, N9913A, MS2035B |
 | Multimeters | 6 | 34461A, 2000, 8846A, SDM3055, DM3068, DMM6500 |
 | Power Supplies | 7 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P, GPP-4323 |
 | Electronic Loads | 5 | SDL1000X, 8600, DL3021, IT8512+, 63200A |
 | Frequency Counters | 1 | 53230A |
-| **Total** | **36** | |
+| **Total** | **37** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed

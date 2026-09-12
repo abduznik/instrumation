@@ -46,7 +46,7 @@ Process per instrument:
 
 ### Signal/Function Generators (4)
 19. [x] Siglent SDG2000X AWG
-20. [ ] Rigol DG4000 series AWG
+20. [x] Rigol DG4000 series AWG
 21. [ ] GW Instek MFG-2000 (roadmap #176)
 22. [ ] SRS DS345
 
