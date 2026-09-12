@@ -195,6 +195,12 @@ class TestFactoryGenericFallback(unittest.TestCase):
             drv = get_instrument("USB0::0x0957::0x2A18::MY12345::INSTR", "SENSOR")
         self.assertEqual(drv.__class__.__name__, "KeysightU2000")
 
+    def test_rs_nrpz_idn_routes_correctly(self):
+        rm = _mock_rm("Rohde&Schwarz,NRP-Z21,100001,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("USB0::0x0AAD::0x0138::100001::INSTR", "SENSOR")
+        self.assertEqual(drv.__class__.__name__, "RohdeSchwarzNRPZ")
+
     def test_ambiguous_counter_idn_falls_back_to_generic(self):
         # Both COUNTER drivers register lazily on first import inside
         # factory.py branches; force both imports so this test doesn't

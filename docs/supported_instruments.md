@@ -850,6 +850,22 @@ the sensor's internal cal-factor table lookup, not an output.
 > prefer `"GENERIC"` passthrough or file an issue with the failing
 > command.
 
+### Rohde & Schwarz NRP-Z Series
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `RohdeSchwarzNRPZ` | NRP-Z21 | NRP-Z Series USB Power Sensor | `HAMEG`/`ROHDE`/`ROHDE&SCHWARZ` + `NRP` |
+
+Headless USB sensor (no front panel), similar in shape to the
+Keysight U2000 series but with R&S-specific correction subsystems:
+`SENSe:CORRection:DCYCle` for pulse-power duty-cycle correction and
+`SENSe:CORRection:SPDevice` for S-parameter device correction.
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ---
 
 ## RF Switches
@@ -909,8 +925,8 @@ default, never a silent DMM/SA misread — see issue #148.
 | LCR Meters | 2 | E4980A, IM3536 |
 | Frequency Counters | 2 | 53230A, PM6690 |
 | RF Switches | 1 | RC-4SPDT-A18 |
-| USB Power Sensors | 1 | U2004A |
-| **Total** | **46** | |
+| USB Power Sensors | 2 | U2004A, NRP-Z21 |
+| **Total** | **47** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed

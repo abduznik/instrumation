@@ -66,7 +66,7 @@ Process per instrument:
 ### RF / Sensors (3)
 30. [x] Mini-Circuits RFS RF switch matrix (roadmap #174, new "SWITCH" driver_type added)
 31. [x] Keysight U2004A USB power sensor (new "SENSOR" driver_type added)
-32. [ ] Rohde & Schwarz NRP-Z USB power sensor
+32. [x] Rohde & Schwarz NRP-Z USB power sensor
 
 ### Power Analyzers (2)
 33. [ ] Yokogawa WT310

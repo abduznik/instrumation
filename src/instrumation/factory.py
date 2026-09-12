@@ -551,6 +551,9 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
         if "HMO" in idn:
             from .drivers.rs_scope import RohdeSchwarzHMOCompact
             final_drv = RohdeSchwarzHMOCompact(resource_address)
+        elif "NRP" in idn:
+            from .drivers.rs_powersensor import RohdeSchwarzNRPZ
+            final_drv = RohdeSchwarzNRPZ(resource_address)
     elif "GW" in idn or "GWINSTEK" in idn or "GW INSTEK" in idn:
         if "GPP" in idn:
             from .drivers.gwinstek_psu import GWInstekGPP4323
