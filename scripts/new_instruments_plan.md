@@ -60,7 +60,7 @@ Process per instrument:
 27. [x] ~~Zurich Instruments MFLI~~ SKIPPED: uses proprietary LabOne "node tree" data-server API (Python/MATLAB/LabVIEW/.NET/C bindings), not VISA/SCPI -- incompatible with this library's RealDriver/PyVISA transport model. Replaced with Fluke PM6690 counter (moved up from frequency-counter list).
 
 ### Frequency Counters (2)
-28. [ ] Keysight 53181A
+28. [x] Keysight 53181A (also fixed pre-existing gap: Keysight53230A had no explicit IDN branch in factory.py)
 29. [x] Fluke PM6690 counter
 
 ### RF / Sensors (3)

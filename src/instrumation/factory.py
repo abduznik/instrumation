@@ -435,6 +435,9 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
         elif "E4980" in idn:
             from .drivers.keysight_lcr import KeysightE4980A
             final_drv = KeysightE4980A(resource_address)
+        elif any(m in idn for m in ["53230", "53220", "53181"]):
+            from .drivers.keysight import Keysight53230A
+            final_drv = Keysight53230A(resource_address)
     elif "SIGLENT" in idn:
         if "SDM" in idn:
             from .drivers.siglent_dmm import SiglentSDM3055

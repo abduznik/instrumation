@@ -798,10 +798,16 @@ Keysight E4980A LCR meter class.
 
 | Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
 |:---|:---|:---|:---|
-| `Keysight53230A` | 53230A | 53230A/53220A Universal Counter | `34401`, `34410`, `53230`, `53220` |
+| `Keysight53230A` | 53230A | 53230A/53220A Universal Counter | `KEYSIGHT`/`AGILENT`/`HP` + (`53230`, `53220`, `53181`) |
 
 **Also likely compatible:**
-- 53220A (350 MHz), 53230A (350 MHz, 12 digits/s)
+- 53220A (350 MHz), 53230A (350 MHz, 12 digits/s), 53181A (225 MHz, RF counter predecessor)
+
+> [!NOTE]
+> Prior to issue #204, this driver had no explicit IDN branch in
+> `factory.py` and relied on the single-registered-candidate fallback;
+> now that a second `"COUNTER"` driver (`FlukePM6690`) is registered,
+> an explicit `KEYSIGHT`/`AGILENT`/`HP` + model-number branch is required.
 
 ### Fluke PM6690
 

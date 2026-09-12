@@ -171,6 +171,29 @@ class TestFactoryGenericFallback(unittest.TestCase):
             drv = get_instrument("GPIB0::3::INSTR", "COUNTER")
         self.assertEqual(drv.__class__.__name__, "FlukePM6690")
 
+    def test_keysight_53230a_idn_routes_correctly(self):
+        rm = _mock_rm("KEYSIGHT TECHNOLOGIES,53230A,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("GPIB0::4::INSTR", "COUNTER")
+        self.assertEqual(drv.__class__.__name__, "Keysight53230A")
+
+    def test_keysight_53181a_idn_routes_correctly(self):
+        rm = _mock_rm("KEYSIGHT TECHNOLOGIES,53181A,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("GPIB0::5::INSTR", "COUNTER")
+        self.assertEqual(drv.__class__.__name__, "Keysight53230A")
+
+    def test_ambiguous_counter_idn_falls_back_to_generic(self):
+        # Both COUNTER drivers register lazily on first import inside
+        # factory.py branches; force both imports so this test doesn't
+        # depend on prior test execution order within the same process.
+        import instrumation.drivers.keysight  # noqa: F401
+        import instrumation.drivers.fluke_counter  # noqa: F401
+        rm = _mock_rm("UNKNOWNCO,COUNTER-1,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("GPIB0::6::INSTR", "COUNTER")
+        self.assertIsInstance(drv, GenericDriver)
+
     def test_rigol_dm3068_idn_routes_to_rigol_dmm(self):
         rm = _mock_rm("RIGOL TECHNOLOGIES,DM3068,SN1,1.0")
         with patch("instrumation.factory.get_rm", return_value=rm):
