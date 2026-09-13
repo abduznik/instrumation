@@ -624,6 +624,112 @@ class KeysightSG(RealDriver, SignalGenerator):
     def set_reference_clock(self, source: str) -> None:
         self.safe_send(f":ROSC:SOUR {source}")
 
+    # ── Vector / ARB Capabilities (GH #195) ──────────────────────
+
+    def enable_iq_modulation(self, state: bool) -> None:
+        """Enable or disable IQ (vector) modulation on the RF output.
+
+        Only available on vector-capable EXG/MXG models (N5172B, N5182B).
+        Analog-only models (N5171B, N5181B) will raise an instrument error.
+        """
+        self.safe_send(f":IQ:STAT {'ON' if state else 'OFF'}")
+
+    def get_iq_modulation_state(self) -> bool:
+        """Return True if IQ modulation is currently enabled."""
+        val = self.query_ascii(":IQ:STAT?").strip()
+        return val in ("1", "ON")
+
+    def set_iq_source(self, source: str) -> None:
+        """Set the IQ baseband source.
+
+        Parameters
+        ----------
+        source : str
+            One of ``"INTernal"`` (internal baseband generator),
+            ``"EXTernal"`` (external I/Q inputs), or ``"ARB"`` (arbitrary
+            waveform memory).
+        """
+        valid = {"INT", "INTernal", "EXT", "EXTernal", "ARB"}
+        if source.upper() not in {v.upper() for v in valid}:
+            raise ValueError(f"Invalid IQ source '{source}'. Must be INT, EXT, or ARB")
+        self.safe_send(f":IQ:SOUR {source}")
+
+    def load_arb_waveform(self, waveform_name: str, data: List[float] = None) -> None:
+        """Load an arbitrary waveform into the instrument's waveform memory.
+
+        If *data* is provided the waveform is created from the samples
+        (I/Q interleaved float pairs).  If *data* is None the instrument
+        is told to load an existing waveform by *waveform_name* from its
+        internal memory.
+
+        Parameters
+        ----------
+        waveform_name : str
+            Name for the waveform in instrument memory.
+        data : list of float, optional
+            I/Q sample pairs.  Length must be even.
+        """
+        if data is not None:
+            if len(data) % 2 != 0:
+                raise ValueError("ARB data length must be even (I/Q pairs)")
+            self.safe_send(f":RAD:ARB:WAV \"{waveform_name}\"")
+            # Write the raw binary data
+            self.write(f":RAD:ARB:DATA {','.join(str(v) for v in data)}")
+        else:
+            self.safe_send(f":RAD:ARB:WAV \"{waveform_name}\"")
+
+    def set_arb_sample_rate(self, sample_rate: float) -> None:
+        """Set the arbitrary waveform sample rate in samples/second.
+
+        Only effective when IQ source is set to ARB.
+        """
+        self.safe_send(f":RAD:ARB:SRAT {sample_rate}")
+
+    def start_arb_playback(self) -> None:
+        """Start playing the currently loaded arbitrary waveform.
+
+        The RF output must be enabled separately with :meth:`set_output`.
+        """
+        self.safe_send(":RAD:ARB:STAT ON")
+        self.safe_send(":INIT:IMM")
+        self.wait_ready()
+
+    def stop_arb_playback(self) -> None:
+        """Stop arbitrary waveform playback and return to CW mode."""
+        self.safe_send(":RAD:ARB:STAT OFF")
+        self.safe_send(":FREQ:MODE CW")
+
+    def trigger_iq_calibration(self) -> None:
+        """Trigger the internal IQ calibration routine.
+
+        This corrects for I/Q gain imbalance, DC offset, and quadrature
+        skew.  The instrument must have IQ modulation enabled first.
+        Typically takes 5--30 seconds depending on the model.
+        """
+        self.safe_send(":CAL:IQ:EXEC")
+        self.wait_ready(timeout=60.0)
+
+    def set_iq_gain_imbalance(self, gain_db: float) -> None:
+        """Manually set IQ gain imbalance correction in dB.
+
+        Typically used after :meth:`trigger_iq_calibration` for fine
+        adjustments.  0 dB = perfectly balanced.
+        """
+        self.safe_send(f":CAL:IQ:GAIN {gain_db}")
+
+    def set_iq_phase_imbalance(self, phase_deg: float) -> None:
+        """Manually set IQ phase imbalance correction in degrees.
+
+        Typically used after :meth:`trigger_iq_calibration` for fine
+        adjustments.  0 degrees = perfect quadrature.
+        """
+        self.safe_send(f":CAL:IQ:PHAS {phase_deg}")
+
+    def list_arb_waveforms(self) -> List[str]:
+        """Return the names of all arbitrary waveforms stored in memory."""
+        raw = self.query(":RAD:ARB:CAT?")
+        return [name.strip().strip('"') for name in raw.split(",") if name.strip()]
+
     def measure_frequency(self) -> MeasurementResult: return MeasurementResult(0.0, "Hz")
     def measure_duty_cycle(self) -> MeasurementResult: return MeasurementResult(0.0, "%")
     def measure_v_peak_to_peak(self) -> MeasurementResult: return MeasurementResult(0.0, "V")

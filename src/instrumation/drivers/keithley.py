@@ -1,3 +1,4 @@
+from typing import List
 from .base import Multimeter, PowerSupply
 from .registry import register_driver
 from .real import RealDriver
@@ -175,3 +176,126 @@ class Keithley2400(Keithley2000, PowerSupply):
         self.safe_send(":SOUR:VOLT 0")
         self.safe_send(":SOUR:CURR 0")
         self.sync_config()
+
+    # ── Sweep / Step Helpers (GH #202) ───────────────────────────
+
+    def configure_sweep_linear(
+        self,
+        start: float,
+        stop: float,
+        steps: int,
+        source: str = "VOLT",
+        delay: float = 0.01,
+    ) -> None:
+        """Configure a linear sweep on the given source (VOLT or CURR).
+
+        Parameters
+        ----------
+        start : float
+            Sweep start value.
+        stop : float
+            Sweep stop value.
+        steps : int
+            Number of steps (2 -- 1001).
+        source : str
+            Source function: ``"VOLT"`` or ``"CURR"``.
+        delay : float
+            Inter-step delay in seconds (0 -- 10).
+        """
+        src = source.upper()
+        if src not in ("VOLT", "CURR"):
+            raise ValueError(f"Invalid sweep source '{source}'. Must be VOLT or CURR")
+        if steps < 2 or steps > 1001:
+            raise ValueError(f"Steps must be 2--1001, got {steps}")
+        self._source_mode = src
+        self.safe_send(f":SOUR:FUNC {src}")
+        self.safe_send(":SOUR:SWEEP:TYPE LIN")
+        self.safe_send(f":SOUR:{src}:START {start}")
+        self.safe_send(f":SOUR:{src}:STOP {stop}")
+        self.safe_send(f":SOUR:{src}:STEP {steps}")
+        self.safe_send(f":SOUR:DEL {delay}")
+
+    def configure_sweep_log(
+        self,
+        start: float,
+        stop: float,
+        steps: int,
+        source: str = "VOLT",
+        delay: float = 0.01,
+    ) -> None:
+        """Configure a logarithmic sweep on the given source.
+
+        Parameters mirror :meth:`configure_sweep_linear` but the step
+        distribution is logarithmic (useful for impedance / capacitance
+        sweeps).
+        """
+        src = source.upper()
+        if src not in ("VOLT", "CURR"):
+            raise ValueError(f"Invalid sweep source '{source}'. Must be VOLT or CURR")
+        if steps < 2 or steps > 1001:
+            raise ValueError(f"Steps must be 2--1001, got {steps}")
+        if start <= 0 or stop <= 0:
+            raise ValueError("Log sweep requires positive start and stop values")
+        self._source_mode = src
+        self.safe_send(f":SOUR:FUNC {src}")
+        self.safe_send(":SOUR:SWEEP:TYPE LOG")
+        self.safe_send(f":SOUR:{src}:START {start}")
+        self.safe_send(f":SOUR:{src}:STOP {stop}")
+        self.safe_send(f":SOUR:{src}:STEP {steps}")
+        self.safe_send(f":SOUR:DEL {delay}")
+
+    def configure_sweep_list(self, values: List[float], source: str = "VOLT", delay: float = 0.01) -> None:
+        """Configure a custom list sweep with arbitrary source values.
+
+        Parameters
+        ----------
+        values : list of float
+            Source values to step through in order.
+        source : str
+            Source function: ``"VOLT"`` or ``"CURR"``.
+        delay : float
+            Inter-step delay in seconds.
+        """
+        src = source.upper()
+        if src not in ("VOLT", "CURR"):
+            raise ValueError(f"Invalid sweep source '{source}'. Must be VOLT or CURR")
+        if len(values) < 2:
+            raise ValueError("List sweep requires at least 2 values")
+        self._source_mode = src
+        self.safe_send(f":SOUR:FUNC {src}")
+        self.safe_send(":SOUR:SWEEP:TYPE LIST")
+        list_str = ",".join(str(v) for v in values)
+        self.safe_send(f":SOUR:{src}:LIST {list_str}")
+        self.safe_send(f":SOUR:DEL {delay}")
+
+    def execute_sweep(self) -> List[MeasurementResult]:
+        """Execute the previously configured sweep and return all data points.
+
+        Returns a list of :class:`MeasurementResult` objects — one per
+        step — containing the measured value (V, A, or Ohm) at each
+        source point.
+        """
+        self.set_output(True)
+        self.safe_send(":INIT")
+        self.wait_ready()
+        raw = self.query_ascii(":FETC?")
+        self.set_output(False)
+        parts = [p.strip() for p in raw.split(",") if p.strip()]
+        unit = "V" if self._source_mode == "VOLT" else "A"
+        return [MeasurementResult(float(p), unit) for p in parts]
+
+    def step_sweep(
+        self,
+        start: float,
+        stop: float,
+        steps: int,
+        source: str = "VOLT",
+        delay: float = 0.01,
+    ) -> List[MeasurementResult]:
+        """Convenience: configure + execute a linear sweep in one call.
+
+        Combines :meth:`configure_sweep_linear` and
+        :meth:`execute_sweep` for the common IV-curve use case.
+        """
+        self.configure_sweep_linear(start, stop, steps, source, delay)
+        return self.execute_sweep()
