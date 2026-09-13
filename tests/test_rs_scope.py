@@ -35,6 +35,21 @@ def test_channel_display(mock_hmo):
     assert mock_hmo.get_channel_display(1) is True
 
 
+def test_channel_display_scpi_on_off_dialect(mock_hmo):
+    # HMO reports CHAN<n>:STAT? as ON/OFF (SCPI boolean), not 1/0.
+    # Regression: the getter previously only accepted "1" and therefore
+    # always returned False for a genuinely-enabled HMO channel.
+    mock_hmo.inst.query.return_value = "ON"
+    assert mock_hmo.get_channel_display(1) is True
+    mock_hmo.inst.query.return_value = "on"
+    assert mock_hmo.get_channel_display(1) is True
+    mock_hmo.inst.query.return_value = "OFF"
+    assert mock_hmo.get_channel_display(1) is False
+    with pytest.raises(ValueError):
+        mock_hmo.inst.query.return_value = "BOGUS"
+        mock_hmo.get_channel_display(1)
+
+
 def test_channel_display_invalid_channel_raises(mock_hmo):
     with pytest.raises(ValueError):
         mock_hmo.set_channel_display(5, True)
