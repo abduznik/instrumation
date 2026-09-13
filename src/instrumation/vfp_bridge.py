@@ -20,6 +20,7 @@ class VFPBridge:
         self.ws_host = ws_host
         self.ws_port = ws_port
         self.clients: Set[websockets.WebSocketServerProtocol] = set()
+        self.latest_readings = {}
 
     async def ws_handler(self, websocket):
         """Manages WebSocket client connections."""
@@ -50,9 +51,13 @@ class VFPBridge:
                 data, addr = await loop.sock_recvfrom(sock, 65535)
                 try:
                     payload = data.decode("utf-8")
-                    # Validate JSON (optional but good for bridge stability)
-                    json.loads(payload)
-                    
+                    parsed = json.loads(payload)
+
+                    if isinstance(parsed, dict):
+                        metadata = parsed.get("metadata") or {}
+                        instrument_id = metadata.get("instrument_id") or metadata.get("driver") or "default"
+                        self.latest_readings[instrument_id] = parsed
+
                     if self.clients:
                         # Broadcast to all connected WebSocket clients
                         logger.debug(f"Broadcasting data to {len(self.clients)} clients")

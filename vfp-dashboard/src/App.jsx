@@ -1,6 +1,7 @@
 import { RefreshCw, Radio, Layers } from 'lucide-react';
 import { useInstrumentData } from './hooks/useInstrumentData';
 import { StatusGrid } from './components/StatusGrid';
+import { DataExport } from './components/DataExport';
 
 const BRIDGE_URL = 'ws://127.0.0.1:8080';
 
@@ -45,12 +46,15 @@ function Dashboard() {
           <Layers className="text-accent" />
           <h2 className="text-2xl font-semibold m-0">Instruments</h2>
           <span className="text-dim text-sm mono">({instrumentCount})</span>
+          <div className="ml-auto">
+            <DataExport />
+          </div>
         </div>
         <StatusGrid instruments={instruments} />
       </section>
 
       <footer className="flex justify-between items-center text-dim text-xs mono mt-auto py-4 border-t border-border-color">
-        <div>INSTRUMATION HAL ENGINE v0.10.0</div>
+        <div>INSTRUMATION HAL ENGINE v0.11.0</div>
         <div>STATION: LOCALHOST</div>
       </footer>
     </div>

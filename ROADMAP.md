@@ -1,6 +1,14 @@
-# Roadmap — v0.10.0
+# Roadmap — v0.11.0
 
-**Status:** Released 2026-09-07 (v0.10.0)
+**Status:** Released 2026-09-13 (v0.11.0)
+
+---
+
+## v0.11.0 Highlights
+
+- **New drivers:** SRS SR830 lock-in amplifier (#180), GW Instek MFG-2000 function generator (#176), Mini-Circuits RFS RF signal generator (#174), GW Instek GPP series PSU (#171) — plus the full 34-instrument rollout from #204 (see commit history for the complete list spanning DMMs, PSUs, loads, scopes, spectrum analyzers, AWGs, VNA/LCR/lock-in, counters, RF sensors, and power analyzers).
+- **Dashboard launcher (#118):** `instrumation.dashboard.launch_dashboard()` starts the UDP broadcaster bridge, WebSocket relay, and an HTTP server (serving the built React app) in a single call. CLI: `instrumation dashboard --port 8080`.
+- **Dashboard CSV/JSON export (#120):** `GET /api/readings` (JSON) and `GET /api/readings?format=csv` return the latest reading from every instrument; an "Export" button on the dashboard toolbar downloads either format directly from the browser.
 
 ---
 
@@ -44,18 +52,18 @@ error/offline-stale), live value/unit, and a rolling sparkline. See
 `docs/user_guide/vfp.md` for the `instrument_id` metadata convention
 producers must follow.
 
-Still **planned, not yet shipped**:
-- **#118** — `launch_dashboard(port=8080)` Python helper to start the bridge + dashboard from a script instead of running `python -m instrumation.vfp_bridge` and `npm run dev` by hand.
-- **#120** — CSV/JSON export of readings from the dashboard UI.
+Both remaining items **shipped in v0.11.0**:
+- **#118** — `launch_dashboard(port=8080)` Python helper (`instrumation/dashboard.py`) starts the bridge + static file server from a script; also available as `instrumation dashboard` on the CLI.
+- **#120** — CSV/JSON export of readings via `GET /api/readings` and the toolbar Export button.
 
-### Target design (remaining scope)
+### Target design
 
 - Auto-discovers instruments and shows them in a clean table — ✅ done via `instrument_id` grouping
 - Streams live readings (voltage, current, frequency, etc.) to the browser in real-time — ✅ done
 - Color-coded status indicators (connected, measuring, error, idle) — ✅ done
-- Export readings to CSV/JSON with one click (#120) — not yet implemented
+- Export readings to CSV/JSON with one click (#120) — ✅ done
 - Works in SIM mode for demos and development — ✅ done (`examples/common/vfp_telemetry_stream.py`)
-- Single-call Python launcher (#118) — not yet implemented
+- Single-call Python launcher (#118) — ✅ done
 
 ### Architecture (target)
 
@@ -147,4 +155,5 @@ All issue numbers below were reconciled against actual code + issue state (gh #1
 | 0.8.0 | Generic driver fallback, PXA N9030A expansion, station/transport/logging hardening (released) |
 | 0.9.0 | Driver-factory + simulation fixes (#149–#168 batch), ROADMAP reconciliation, v0.9.0 release (released 2026-09-05) |
 | 0.10.0 | New drivers (Fluke 8845A/8846A, BK Precision 9130B/8600, R&S HMO Compact), React dashboard status cards (#119) (released 2026-09-07) |
-| 0.11.0 | New drivers: SRS SR830 lock-in (#180), GW Instek MFG-2000 (#176), Mini-Circuits RFS (#174), GW Instek GPP (#171); dashboard launcher (#118) and CSV/JSON export (#120) (planned) |
+| 0.11.0 | New drivers: SRS SR830 lock-in (#180), GW Instek MFG-2000 (#176), Mini-Circuits RFS (#174), GW Instek GPP (#171); dashboard launcher (#118) and CSV/JSON export (#120) (released 2026-09-13) |
+| 0.12.0 | New drivers: Lake Shore 336 temperature controller (#185, new TemperatureController category), Boonton 4530 RF peak power meter (#187) (planned) |

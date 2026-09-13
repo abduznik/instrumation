@@ -45,6 +45,22 @@ def handle_station_list(args):
         type_name = inst.__class__.__name__
         print(f"{name:<15} {type_name:<10} {inst.resource}")
 
+def handle_dashboard(args):
+    import time
+    from .dashboard import launch_dashboard, DEFAULT_WS_PORT, DEFAULT_UDP_PORT
+
+    handle = launch_dashboard(http_port=args.port, ws_port=args.ws_port, udp_port=args.udp_port)
+    print(f"VFP dashboard running at http://127.0.0.1:{args.port}")
+    print(f"  WebSocket bridge: ws://127.0.0.1:{args.ws_port}")
+    print(f"  UDP listener: 127.0.0.1:{args.udp_port}")
+    print("Press Ctrl+C to stop.")
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("\nStopping dashboard...")
+        handle.stop()
+
 def handle_station_measure(args):
     config_path = args.config if args.config else "station.toml"
     station = Station(config_path)
@@ -95,6 +111,12 @@ def main():
     st_measure_parser.add_argument("method", help="Method to call")
     st_measure_parser.add_argument("-c", "--config", help="Path to station.toml")
 
+    # Dashboard command
+    dashboard_parser = subparsers.add_parser("dashboard", help="Launch the Virtual Front Panel dashboard")
+    dashboard_parser.add_argument("--port", type=int, default=8080, help="HTTP port to serve the dashboard on")
+    dashboard_parser.add_argument("--ws-port", type=int, default=8765, help="WebSocket bridge port")
+    dashboard_parser.add_argument("--udp-port", type=int, default=9999, help="UDP listener port")
+
     args = parser.parse_args()
 
     if args.command == "record":
@@ -136,6 +158,8 @@ def main():
             handle_station_measure(args)
         else:
             station_parser.print_help()
+    elif args.command == "dashboard":
+        handle_dashboard(args)
     else:
         parser.print_help()
 

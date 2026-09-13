@@ -17,7 +17,30 @@ graph LR
 
 ## How to use the VFP
 
-### 1. Start the Bridge
+### Option A: One-call launcher (recommended)
+
+`launch_dashboard()` starts the UDP bridge, the WebSocket relay, and an HTTP
+server (serving the built React app plus a small REST API) in one call:
+
+```python
+from instrumation.dashboard import launch_dashboard
+
+handle = launch_dashboard()  # http=8080, ws=8765, udp=9999
+# ... run your test session, streaming via DataBroadcaster ...
+handle.stop()
+```
+
+Or from the command line:
+
+```bash
+instrumation dashboard --port 8080 --ws-port 8765 --udp-port 9999
+```
+
+This requires the dashboard to be built first (`cd vfp-dashboard && npm run build`);
+otherwise the HTTP server serves a placeholder page telling you to build it.
+
+### Option B: Run components by hand (development)
+
 Run the bridge service to start listening for instrument data:
 ```bash
 python -m instrumation.vfp_bridge
@@ -60,3 +83,6 @@ Then open [http://localhost:5173](http://localhost:5173) in your browser.
 - **Multi-Instrument Grid**: One card per `instrument_id`, auto-discovered from the stream -- no hardcoded instrument list.
 - **Multi-Channel Support**: View data from different channels or pods simultaneously.
 - **Zero Impact**: UDP broadcasting is non-blocking and does not slow down your test execution.
+- **Data Export**: The "Export" button on the toolbar downloads the latest reading
+  from every instrument as CSV or JSON, via `GET /api/readings` (add
+  `?format=csv` for CSV). Backed by `launch_dashboard()`'s REST API.
