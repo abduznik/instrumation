@@ -1,14 +1,16 @@
 # Roadmap — v0.11.0
 
-**Status:** Released 2026-09-13 (v0.11.0)
+**Status:** Released 2026-09-14 (v0.11.0)
 
 ---
 
 ## v0.11.0 Highlights
 
-- **New drivers:** SRS SR830 lock-in amplifier (#180), GW Instek MFG-2000 function generator (#176), Mini-Circuits RFS RF signal generator (#174), GW Instek GPP series PSU (#171) — plus the full 34-instrument rollout from #204 (see commit history for the complete list spanning DMMs, PSUs, loads, scopes, spectrum analyzers, AWGs, VNA/LCR/lock-in, counters, RF sensors, and power analyzers).
+- **New drivers (40 total):** the full 34-instrument rollout from #204 (DMMs, PSUs, loads, scopes, spectrum analyzers, AWGs, VNA/LCR/lock-in, counters, RF sensors, and power analyzers — see commit history for the complete list, headlined by SRS SR830 lock-in #180, GW Instek MFG-2000 #176, Mini-Circuits RFS #174, GW Instek GPP #171), plus 6 more PSU/electronic-load drivers added after #204 closed: Agilent/HP 6632B/6634B (#213), AIM-TTi CPX400DP (#211), Rohde & Schwarz HMP4040 (#212), Ametek Sorensen SG (#210, core subsystem), BK Precision 1685B/1687B/1688B (#209), and Prodigit 3311F electronic load (#215).
 - **Dashboard launcher (#118):** `instrumation.dashboard.launch_dashboard()` starts the UDP broadcaster bridge, WebSocket relay, and an HTTP server (serving the built React app) in a single call. CLI: `instrumation dashboard --port 8080`.
 - **Dashboard CSV/JSON export (#120):** `GET /api/readings` (JSON) and `GET /api/readings?format=csv` return the latest reading from every instrument; an "Export" button on the dashboard toolbar downloads either format directly from the browser.
+- **Bug fix:** R&S/Hameg HMO Compact `get_channel_display()` now correctly parses the `ON`/`OFF` SCPI boolean dialect instead of only accepting `"1"` (#233).
+- **License:** switched to AGPL-3.0 (#201).
 
 ---
 
@@ -155,5 +157,5 @@ All issue numbers below were reconciled against actual code + issue state (gh #1
 | 0.8.0 | Generic driver fallback, PXA N9030A expansion, station/transport/logging hardening (released) |
 | 0.9.0 | Driver-factory + simulation fixes (#149–#168 batch), ROADMAP reconciliation, v0.9.0 release (released 2026-09-05) |
 | 0.10.0 | New drivers (Fluke 8845A/8846A, BK Precision 9130B/8600, R&S HMO Compact), React dashboard status cards (#119) (released 2026-09-07) |
-| 0.11.0 | New drivers: SRS SR830 lock-in (#180), GW Instek MFG-2000 (#176), Mini-Circuits RFS (#174), GW Instek GPP (#171); dashboard launcher (#118) and CSV/JSON export (#120) (released 2026-09-13) |
+| 0.11.0 | 40 new drivers (#204 rollout + #209-#215 PSU/load batch); dashboard launcher (#118) and CSV/JSON export (#120); HMO Compact fix (#233); AGPL-3.0 relicense (#201) (released 2026-09-14) |
 | 0.12.0 | New drivers: Lake Shore 336 temperature controller (#185, new TemperatureController category), Boonton 4530 RF peak power meter (#187) (planned) |
