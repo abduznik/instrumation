@@ -620,6 +620,111 @@ CH1+CH2 (and CH3+CH4 where present).
 > prefer `"GENERIC"` passthrough or file an issue with the failing
 > command.
 
+### Agilent/HP 6632B/6634B Series
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `Agilent6632B` | 6632B | 663xB System DC Power Supply | `KEYSIGHT`/`AGILENT`/`HEWLETT-PACKARD`/`HP` + (`6631`, `6632`, `6633`, `6634`) |
+
+Legacy single-channel SCPI-99 PSU family, routed through the same
+Keysight/Agilent IDN branch as `Keysight34461A`/`KeysightPNA` since it
+predates the Keysight brand name but shares the same SCPI lineage.
+`set_autostart()` maps to `OUTP:PON:STAT {RCL0|RST}` (power-on state).
+
+**Also likely compatible:**
+- 6631B, 6633B (same programming guide, different voltage/current ranges)
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
+### AIM-TTi CPX400DP
+
+| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `AimTTiCPX400DP` | CPX400DP | AIM-TTi PowerFlex command set | `AIM-TTI`/`THURLBY THANDAR`/`AIMTTI` + `CPX400` |
+
+Puts the channel number directly on the command keyword with no colon
+or prefix separator (`V1 <v>`, `I2 <i>`, `OP1 {0|1}`) -- distinct from
+every SCPI-99 `SOURce<n>:`-prefixed or `INST:NSEL`-selected dialect
+elsewhere in this library. Measured readbacks (`V<n>O?`/`I<n>O?`) may
+echo a trailing unit suffix (`"4.999V"`); the driver strips it before
+parsing. `set_track_mode()` maps to `CONFIG {0|1|2}` (independent/
+series/parallel).
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit a command error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
+### Rohde & Schwarz HMP4040 Series
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `RohdeSchwarzHMP4040` | HMP4040 | HMP Series (4 independent channels) | `HAMEG`/`ROHDE`/`ROHDE&SCHWARZ` + `HMP` |
+
+Channels are selected via `INST:NSEL {1..4}` and then addressed with
+plain `VOLT`/`CURR`/`OUTP` commands -- the same select-then-command
+shape as `BKPrecision9130B`, distinct from the GW Instek GPP's
+numeric-suffix-on-keyword dialect. `set_global_output()` maps to
+`OUTP:GEN {ON|OFF}`, the master enable for channels armed via
+`OUTP:SEL` (not wired up individually here). `clear_protection()`
+disables the fuse-link coupling (`FUSE:STAT OFF`) since the HMP series
+has no separate OVP/OCP trip-clear command.
+
+**Also likely compatible** (same SCPI dialect, fewer channels):
+- HMP2020, HMP2030, HMP4030
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
+### Ametek Sorensen SG Series
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `SorensenSG` | SG Series | SG/SGA/SGX Series (core PSU subsystem) | `SORENSEN` |
+
+Standard SCPI-99 `:SOURce`/`:OUTPut`/`:MEASure` subsystem, directly
+comparable to `KeysightE36313A`/`RigolDP832`. The Sorensen-specific
+`:PROGram` subsystem for stored multi-step voltage/current sequences
+is intentionally **not implemented** in this initial driver -- it is a
+genuinely new interaction pattern (triggered sequence playback) not
+present in any other `PowerSupply` driver in this library, and is left
+for a future pass.
+
+**Also likely compatible:**
+- SGA, SGX series (same core SCPI subsystem; `:PROGram` support varies)
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
+### BK Precision 1685B/1687B/1688B Series
+
+| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `BKPrecision1685B` | 1685B | BK Precision flat ASCII (non-SCPI) | `B&K`/`BK PRECISION` + (`1685`, `1687`, `1688`) |
+
+**Not a SCPI instrument.** Speaks the same flat ASCII command family
+as `KoradKA3005P` (`VSET1:<v>`, `ISET1:<i>`, `OUT1`/`OUT0`) over a USB
+virtual COM port -- distinct from the SCPI-based `BKPrecision9130B`
+driver, which targets BK Precision's other, multi-channel product
+line. `check_errors`, `sync_config`, and `clear_status` are no-ops;
+`preset()` emulates a reset (no hardware `*RST`) by forcing output
+off, 0V, 0A limit.
+
+**Also likely compatible:**
+- 1687B, 1688B (same programming manual, different voltage/current ranges)
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit a protocol error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ---
 
 ## Electronic Loads
@@ -713,6 +818,25 @@ unsupported-feature warning.
 
 > [!WARNING]
 > Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
+### Prodigit 3311F
+
+| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `Prodigit3311F` | 3311F | 3310F Series plug-in module | `PRODIGIT` + (`3311`, `3310`) |
+
+The 3311F is a plug-in module hosted in a 3302F mainframe chassis, not
+a standalone load -- every command is prefixed with a `CHAN<n>` slot
+select (default slot 1, override via `slot=` on any method), an extra
+addressing layer beyond standalone loads like `SiglentSDL1000X` or
+`ItechIT8512Plus`. The CC/CV/CR/CP command shape itself
+(`MODE:CC`/`CURR <a>`/`LOAD ON`/`MEAS:VOLT?`) is otherwise directly
+comparable.
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit a command error,
 > prefer `"GENERIC"` passthrough or file an issue with the failing
 > command.
 
@@ -975,15 +1099,15 @@ default, never a silent DMM/SA misread — see issue #148.
 | Signal Generators | 9 | N5183B, AFG3022C, SMA100B, MG3700A, SMA100A, SDG2042X, DG4062, MFG-2120, DS345 |
 | Network Analyzers | 4 | N5232A, N9913A, MS2035B, SNA5012A |
 | Multimeters | 6 | 34461A, 2000, 8846A, SDM3055, DM3068, DMM6500 |
-| Power Supplies | 7 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P, GPP-4323 |
-| Electronic Loads | 5 | SDL1000X, 8600, DL3021, IT8512+, 63200A |
+| Power Supplies | 12 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P, GPP-4323, 6632B, CPX400DP, HMP4040, SG Series, 1685B |
+| Electronic Loads | 6 | SDL1000X, 8600, DL3021, IT8512+, 63200A, 3311F |
 | Lock-In Amplifiers | 1 | SR830 |
 | LCR Meters | 2 | E4980A, IM3536 |
 | Frequency Counters | 2 | 53230A, PM6690 |
 | RF Switches | 1 | RC-4SPDT-A18 |
 | USB Power Sensors | 2 | U2004A, NRP-Z21 |
 | Power Analyzers | 2 | WT310, PA1000 |
-| **Total** | **49** | |
+| **Total** | **55** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed

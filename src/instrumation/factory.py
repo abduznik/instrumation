@@ -444,6 +444,9 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
         elif "U2000" in idn or "U200" in idn:
             from .drivers.keysight_powersensor import KeysightU2000
             final_drv = KeysightU2000(resource_address)
+        elif any(m in idn for m in ["6632", "6633", "6634", "6631"]):
+            from .drivers.agilent_psu import Agilent6632B
+            final_drv = Agilent6632B(resource_address)
     elif "SIGLENT" in idn:
         if "SDM" in idn:
             from .drivers.siglent_dmm import SiglentSDM3055
@@ -554,6 +557,9 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
         elif any(m in idn for m in ["8600", "8601", "8602", "8610", "8612", "8614", "8620"]):
             from .drivers.bk_precision import BKPrecision8600
             final_drv = BKPrecision8600(resource_address)
+        elif any(m in idn for m in ["1685", "1687", "1688"]):
+            from .drivers.bk_precision_1685b import BKPrecision1685B
+            final_drv = BKPrecision1685B(resource_address)
     elif "HAMEG" in idn or "ROHDE" in idn or "ROHDE&SCHWARZ" in idn:
         if "HMO" in idn:
             from .drivers.rs_scope import RohdeSchwarzHMOCompact
@@ -561,6 +567,9 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
         elif "NRP" in idn:
             from .drivers.rs_powersensor import RohdeSchwarzNRPZ
             final_drv = RohdeSchwarzNRPZ(resource_address)
+        elif "HMP" in idn:
+            from .drivers.rs_psu import RohdeSchwarzHMP4040
+            final_drv = RohdeSchwarzHMP4040(resource_address)
     elif "GW" in idn or "GWINSTEK" in idn or "GW INSTEK" in idn:
         if "GPP" in idn:
             from .drivers.gwinstek_psu import GWInstekGPP4323
@@ -576,6 +585,18 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
         if "632" in idn:
             from .drivers.chroma_load import Chroma63200A
             final_drv = Chroma63200A(resource_address)
+    elif "AIM-TTI" in idn or "THURLBY THANDAR" in idn or "AIMTTI" in idn:
+        if "CPX400" in idn:
+            from .drivers.aimtti_psu import AimTTiCPX400DP
+            final_drv = AimTTiCPX400DP(resource_address)
+    elif "SORENSEN" in idn:
+        if "SG" in idn:
+            from .drivers.sorensen_psu import SorensenSG
+            final_drv = SorensenSG(resource_address)
+    elif "PRODIGIT" in idn:
+        if "3311" in idn or "3310" in idn:
+            from .drivers.prodigit_load import Prodigit3311F
+            final_drv = Prodigit3311F(resource_address)
 
     if not final_drv:
         # No brand matched the IDN. If exactly one driver is registered for the

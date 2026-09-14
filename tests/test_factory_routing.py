@@ -320,6 +320,42 @@ class TestFactoryGenericFallback(unittest.TestCase):
             drv = get_instrument("TCPIP::10.0.0.13::INSTR", "SCOPE")
         self.assertEqual(drv.__class__.__name__, "RohdeSchwarzHMOCompact")
 
+    def test_agilent_6632b_idn_routes_correctly(self):
+        rm = _mock_rm("AGILENT TECHNOLOGIES,6632B,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("GPIB0::5::INSTR", "PSU")
+        self.assertEqual(drv.__class__.__name__, "Agilent6632B")
+
+    def test_aimtti_cpx400dp_idn_routes_correctly(self):
+        rm = _mock_rm("AIM-TTI,CPX400DP,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("ASRL3::INSTR", "PSU")
+        self.assertEqual(drv.__class__.__name__, "AimTTiCPX400DP")
+
+    def test_sorensen_sg_idn_routes_correctly(self):
+        rm = _mock_rm("SORENSEN,SGA80-38,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("GPIB0::10::INSTR", "PSU")
+        self.assertEqual(drv.__class__.__name__, "SorensenSG")
+
+    def test_prodigit_3311f_idn_routes_correctly(self):
+        rm = _mock_rm("PRODIGIT,3311F,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("GPIB0::12::INSTR", "LOAD")
+        self.assertEqual(drv.__class__.__name__, "Prodigit3311F")
+
+    def test_bk_precision_idn_routes_to_1685b_psu(self):
+        rm = _mock_rm("B&K PRECISION,1685B,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("ASRL7::INSTR", "PSU")
+        self.assertEqual(drv.__class__.__name__, "BKPrecision1685B")
+
+    def test_rohde_schwarz_hmp4040_idn_routes_correctly(self):
+        rm = _mock_rm("ROHDE&SCHWARZ,HMP4040,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("TCPIP::10.0.0.14::INSTR", "PSU")
+        self.assertEqual(drv.__class__.__name__, "RohdeSchwarzHMP4040")
+
 
 class TestFactoryGenericSimMode(unittest.TestCase):
     """Covers GH #142/#147: SIM-mode GENERIC must not secretly be a DMM."""
