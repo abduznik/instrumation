@@ -74,6 +74,21 @@ def test_set_get_input(mock_load):
     mock_load.inst.write.assert_any_call(":SOUR:INP:STAT OFF")
 
 
+def test_get_input_accepts_numeric_boolean(mock_load):
+    """Regression: the 8600 answers queries with 0|1, not ON|OFF.
+
+    8600 Series Programming Manual p.22/p.34 documents <Bool> as
+    "0 | 1 or ON | OFF", so a parser that only matches "ON" reports an
+    enabled input as OFF.
+    """
+    mock_load.inst.query.return_value = "1"
+    assert mock_load.get_input() is True
+    mock_load.inst.query.return_value = "1\n"
+    assert mock_load.get_input() is True
+    mock_load.inst.query.return_value = "0"
+    assert mock_load.get_input() is False
+
+
 def test_measure_voltage_current_power(mock_load):
     mock_load.inst.query.return_value = "4.999"
     res = mock_load.measure_voltage()

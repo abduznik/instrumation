@@ -209,7 +209,7 @@ class ReplayDriver(SignalGenerator, SpectrumAnalyzer, NetworkAnalyzer, Oscillosc
     def set_power(self, watts: float) -> None: self.write(f":SOUR:POW {watts}")
     def get_power(self) -> float: return float(self.query(":SOUR:POW?"))
     def set_input(self, state: bool) -> None: self.write(f":SOUR:INP:STAT {'ON' if state else 'OFF'}")
-    def get_input(self) -> bool: return self.query(":SOUR:INP:STAT?") == "ON"
+    def get_input(self) -> bool: return self.query(":SOUR:INP:STAT?").strip().upper() in ("1", "ON")
     def measure_voltage(self) -> MeasurementResult: return MeasurementResult(float(self.query("MEAS:VOLT?")), "V")
     def measure_current(self) -> MeasurementResult: return MeasurementResult(float(self.query("MEAS:CURR?")), "A")
     def measure_power(self) -> MeasurementResult: return MeasurementResult(float(self.query("MEAS:POW?")), "W")
