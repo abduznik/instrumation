@@ -952,6 +952,38 @@ mode uses the same standard SCPI-99 counter subsystem shape as
 
 ---
 
+## Data Acquisition Units
+
+### Keysight DAQ970A/DAQ973A
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `KeysightDAQ970A` | DAQ970A | DAQ970A/DAQ973A Programming Guide | `KEYSIGHT`/`AGILENT` + (`DAQ970`, `DAQ973`) |
+
+New `DataAcquisitionUnit` base class (`src/instrumation/drivers/base.py`),
+registered under a new `"DAQ"` driver type -- the direct,
+backward-compatible successor to the 34970A/34972A Data
+Acquisition/Switch Unit. Unlike a `Multimeter`, a DAQ/switch unit
+multiplexes many channels through plug-in modules behind a single
+measurement engine, addressed with SCPI channel-list syntax (slot is
+the hundreds digit, channel the tens/units -- e.g. `(@101,102,203)`).
+`DataAcquisitionUnit.format_channel_list()` builds this syntax from a
+plain list (`[101, 102, 203]`) or a range string (`"101:110"`).
+
+Covers per-channel measurement-function configuration
+(`CONFigure:VOLTage:DC`/`:AC`, `:RESistance`/`:FRESistance` 2W/4W,
+`:TEMPerature`, `:FREQuency`), scan-list setup and triggering
+(`ROUTe:SCAN`, `INITiate`, `TRIGger:SOURce`, `FETCh?`), immediate
+per-channel reads (`READ?`), and relay open/close for switch modules
+(`ROUTe:CLOSe`/`:OPEN`/`:CLOSe?`).
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
+---
+
 ## USB Power Sensors
 
 New instrument category (issue #204). `"SENSOR"` is a new canonical
@@ -1104,10 +1136,11 @@ default, never a silent DMM/SA misread — see issue #148.
 | Lock-In Amplifiers | 1 | SR830 |
 | LCR Meters | 2 | E4980A, IM3536 |
 | Frequency Counters | 2 | 53230A, PM6690 |
+| Data Acquisition Units | 1 | DAQ970A |
 | RF Switches | 1 | RC-4SPDT-A18 |
 | USB Power Sensors | 2 | U2004A, NRP-Z21 |
 | Power Analyzers | 2 | WT310, PA1000 |
-| **Total** | **55** | |
+| **Total** | **56** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed

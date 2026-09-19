@@ -651,3 +651,85 @@ class FunctionGenerator(SignalGenerator):
     def set_offset(self, volts: float) -> None: pass
     @abstractmethod
     def set_waveform(self, shape: str) -> None: pass # SIN, SQU, PULS, RAMP, NOIS, DC
+
+class DataAcquisitionUnit(InstrumentDriver):
+    """Abstract Base for Data Acquisition / Switch Units (DAQ + relay mux).
+
+    Unlike a `Multimeter`, a DAQ/switch unit multiplexes many channels
+    through plug-in modules (relay multiplexers, matrix switches,
+    digital I/O, totalizers) behind a single measurement engine.
+    Channels/slots are addressed with SCPI channel-list syntax, e.g.
+    ``(@101,102,203)`` -- slot 1 channels 01/02, slot 2 channel 03.
+    """
+
+    @staticmethod
+    def format_channel_list(channels: Union[List[int], List[str], str]) -> str:
+        """Builds a SCPI channel-list string, e.g. ``(@101,102,203)``.
+
+        Accepts a pre-formatted string (returned as-is if it already
+        starts with ``(@``), or a list of channel numbers/strings that
+        gets comma-joined and wrapped.
+        """
+        if isinstance(channels, str):
+            return channels if channels.startswith("(@") else f"(@{channels})"
+        return f"(@{','.join(str(c) for c in channels)})"
+
+    @abstractmethod
+    def configure_channel(self, channel: str, function: str, **kwargs: Any) -> None:
+        """Configures the measurement function for a channel or channel list.
+
+        `function` is a measurement function mnemonic, e.g. 'VOLT:DC',
+        'VOLT:AC', 'RES', 'FRES' (4-wire), 'TEMP', 'FREQ'.
+        """
+        pass
+
+    @abstractmethod
+    def measure_scan(self, channels: Union[List[int], List[str], str]) -> MeasurementResult:
+        """Configures a scan list and returns one reading per channel."""
+        pass
+
+    @abstractmethod
+    def read_channel(self, channel: str) -> MeasurementResult:
+        """Immediately measures and returns a single channel's reading."""
+        pass
+
+    @abstractmethod
+    def close_relay(self, channel: str) -> None:
+        """Closes (activates) the relay for the given channel/channel list."""
+        pass
+
+    @abstractmethod
+    def open_relay(self, channel: str) -> None:
+        """Opens (deactivates) the relay for the given channel/channel list."""
+        pass
+
+    @abstractmethod
+    def get_relay_state(self, channel: str) -> bool:
+        """Returns True if the given channel's relay is closed."""
+        pass
+
+    def set_scan_list(self, channels: Union[List[int], List[str], str]) -> None:
+        """Defines the scan list used by a subsequent triggered scan."""
+        self._unsupported_feature("set_scan_list")
+
+    def start_scan(self) -> None:
+        """Initiates a scan over the configured scan list."""
+        self._unsupported_feature("start_scan")
+
+    def get_scan_data(self) -> MeasurementResult:
+        """Fetches the results of the most recent scan."""
+        self._unsupported_feature("get_scan_data")
+        return MeasurementResult([], "")
+
+    def set_trigger_source(self, source: str) -> None:
+        """Sets the scan trigger source, e.g. 'IMMEDIATE', 'BUS', 'EXTERNAL'."""
+        self._unsupported_feature("set_trigger_source")
+
+    def measure_frequency(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "Hz")
+
+    def measure_duty_cycle(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "%")
+
+    def measure_v_peak_to_peak(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "V")

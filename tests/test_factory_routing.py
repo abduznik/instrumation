@@ -356,6 +356,18 @@ class TestFactoryGenericFallback(unittest.TestCase):
             drv = get_instrument("TCPIP::10.0.0.14::INSTR", "PSU")
         self.assertEqual(drv.__class__.__name__, "RohdeSchwarzHMP4040")
 
+    def test_keysight_daq970a_idn_routes_correctly(self):
+        rm = _mock_rm("Keysight Technologies,DAQ970A,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("TCPIP::10.0.0.50::INSTR", "DAQ")
+        self.assertEqual(drv.__class__.__name__, "KeysightDAQ970A")
+
+    def test_keysight_daq973a_idn_routes_correctly(self):
+        rm = _mock_rm("Keysight Technologies,DAQ973A,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("TCPIP::10.0.0.51::INSTR", "DAQ")
+        self.assertEqual(drv.__class__.__name__, "KeysightDAQ970A")
+
 
 class TestFactoryGenericSimMode(unittest.TestCase):
     """Covers GH #142/#147: SIM-mode GENERIC must not secretly be a DMM."""

@@ -2,7 +2,7 @@ import random
 import time
 import math
 from typing import Optional, List, Tuple, Union
-from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, FunctionGenerator, ElectronicLoad, FrequencyCounter, LCRMeter, LockInAmplifier
+from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, FunctionGenerator, ElectronicLoad, FrequencyCounter, LCRMeter, LockInAmplifier, DataAcquisitionUnit
 from .registry import register_driver
 from ..results import MeasurementResult
 
@@ -741,3 +741,57 @@ class SimulatedLockInAmplifier(SimulatedBaseDriver, LockInAmplifier):
         time.sleep(self.latency)
         noise = random.gauss(0, 1e-6)
         return MeasurementResult((1.1e-3 + noise, 26.57), "V,deg")
+
+@register_driver("DAQ")
+class SimulatedDataAcquisitionUnit(SimulatedBaseDriver, DataAcquisitionUnit):
+    """Simulated Data Acquisition / Switch Unit (Keysight DAQ970A-style)."""
+
+    def __init__(self, resource: str) -> None:
+        super().__init__(resource)
+        self._relay_state: dict = {}
+        self._scan_list: List[str] = []
+
+    def connect(self) -> None:
+        super().connect()
+        self.identity = {"manufacturer": "SIM", "model": "SIM_DAQ", "serial": "970", "version": "1.0"}
+
+    def get_id(self) -> str: return "SIM_DAQ"
+
+    def configure_channel(self, channel, function: str, **kwargs) -> None:
+        print(f"[SIM] DAQ Configure {channel}: {function} {kwargs}")
+
+    def measure_scan(self, channels) -> MeasurementResult:
+        time.sleep(self.latency)
+        ch_list = channels if isinstance(channels, list) else [channels]
+        values = [1.0 + random.gauss(0, 0.001) for _ in ch_list]
+        return MeasurementResult(values, "")
+
+    def read_channel(self, channel: str) -> MeasurementResult:
+        time.sleep(self.latency)
+        noise = random.gauss(0, 0.001)
+        return MeasurementResult(1.0 + noise, "", channel=channel)
+
+    def close_relay(self, channel) -> None:
+        key = str(channel)
+        self._relay_state[key] = True
+        print(f"[SIM] DAQ Relay Close: {channel}")
+
+    def open_relay(self, channel) -> None:
+        key = str(channel)
+        self._relay_state[key] = False
+        print(f"[SIM] DAQ Relay Open: {channel}")
+
+    def get_relay_state(self, channel: str) -> bool:
+        return self._relay_state.get(str(channel), False)
+
+    def set_scan_list(self, channels) -> None:
+        self._scan_list = channels if isinstance(channels, list) else [channels]
+        print(f"[SIM] DAQ Scan List: {self._scan_list}")
+
+    def start_scan(self) -> None:
+        print("[SIM] DAQ Scan Started")
+
+    def get_scan_data(self) -> MeasurementResult:
+        time.sleep(self.latency)
+        values = [1.0 + random.gauss(0, 0.001) for _ in (self._scan_list or [1])]
+        return MeasurementResult(values, "")
