@@ -727,6 +727,38 @@ off, 0V, 0A limit.
 
 ---
 
+## AC Power Sources
+
+### Keysight AC6800B Series
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `KeysightAC6800B` | AC6800B Series | AC6800B Series Programming Guide | `KEYSIGHT` + `AC68` |
+
+New `ACPowerSource` base class (`src/instrumation/drivers/base.py`) --
+every `PowerSupply` driver in this library is DC-only (a single
+voltage/current setpoint with no frequency/phase/output-mode concept),
+which does not fit an AC source needing frequency programming and an
+explicit AC/DC/AC+DC output mode. Covers voltage/frequency setpoints
+(`SOURce:VOLTage`/`:FREQuency`), output mode select
+(`SOURce:VOLTage:MODE {AC|DC|AC+DC}`), output on/off, true-RMS
+voltage/current/power measurement (`MEASure:VOLTage:AC?`/
+`:CURRent:AC?`/`:POWer:AC?`), OVP/OCP, and DC offset (for `AC+DC` mode).
+Registered under a new `"ACPSU"` driver type to avoid conflating it
+with the DC-only `"PSU"` category.
+
+Per issue #192's scope, transient/waveform-step programming and
+arbitrary-waveform output are **not implemented** in this initial
+driver -- left as a follow-up, consistent with how `SorensenSG`
+deferred its `:PROGram` subsystem.
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
+---
+
 ## Electronic Loads
 
 ### Siglent SDL1000X
@@ -1100,6 +1132,7 @@ default, never a silent DMM/SA misread — see issue #148.
 | Network Analyzers | 4 | N5232A, N9913A, MS2035B, SNA5012A |
 | Multimeters | 6 | 34461A, 2000, 8846A, SDM3055, DM3068, DMM6500 |
 | Power Supplies | 12 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P, GPP-4323, 6632B, CPX400DP, HMP4040, SG Series, 1685B |
+| AC Power Sources | 1 | AC6800B Series |
 | Electronic Loads | 6 | SDL1000X, 8600, DL3021, IT8512+, 63200A, 3311F |
 | Lock-In Amplifiers | 1 | SR830 |
 | LCR Meters | 2 | E4980A, IM3536 |
@@ -1107,7 +1140,7 @@ default, never a silent DMM/SA misread — see issue #148.
 | RF Switches | 1 | RC-4SPDT-A18 |
 | USB Power Sensors | 2 | U2004A, NRP-Z21 |
 | Power Analyzers | 2 | WT310, PA1000 |
-| **Total** | **55** | |
+| **Total** | **56** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed

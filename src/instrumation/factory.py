@@ -25,7 +25,8 @@ logger = logging.getLogger(__name__)
 # never heard of.
 KNOWN_DRIVER_TYPES = frozenset({
     "SCOPE", "SA", "SG", "PSU", "DMM", "VNA", "NA", "LOAD", "ELOAD",
-    "COUNTER", "LCR", "LOCKIN", "SWITCH", "SENSOR", "POWERMETER", "GENERIC",
+    "COUNTER", "LCR", "LOCKIN", "SWITCH", "SENSOR", "POWERMETER", "ACPSU",
+    "GENERIC",
 })
 
 # ASRL resources look like "ASRL1::INSTR", "ASRL10::INSTR", "ASRL21::INSTR".
@@ -194,8 +195,9 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
     driver_type : str, optional
         Instrument category used to select and validate the driver. One of
         ``"SCOPE"``, ``"SA"``, ``"SG"``, ``"PSU"``, ``"DMM"``, ``"VNA"``,
-        ``"NA"``, ``"LOAD"``, ``"ELOAD"``, ``"COUNTER"`` or ``"GENERIC"``.
-        Defaults to ``"GENERIC"``, which accepts any instrument.
+        ``"NA"``, ``"LOAD"``, ``"ELOAD"``, ``"COUNTER"``, ``"ACPSU"`` or
+        ``"GENERIC"``. Defaults to ``"GENERIC"``, which accepts any
+        instrument.
     probe_asrl : bool, optional
         When True (default), an explicit ASRL connection gets a best-effort
         TDK-Lambda Z+ handshake (``INST:NSEL 6``) before ``*IDN?`` so the
@@ -447,6 +449,9 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
         elif any(m in idn for m in ["6632", "6633", "6634", "6631"]):
             from .drivers.agilent_psu import Agilent6632B
             final_drv = Agilent6632B(resource_address)
+        elif "AC6800" in idn or "AC68" in idn:
+            from .drivers.keysight_ac_psu import KeysightAC6800B
+            final_drv = KeysightAC6800B(resource_address)
     elif "SIGLENT" in idn:
         if "SDM" in idn:
             from .drivers.siglent_dmm import SiglentSDM3055

@@ -2,7 +2,7 @@ import random
 import time
 import math
 from typing import Optional, List, Tuple, Union
-from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, FunctionGenerator, ElectronicLoad, FrequencyCounter, LCRMeter, LockInAmplifier
+from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, FunctionGenerator, ElectronicLoad, FrequencyCounter, LCRMeter, LockInAmplifier, ACPowerSource
 from .registry import register_driver
 from ..results import MeasurementResult
 
@@ -741,3 +741,82 @@ class SimulatedLockInAmplifier(SimulatedBaseDriver, LockInAmplifier):
         time.sleep(self.latency)
         noise = random.gauss(0, 1e-6)
         return MeasurementResult((1.1e-3 + noise, 26.57), "V,deg")
+
+@register_driver("ACPSU")
+class SimulatedACPowerSource(SimulatedBaseDriver, ACPowerSource):
+    """Simulated Programmable AC Power Source (Keysight AC6800B-style)."""
+
+    def __init__(self, resource: str) -> None:
+        super().__init__(resource)
+        self._voltage = 120.0
+        self._frequency = 60.0
+        self._mode = "AC"
+        self._output = False
+        self._current_limit = 10.0
+        self._dc_offset = 0.0
+
+    def connect(self) -> None:
+        super().connect()
+        self.identity = {"manufacturer": "SIM", "model": "SIM_ACPSU", "serial": "6800", "version": "1.0"}
+
+    def get_id(self) -> str: return "SIM_ACPSU"
+
+    def set_voltage(self, volts_rms: float) -> None:
+        self._voltage = volts_rms
+        print(f"[SIM] ACPSU Voltage: {volts_rms} Vrms")
+
+    def get_voltage(self) -> float:
+        return self._voltage
+
+    def set_frequency(self, hz: float) -> None:
+        self._frequency = hz
+        print(f"[SIM] ACPSU Frequency: {hz} Hz")
+
+    def get_frequency(self) -> float:
+        return self._frequency
+
+    def set_output_mode(self, mode: str) -> None:
+        self._mode = mode.upper()
+        print(f"[SIM] ACPSU Output Mode: {self._mode}")
+
+    def get_output_mode(self) -> str:
+        return self._mode
+
+    def set_output(self, state: bool) -> None:
+        self._output = state
+        print(f"[SIM] ACPSU Output: {'ON' if state else 'OFF'}")
+
+    def get_output(self) -> bool:
+        return self._output
+
+    def measure_voltage(self) -> MeasurementResult:
+        time.sleep(self.latency)
+        base = self._voltage if self._output else 0.0
+        noise = random.gauss(0, base * 0.001) if base else 0.0
+        return MeasurementResult(base + noise, "Vrms")
+
+    def measure_current(self) -> MeasurementResult:
+        time.sleep(self.latency)
+        return MeasurementResult(0.5 if self._output else 0.0, "Arms")
+
+    def measure_power(self) -> MeasurementResult:
+        time.sleep(self.latency)
+        v = self._voltage if self._output else 0.0
+        return MeasurementResult(v * 0.5, "W")
+
+    def set_current_limit(self, amps_rms: float) -> None:
+        self._current_limit = amps_rms
+        print(f"[SIM] ACPSU Current Limit: {amps_rms} Arms")
+
+    def set_ovp(self, volts: float) -> None:
+        print(f"[SIM] ACPSU OVP: {volts} V")
+
+    def set_ocp(self, amps: float) -> None:
+        print(f"[SIM] ACPSU OCP: {amps} A")
+
+    def clear_protection(self) -> None:
+        print("[SIM] ACPSU Protection Cleared")
+
+    def set_dc_offset(self, volts: float) -> None:
+        self._dc_offset = volts
+        print(f"[SIM] ACPSU DC Offset: {volts} V")
