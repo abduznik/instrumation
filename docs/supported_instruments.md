@@ -1050,6 +1050,40 @@ Roadmap #174.
 
 ---
 
+## RF Peak Power Meters
+
+### Boonton 4530 Series
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `Boonton4531` | 4531 (single-channel) | SCPI 1993 | `BOONTON` + (`4531`, `4530`) |
+| `Boonton4532` | 4532 (dual-channel) | SCPI 1993 | `BOONTON` + `4532` |
+
+New `PowerMeter` base class (`src/instrumation/drivers/base.py`) --
+distinct from the `POWERMETER`-keyed `TektronixPA1000`/`YokogawaWT310`
+AC power *analyzers* (registered separately, no shared ABC), this
+covers wideband RF *peak/pulse* power measurement: CW average power
+(`MEAS:POWER?`), peak/pulse power (`MEAS:PEAK?`), video bandwidth for
+pulse demodulation (`SENS:BAND:VIDEO`), trigger source/level
+(`TRIG:SOURCE`/`TRIG:LEVEL`), pulse-width measurement
+(`MEAS:PULSE:WIDTH?`), relative gain/loss offset (`CAL1:OFFSET`), and
+sensor zero calibration (`CAL:ZERO`). Registered under a dedicated
+`"PEAKPM"` driver type to avoid ambiguity with the existing
+`"POWERMETER"` category.
+
+`Boonton4532` (dual-channel) overrides `measure_power`/
+`measure_peak_power` with an optional `channel` argument (1 or 2);
+`Boonton4531` (single-channel) omits the parameter entirely. GPIB and
+RS-232 only -- no USB/LAN on this generation, which fits the existing
+PyVISA `RealDriver` path directly.
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
+---
+
 ## Power Analyzers
 
 New instrument category (issue #204). `"POWERMETER"` is a new
@@ -1106,6 +1140,37 @@ PyVISA usage notes and documents several real quirks:
 
 ---
 
+## Temperature Controllers
+
+### Lake Shore Model 336
+
+| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `LakeShore336` | 336 | Model 336/335 ASCII mnemonic set | `LSCI`/`LAKE SHORE`/`LAKESHORE` + (`336`, `335`) |
+
+New `TemperatureController` base class (`src/instrumation/drivers/base.py`)
+-- a cryogenic temperature controller reads multiple sensor inputs
+(lettered `A`-`D`) and drives PID heater-output control loops (numbered
+`1`-`2`), which has no equivalent in the DC-only `PowerSupply` ABC.
+Covers Kelvin/Celsius/sensor-units readings (`KRDG?`/`CRDG?`/`SRDG?`),
+per-loop setpoint and PID gain configuration (`SETP`/`PID`), heater
+range and output queries (`RANGE`/`HTR?`), ramp-rate warm-up/cool-down
+limiting (`RAMP`), control-mode selection (`CMODE`), and autotune
+(`ATUNE`). Alarm status (`ALARMST?`) is also exposed. Sensor input
+curve/type configuration (`INTYPE`) is passed through as a raw
+comma-separated parameter string, since the exact field encoding varies
+by sensor family (diode, RTD, thermocouple) and firmware revision.
+
+**Also likely compatible** (same ASCII mnemonic command set):
+- Model 335 (2 inputs / 1 loop -- use loop `1` only)
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit a command error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
+---
+
 ## GENERIC (Universal Fallback)
 
 | Driver | Purpose | Auto-Detect IDN Keywords |
@@ -1140,7 +1205,9 @@ default, never a silent DMM/SA misread — see issue #148.
 | RF Switches | 1 | RC-4SPDT-A18 |
 | USB Power Sensors | 2 | U2004A, NRP-Z21 |
 | Power Analyzers | 2 | WT310, PA1000 |
-| **Total** | **56** | |
+| RF Peak Power Meters | 2 | 4531, 4532 |
+| Temperature Controllers | 1 | Model 336 |
+| **Total** | **59** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed
