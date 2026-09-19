@@ -2,7 +2,7 @@ import random
 import time
 import math
 from typing import Optional, List, Tuple, Union
-from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, FunctionGenerator, ElectronicLoad, FrequencyCounter, LCRMeter, LockInAmplifier
+from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, FunctionGenerator, ElectronicLoad, FrequencyCounter, LCRMeter, LockInAmplifier, TemperatureController
 from .registry import register_driver
 from ..results import MeasurementResult
 
@@ -741,3 +741,46 @@ class SimulatedLockInAmplifier(SimulatedBaseDriver, LockInAmplifier):
         time.sleep(self.latency)
         noise = random.gauss(0, 1e-6)
         return MeasurementResult((1.1e-3 + noise, 26.57), "V,deg")
+
+@register_driver("TEMP")
+class SimulatedTemperatureController(SimulatedBaseDriver, TemperatureController):
+    """Simulated Cryogenic Temperature Controller (Lake Shore 336-style)."""
+
+    def __init__(self, resource: str) -> None:
+        super().__init__(resource)
+        self._setpoints = {1: 300.0, 2: 300.0}
+        self._pid = {1: (50.0, 20.0, 0.0), 2: (50.0, 20.0, 0.0)}
+        self._heater_range = {1: "OFF", 2: "OFF"}
+
+    def connect(self) -> None:
+        super().connect()
+        self.identity = {"manufacturer": "SIM", "model": "SIM_TEMP", "serial": "336", "version": "1.0"}
+
+    def get_id(self) -> str: return "SIM_TEMP"
+
+    def get_temperature(self, input_channel: str) -> MeasurementResult:
+        time.sleep(self.latency)
+        noise = random.gauss(0, 0.01)
+        return MeasurementResult(300.0 + noise, "K", channel=input_channel.upper())
+
+    def set_setpoint(self, loop: int, temperature: float) -> None:
+        self._setpoints[loop] = temperature
+        print(f"[SIM] TempCtrl Loop {loop} Setpoint: {temperature} K")
+
+    def get_setpoint(self, loop: int) -> float:
+        return self._setpoints.get(loop, 0.0)
+
+    def set_pid(self, loop: int, p: float, i: float, d: float) -> None:
+        self._pid[loop] = (p, i, d)
+        print(f"[SIM] TempCtrl Loop {loop} PID: {p},{i},{d}")
+
+    def get_pid(self, loop: int) -> tuple:
+        return self._pid.get(loop, (0.0, 0.0, 0.0))
+
+    def set_heater_range(self, loop: int, range_setting: str) -> None:
+        self._heater_range[loop] = range_setting.upper()
+        print(f"[SIM] TempCtrl Loop {loop} Heater Range: {range_setting}")
+
+    def get_heater_output(self, loop: int) -> MeasurementResult:
+        time.sleep(self.latency)
+        return MeasurementResult(0.0 if self._heater_range.get(loop) == "OFF" else 25.0, "%", channel=f"LOOP{loop}")

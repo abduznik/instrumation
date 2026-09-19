@@ -1074,6 +1074,37 @@ PyVISA usage notes and documents several real quirks:
 
 ---
 
+## Temperature Controllers
+
+### Lake Shore Model 336
+
+| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `LakeShore336` | 336 | Model 336/335 ASCII mnemonic set | `LSCI`/`LAKE SHORE`/`LAKESHORE` + (`336`, `335`) |
+
+New `TemperatureController` base class (`src/instrumation/drivers/base.py`)
+-- a cryogenic temperature controller reads multiple sensor inputs
+(lettered `A`-`D`) and drives PID heater-output control loops (numbered
+`1`-`2`), which has no equivalent in the DC-only `PowerSupply` ABC.
+Covers Kelvin/Celsius/sensor-units readings (`KRDG?`/`CRDG?`/`SRDG?`),
+per-loop setpoint and PID gain configuration (`SETP`/`PID`), heater
+range and output queries (`RANGE`/`HTR?`), ramp-rate warm-up/cool-down
+limiting (`RAMP`), control-mode selection (`CMODE`), and autotune
+(`ATUNE`). Alarm status (`ALARMST?`) is also exposed. Sensor input
+curve/type configuration (`INTYPE`) is passed through as a raw
+comma-separated parameter string, since the exact field encoding varies
+by sensor family (diode, RTD, thermocouple) and firmware revision.
+
+**Also likely compatible** (same ASCII mnemonic command set):
+- Model 335 (2 inputs / 1 loop -- use loop `1` only)
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit a command error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
+---
+
 ## GENERIC (Universal Fallback)
 
 | Driver | Purpose | Auto-Detect IDN Keywords |
@@ -1107,7 +1138,8 @@ default, never a silent DMM/SA misread — see issue #148.
 | RF Switches | 1 | RC-4SPDT-A18 |
 | USB Power Sensors | 2 | U2004A, NRP-Z21 |
 | Power Analyzers | 2 | WT310, PA1000 |
-| **Total** | **55** | |
+| Temperature Controllers | 1 | Model 336 |
+| **Total** | **56** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed
