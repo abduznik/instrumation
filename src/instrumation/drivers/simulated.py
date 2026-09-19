@@ -2,7 +2,7 @@ import random
 import time
 import math
 from typing import Optional, List, Tuple, Union
-from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, FunctionGenerator, ElectronicLoad, FrequencyCounter, LCRMeter, LockInAmplifier, ACPowerSource
+from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, FunctionGenerator, ElectronicLoad, FrequencyCounter, LCRMeter, LockInAmplifier, ACPowerSource, DataAcquisitionUnit, PowerMeter, TemperatureController
 from .registry import register_driver
 from ..results import MeasurementResult
 
@@ -820,3 +820,150 @@ class SimulatedACPowerSource(SimulatedBaseDriver, ACPowerSource):
     def set_dc_offset(self, volts: float) -> None:
         self._dc_offset = volts
         print(f"[SIM] ACPSU DC Offset: {volts} V")
+
+@register_driver("DAQ")
+class SimulatedDataAcquisitionUnit(SimulatedBaseDriver, DataAcquisitionUnit):
+    """Simulated Data Acquisition / Switch Unit (Keysight DAQ970A-style)."""
+
+    def __init__(self, resource: str) -> None:
+        super().__init__(resource)
+        self._relay_state: dict = {}
+        self._scan_list: List[str] = []
+
+    def connect(self) -> None:
+        super().connect()
+        self.identity = {"manufacturer": "SIM", "model": "SIM_DAQ", "serial": "970", "version": "1.0"}
+
+    def get_id(self) -> str: return "SIM_DAQ"
+
+    def configure_channel(self, channel, function: str, **kwargs) -> None:
+        print(f"[SIM] DAQ Configure {channel}: {function} {kwargs}")
+
+    def measure_scan(self, channels) -> MeasurementResult:
+        time.sleep(self.latency)
+        ch_list = channels if isinstance(channels, list) else [channels]
+        values = [1.0 + random.gauss(0, 0.001) for _ in ch_list]
+        return MeasurementResult(values, "")
+
+    def read_channel(self, channel: str) -> MeasurementResult:
+        time.sleep(self.latency)
+        noise = random.gauss(0, 0.001)
+        return MeasurementResult(1.0 + noise, "", channel=channel)
+
+    def close_relay(self, channel) -> None:
+        key = str(channel)
+        self._relay_state[key] = True
+        print(f"[SIM] DAQ Relay Close: {channel}")
+
+    def open_relay(self, channel) -> None:
+        key = str(channel)
+        self._relay_state[key] = False
+        print(f"[SIM] DAQ Relay Open: {channel}")
+
+    def get_relay_state(self, channel: str) -> bool:
+        return self._relay_state.get(str(channel), False)
+
+    def set_scan_list(self, channels) -> None:
+        self._scan_list = channels if isinstance(channels, list) else [channels]
+        print(f"[SIM] DAQ Scan List: {self._scan_list}")
+
+    def start_scan(self) -> None:
+        print("[SIM] DAQ Scan Started")
+
+    def get_scan_data(self) -> MeasurementResult:
+        time.sleep(self.latency)
+        values = [1.0 + random.gauss(0, 0.001) for _ in (self._scan_list or [1])]
+        return MeasurementResult(values, "")
+
+@register_driver("PEAKPM")
+class SimulatedPeakPowerMeter(SimulatedBaseDriver, PowerMeter):
+    """Simulated RF Peak Power Meter (Boonton 4530-style)."""
+
+    def __init__(self, resource: str) -> None:
+        super().__init__(resource)
+        self._frequency = 1e9
+        self._unit = "DBM"
+        self._offset = 0.0
+        self._video_bandwidth = 4e6
+
+    def connect(self) -> None:
+        super().connect()
+        self.identity = {"manufacturer": "SIM", "model": "SIM_PEAKPM", "serial": "453", "version": "1.0"}
+
+    def get_id(self) -> str: return "SIM_PEAKPM"
+
+    def set_frequency(self, hz: float) -> None:
+        self._frequency = hz
+        print(f"[SIM] PeakPM Frequency: {hz} Hz")
+
+    def get_frequency(self) -> float:
+        return self._frequency
+
+    def set_power_unit(self, unit: str) -> None:
+        self._unit = unit.upper()
+        print(f"[SIM] PeakPM Unit: {self._unit}")
+
+    def set_offset(self, db: float) -> None:
+        self._offset = db
+        print(f"[SIM] PeakPM Offset: {db} dB")
+
+    def measure_power(self) -> MeasurementResult:
+        time.sleep(self.latency)
+        noise = random.gauss(0, 0.05)
+        return MeasurementResult(-10.0 + self._offset + noise, "dBm")
+
+    def measure_peak_power(self) -> MeasurementResult:
+        time.sleep(self.latency)
+        noise = random.gauss(0, 0.05)
+        return MeasurementResult(-5.0 + self._offset + noise, "dBm")
+
+    def set_video_bandwidth(self, hz: float) -> None:
+        self._video_bandwidth = hz
+        print(f"[SIM] PeakPM Video Bandwidth: {hz} Hz")
+
+    def measure_pulse_width(self) -> MeasurementResult:
+        time.sleep(self.latency)
+        return MeasurementResult(1e-6, "s")
+
+@register_driver("TEMP")
+class SimulatedTemperatureController(SimulatedBaseDriver, TemperatureController):
+    """Simulated Cryogenic Temperature Controller (Lake Shore 336-style)."""
+
+    def __init__(self, resource: str) -> None:
+        super().__init__(resource)
+        self._setpoints = {1: 300.0, 2: 300.0}
+        self._pid = {1: (50.0, 20.0, 0.0), 2: (50.0, 20.0, 0.0)}
+        self._heater_range = {1: "OFF", 2: "OFF"}
+
+    def connect(self) -> None:
+        super().connect()
+        self.identity = {"manufacturer": "SIM", "model": "SIM_TEMP", "serial": "336", "version": "1.0"}
+
+    def get_id(self) -> str: return "SIM_TEMP"
+
+    def get_temperature(self, input_channel: str) -> MeasurementResult:
+        time.sleep(self.latency)
+        noise = random.gauss(0, 0.01)
+        return MeasurementResult(300.0 + noise, "K", channel=input_channel.upper())
+
+    def set_setpoint(self, loop: int, temperature: float) -> None:
+        self._setpoints[loop] = temperature
+        print(f"[SIM] TempCtrl Loop {loop} Setpoint: {temperature} K")
+
+    def get_setpoint(self, loop: int) -> float:
+        return self._setpoints.get(loop, 0.0)
+
+    def set_pid(self, loop: int, p: float, i: float, d: float) -> None:
+        self._pid[loop] = (p, i, d)
+        print(f"[SIM] TempCtrl Loop {loop} PID: {p},{i},{d}")
+
+    def get_pid(self, loop: int) -> tuple:
+        return self._pid.get(loop, (0.0, 0.0, 0.0))
+
+    def set_heater_range(self, loop: int, range_setting: str) -> None:
+        self._heater_range[loop] = range_setting.upper()
+        print(f"[SIM] TempCtrl Loop {loop} Heater Range: {range_setting}")
+
+    def get_heater_output(self, loop: int) -> MeasurementResult:
+        time.sleep(self.latency)
+        return MeasurementResult(0.0 if self._heater_range.get(loop) == "OFF" else 25.0, "%", channel=f"LOOP{loop}")

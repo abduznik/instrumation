@@ -753,3 +753,223 @@ class ACPowerSource(InstrumentDriver):
 
     def measure_v_peak_to_peak(self) -> MeasurementResult:
         return MeasurementResult(0.0, "V")
+
+class DataAcquisitionUnit(InstrumentDriver):
+    """Abstract Base for Data Acquisition / Switch Units (DAQ + relay mux).
+
+    Unlike a `Multimeter`, a DAQ/switch unit multiplexes many channels
+    through plug-in modules (relay multiplexers, matrix switches,
+    digital I/O, totalizers) behind a single measurement engine.
+    Channels/slots are addressed with SCPI channel-list syntax, e.g.
+    ``(@101,102,203)`` -- slot 1 channels 01/02, slot 2 channel 03.
+    """
+
+    @staticmethod
+    def format_channel_list(channels: Union[List[int], List[str], str]) -> str:
+        """Builds a SCPI channel-list string, e.g. ``(@101,102,203)``.
+
+        Accepts a pre-formatted string (returned as-is if it already
+        starts with ``(@``), or a list of channel numbers/strings that
+        gets comma-joined and wrapped.
+        """
+        if isinstance(channels, str):
+            return channels if channels.startswith("(@") else f"(@{channels})"
+        return f"(@{','.join(str(c) for c in channels)})"
+
+    @abstractmethod
+    def configure_channel(self, channel: str, function: str, **kwargs: Any) -> None:
+        """Configures the measurement function for a channel or channel list.
+
+        `function` is a measurement function mnemonic, e.g. 'VOLT:DC',
+        'VOLT:AC', 'RES', 'FRES' (4-wire), 'TEMP', 'FREQ'.
+        """
+        pass
+
+    @abstractmethod
+    def measure_scan(self, channels: Union[List[int], List[str], str]) -> MeasurementResult:
+        """Configures a scan list and returns one reading per channel."""
+        pass
+
+    @abstractmethod
+    def read_channel(self, channel: str) -> MeasurementResult:
+        """Immediately measures and returns a single channel's reading."""
+        pass
+
+    @abstractmethod
+    def close_relay(self, channel: str) -> None:
+        """Closes (activates) the relay for the given channel/channel list."""
+        pass
+
+    @abstractmethod
+    def open_relay(self, channel: str) -> None:
+        """Opens (deactivates) the relay for the given channel/channel list."""
+        pass
+
+    @abstractmethod
+    def get_relay_state(self, channel: str) -> bool:
+        """Returns True if the given channel's relay is closed."""
+        pass
+
+    def set_scan_list(self, channels: Union[List[int], List[str], str]) -> None:
+        """Defines the scan list used by a subsequent triggered scan."""
+        self._unsupported_feature("set_scan_list")
+
+    def start_scan(self) -> None:
+        """Initiates a scan over the configured scan list."""
+        self._unsupported_feature("start_scan")
+
+    def get_scan_data(self) -> MeasurementResult:
+        """Fetches the results of the most recent scan."""
+        self._unsupported_feature("get_scan_data")
+        return MeasurementResult([], "")
+
+    def set_trigger_source(self, source: str) -> None:
+        """Sets the scan trigger source, e.g. 'IMMEDIATE', 'BUS', 'EXTERNAL'."""
+        self._unsupported_feature("set_trigger_source")
+
+    def measure_frequency(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "Hz")
+
+    def measure_duty_cycle(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "%")
+
+    def measure_v_peak_to_peak(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "V")
+
+class PowerMeter(InstrumentDriver):
+    """Abstract Base for RF Power Meters (CW and peak/pulse).
+
+    Distinct from a bench `PowerSupply`: a power meter is a measurement
+    instrument only, reading RF power from an external sensor rather
+    than sourcing voltage/current. Covers both CW average-power meters
+    and wideband peak/pulse power meters (e.g. Boonton 4530 Series).
+    """
+
+    @abstractmethod
+    def measure_power(self) -> MeasurementResult:
+        """Measures the current (CW average) RF power reading."""
+        pass
+
+    @abstractmethod
+    def set_frequency(self, hz: float) -> None:
+        """Sets the CW frequency used for the sensor's cal-factor lookup."""
+        pass
+
+    @abstractmethod
+    def get_frequency(self) -> float:
+        """Returns the configured CW frequency."""
+        pass
+
+    @abstractmethod
+    def set_power_unit(self, unit: str) -> None:
+        """Sets the readout unit, e.g. 'DBM' or 'W'."""
+        pass
+
+    @abstractmethod
+    def set_offset(self, db: float) -> None:
+        """Sets a relative gain/loss offset applied to the reading (dB)."""
+        pass
+
+    def measure_peak_power(self) -> MeasurementResult:
+        """Measures the peak (pulse) RF power reading, if supported."""
+        self._unsupported_feature("measure_peak_power")
+        return MeasurementResult(0.0, "dBm")
+
+    def set_video_bandwidth(self, hz: float) -> None:
+        """Sets the video bandwidth used for pulse/peak demodulation."""
+        self._unsupported_feature("set_video_bandwidth")
+
+    def set_trigger_source(self, source: str) -> None:
+        """Sets the trigger source, e.g. 'INTERNAL', 'EXTERNAL', 'FREE_RUN'."""
+        self._unsupported_feature("set_trigger_source")
+
+    def set_trigger_level(self, dbm: float) -> None:
+        """Sets the trigger level for peak/pulse capture (dBm)."""
+        self._unsupported_feature("set_trigger_level")
+
+    def measure_pulse_width(self) -> MeasurementResult:
+        """Measures the pulse width of the last captured pulse, if supported."""
+        self._unsupported_feature("measure_pulse_width")
+        return MeasurementResult(0.0, "s")
+
+    def zero(self) -> None:
+        """Performs a sensor zero calibration."""
+        self._unsupported_feature("zero")
+
+    def measure_frequency(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "Hz")
+
+    def measure_duty_cycle(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "%")
+
+    def measure_v_peak_to_peak(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "V")
+
+class TemperatureController(InstrumentDriver):
+    """Abstract Base for Cryogenic/Process Temperature Controllers.
+
+    Unlike a `PowerSupply`, a temperature controller reads cryogenic
+    sensors (Si diodes, RTDs, thermocouples) on multiple inputs and
+    drives one or more closed-loop PID heater outputs against a
+    setpoint -- there is no single voltage/current source concept.
+    """
+
+    @abstractmethod
+    def get_temperature(self, input_channel: str) -> MeasurementResult:
+        """Returns the temperature reading (Kelvin) for the given sensor input."""
+        pass
+
+    @abstractmethod
+    def set_setpoint(self, loop: int, temperature: float) -> None:
+        """Sets the control-loop setpoint temperature (Kelvin) for the given loop."""
+        pass
+
+    @abstractmethod
+    def get_setpoint(self, loop: int) -> float:
+        """Returns the control-loop setpoint temperature (Kelvin)."""
+        pass
+
+    @abstractmethod
+    def set_pid(self, loop: int, p: float, i: float, d: float) -> None:
+        """Sets the PID gains for the given control loop."""
+        pass
+
+    @abstractmethod
+    def get_pid(self, loop: int) -> tuple:
+        """Returns the (P, I, D) gains for the given control loop."""
+        pass
+
+    @abstractmethod
+    def set_heater_range(self, loop: int, range_setting: str) -> None:
+        """Sets the heater output range, e.g. 'OFF', 'LOW', 'MEDIUM', 'HIGH'."""
+        pass
+
+    @abstractmethod
+    def get_heater_output(self, loop: int) -> MeasurementResult:
+        """Returns the heater output level as a percentage of the current range."""
+        pass
+
+    def set_ramp_rate(self, loop: int, rate_k_per_min: float, state: bool = True) -> None:
+        """Sets/enables the setpoint ramp rate in K/min (warm-up/cool-down limiting)."""
+        self._unsupported_feature("set_ramp_rate")
+
+    def set_sensor_type(self, input_channel: str, sensor_type: str) -> None:
+        """Configures a sensor input's type (diode, RTD, thermocouple, ...)."""
+        self._unsupported_feature("set_sensor_type")
+
+    def set_control_mode(self, loop: int, mode: str) -> None:
+        """Sets the loop control mode, e.g. 'MANUAL', 'PID', 'ZONE', 'OPENLOOP'."""
+        self._unsupported_feature("set_control_mode")
+
+    def autotune(self, loop: int, mode: str = "PI") -> None:
+        """Starts the autotune routine for the given control loop."""
+        self._unsupported_feature("autotune")
+
+    def measure_frequency(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "Hz")
+
+    def measure_duty_cycle(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "%")
+
+    def measure_v_peak_to_peak(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "V")
