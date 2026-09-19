@@ -652,6 +652,108 @@ class FunctionGenerator(SignalGenerator):
     @abstractmethod
     def set_waveform(self, shape: str) -> None: pass # SIN, SQU, PULS, RAMP, NOIS, DC
 
+class ACPowerSource(InstrumentDriver):
+    """Abstract Base for Programmable AC Power Sources.
+
+    Every `PowerSupply` driver in this library is DC-only -- a single
+    voltage/current setpoint with no frequency, phase, or output-mode
+    concept. An AC source needs frequency programming and an
+    AC/DC/AC+DC output mode, plus true-RMS AC measurement, none of
+    which fits the `PowerSupply` ABC cleanly.
+    """
+
+    @abstractmethod
+    def set_voltage(self, volts_rms: float) -> None:
+        """Sets the AC output voltage setpoint (Volts RMS)."""
+        pass
+
+    @abstractmethod
+    def get_voltage(self) -> float:
+        """Returns the AC output voltage setpoint (Volts RMS)."""
+        pass
+
+    @abstractmethod
+    def set_frequency(self, hz: float) -> None:
+        """Sets the output frequency (Hz)."""
+        pass
+
+    @abstractmethod
+    def get_frequency(self) -> float:
+        """Returns the output frequency (Hz)."""
+        pass
+
+    @abstractmethod
+    def set_output_mode(self, mode: str) -> None:
+        """Sets the output mode: 'AC', 'DC', or 'AC+DC'."""
+        pass
+
+    @abstractmethod
+    def get_output_mode(self) -> str:
+        """Returns the active output mode."""
+        pass
+
+    @abstractmethod
+    def set_output(self, state: bool) -> None:
+        """Turns the AC output ON (True) or OFF (False)."""
+        pass
+
+    @abstractmethod
+    def get_output(self) -> bool:
+        """Returns the output enable state."""
+        pass
+
+    @abstractmethod
+    def measure_voltage(self) -> MeasurementResult:
+        """Measures the actual output voltage (true-RMS)."""
+        pass
+
+    @abstractmethod
+    def measure_current(self) -> MeasurementResult:
+        """Measures the actual output current (true-RMS)."""
+        pass
+
+    @abstractmethod
+    def measure_power(self) -> MeasurementResult:
+        """Measures the actual real output power (Watts)."""
+        pass
+
+    @abstractmethod
+    def set_current_limit(self, amps_rms: float) -> None:
+        """Sets the output current limit (Amps RMS)."""
+        pass
+
+    @abstractmethod
+    def set_ovp(self, volts: float) -> None:
+        """Sets the over-voltage protection trip point."""
+        pass
+
+    @abstractmethod
+    def set_ocp(self, amps: float) -> None:
+        """Sets the over-current protection trip point."""
+        pass
+
+    @abstractmethod
+    def clear_protection(self) -> None:
+        """Clears any tripped protection status."""
+        pass
+
+    def set_dc_offset(self, volts: float) -> None:
+        """Sets the DC offset voltage (used in 'AC+DC' output mode)."""
+        self._unsupported_feature("set_dc_offset")
+
+    def set_voltage_range(self, range_name: str) -> None:
+        """Selects a fixed voltage range, e.g. 'LOW'/'HIGH' (if supported)."""
+        self._unsupported_feature("set_voltage_range")
+
+    def measure_frequency(self) -> MeasurementResult:
+        return MeasurementResult(self.get_frequency() if hasattr(self, "get_frequency") else 0.0, "Hz")
+
+    def measure_duty_cycle(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "%")
+
+    def measure_v_peak_to_peak(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "V")
+
 class DataAcquisitionUnit(InstrumentDriver):
     """Abstract Base for Data Acquisition / Switch Units (DAQ + relay mux).
 
