@@ -119,6 +119,23 @@ class TestGoldenMaster(unittest.TestCase):
         self.assertEqual(replay.get_trace_data().value, [0.0])
         self.assertEqual(replay.get_smith_data().value, [complex(50, 0)])
 
+    def test_replay_input_state_numeric_boolean(self):
+        """Regression: a recorded SDL1000X/8600 input-state query returns 0|1.
+
+        The Siglent SDL1000X Programming Guide (p.18) and the B&K 8600
+        Programming Manual (p.22) both document the boolean query response as
+        numeric, so replaying a real session must not report an enabled input
+        as OFF.
+        """
+        master = GoldenMaster(self.test_file)
+        master.add(":SOUR:INP:STAT?", "1")
+        master.save()
+
+        replay = ReplayDriver("DUMMY", self.test_file)
+
+        self.assertTrue(replay.get_input(),
+            msg="get_input() must replay the recorded '1' (input ON) as True")
+
 
 if __name__ == "__main__":
     unittest.main()

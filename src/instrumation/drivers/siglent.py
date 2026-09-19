@@ -298,7 +298,7 @@ class SiglentSDL1000X(RealDriver, ElectronicLoad):
         self.safe_send(f":SOUR:INP:STAT {'ON' if state else 'OFF'}")
 
     def get_input(self) -> bool:
-        return self.query_ascii(":SOUR:INP:STAT?").strip() == "ON"
+        return self.query_ascii(":SOUR:INP:STAT?").strip().upper() in ("1", "ON")
 
     def measure_voltage(self) -> MeasurementResult:
         val = self.query_ascii(":MEAS:VOLT?")
