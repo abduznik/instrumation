@@ -1,6 +1,20 @@
-# Roadmap — v0.11.0
+# Roadmap — v0.12.0
 
-**Status:** Released 2026-09-14 (v0.11.0)
+**Status:** Released 2026-09-19 (v0.12.0)
+
+---
+
+## v0.12.0 Highlights
+
+- **New drivers (5 total), 4 new instrument categories:**
+  - Lake Shore 336 Cryogenic Temperature Controller (#185, #238) — new `TemperatureController` base class.
+  - Boonton 4531/4532 RF Peak Power Meter (#187, #239) — new `PowerMeter` base class.
+  - Keysight DAQ970A/DAQ973A Data Acquisition System (#191, #240) — new `DataAcquisitionUnit` base class with SCPI channel-list addressing.
+  - Keysight AC6800B Series Programmable AC Power Source (#192, #241) — new `ACPowerSource` base class (existing `PowerSupply` is DC-only).
+  - Keysight E4990A Impedance Analyzer (#193, #242) — reuses the existing `LCRMeter` base class.
+  - None yet validated against real hardware — see `docs/supported_instruments.md` for per-model compatibility status.
+- **Bug fix:** `get_input()` on `BKPrecision8600`, `SiglentSDL1000X`, and `ReplayDriver` now accepts the numeric `1`/`0` SCPI boolean dialect in addition to `ON`/`OFF`, matching the sibling load drivers; a numeric response was previously misread as input-off (#235, #236).
+- **License metadata:** `pyproject.toml` now correctly declares AGPL-3.0 (was still MIT after the #201 relicense).
 
 ---
 
@@ -158,4 +172,4 @@ All issue numbers below were reconciled against actual code + issue state (gh #1
 | 0.9.0 | Driver-factory + simulation fixes (#149–#168 batch), ROADMAP reconciliation, v0.9.0 release (released 2026-09-05) |
 | 0.10.0 | New drivers (Fluke 8845A/8846A, BK Precision 9130B/8600, R&S HMO Compact), React dashboard status cards (#119) (released 2026-09-07) |
 | 0.11.0 | 40 new drivers (#204 rollout + #209-#215 PSU/load batch); dashboard launcher (#118) and CSV/JSON export (#120); HMO Compact fix (#233); AGPL-3.0 relicense (#201) (released 2026-09-14) |
-| 0.12.0 | New drivers: Lake Shore 336 temperature controller (#185, new TemperatureController category), Boonton 4530 RF peak power meter (#187) (planned) |
+| 0.12.0 | New drivers: Lake Shore 336 temperature controller (#185), Boonton 4530 RF peak power meter (#187), Keysight DAQ970A DAQ (#191), Keysight AC6800B AC source (#192), Keysight E4990A impedance analyzer (#193) — 4 new instrument categories; `get_input()` numeric-boolean fix (#235); AGPL-3.0 license metadata fix (released 2026-09-19) |
