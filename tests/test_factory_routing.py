@@ -153,6 +153,12 @@ class TestFactoryGenericFallback(unittest.TestCase):
             drv = get_instrument("GPIB0::17::INSTR", "LCR")
         self.assertEqual(drv.__class__.__name__, "KeysightE4980A")
 
+    def test_keysight_e4990a_idn_routes_correctly(self):
+        rm = _mock_rm("KEYSIGHT TECHNOLOGIES,E4990A,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("GPIB0::21::INSTR", "LCR")
+        self.assertEqual(drv.__class__.__name__, "KeysightE4990A")
+
     def test_hioki_im3536_idn_routes_correctly(self):
         rm = _mock_rm("HIOKI,IM3536,SN1,1.0")
         with patch("instrumation.factory.get_rm", return_value=rm):

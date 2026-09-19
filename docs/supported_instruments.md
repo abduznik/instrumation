@@ -914,6 +914,35 @@ Keysight E4980A LCR meter class.
 > PDF. Not yet verified against real hardware -- prefer `"GENERIC"`
 > passthrough or file an issue with the failing command.
 
+### Keysight E4990A Impedance Analyzer
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `KeysightE4990A` | E4990A | E4990A SCPI Command Reference | `KEYSIGHT`/`AGILENT` + `E4990` |
+
+Unlike the fixed-frequency `KeysightE4980A`/`HiokiIM3536` LCR meters,
+the E4990A sweeps frequency (1 MHz-120 MHz) and returns trace data --
+closer in shape to the `KeysightPNA` VNA driver, but measuring
+impedance/LCR parameters (`CALCulate:PARameter1:DEFine`) instead of
+S-parameters. `LCRMeter.measure()` performs a single-point measurement
+at the current CW frequency (`SENS:FREQ:CW`); `get_trace_data()`/
+`get_complex_trace()` fetch a full swept trace in formatted
+(primary, secondary) or raw complex (real, imaginary) form
+(`CALC:DATA:FDATa?`/`:SDATa?`). Sweep configuration
+(`set_start_frequency`/`set_stop_frequency`/`set_points`/
+`set_sweep_type`) mirrors the existing `NetworkAnalyzer` sweep API.
+`connect()` sets the safety-guard frequency range to the instrument's
+1 MHz-120 MHz span.
+
+Per issue #193, equivalent-circuit fitting and fixture compensation
+(open/short/load cal) are **out of scope** for this initial driver and
+are left as a follow-up.
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ---
 
 ## Frequency Counters
@@ -1102,12 +1131,12 @@ default, never a silent DMM/SA misread — see issue #148.
 | Power Supplies | 12 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P, GPP-4323, 6632B, CPX400DP, HMP4040, SG Series, 1685B |
 | Electronic Loads | 6 | SDL1000X, 8600, DL3021, IT8512+, 63200A, 3311F |
 | Lock-In Amplifiers | 1 | SR830 |
-| LCR Meters | 2 | E4980A, IM3536 |
+| LCR Meters | 3 | E4980A, IM3536, E4990A |
 | Frequency Counters | 2 | 53230A, PM6690 |
 | RF Switches | 1 | RC-4SPDT-A18 |
 | USB Power Sensors | 2 | U2004A, NRP-Z21 |
 | Power Analyzers | 2 | WT310, PA1000 |
-| **Total** | **55** | |
+| **Total** | **56** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed
