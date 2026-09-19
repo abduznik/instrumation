@@ -356,6 +356,18 @@ class TestFactoryGenericFallback(unittest.TestCase):
             drv = get_instrument("TCPIP::10.0.0.14::INSTR", "PSU")
         self.assertEqual(drv.__class__.__name__, "RohdeSchwarzHMP4040")
 
+    def test_boonton_4531_idn_routes_correctly(self):
+        rm = _mock_rm("BOONTON,4531,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("GPIB0::16::INSTR", "PEAKPM")
+        self.assertEqual(drv.__class__.__name__, "Boonton4531")
+
+    def test_boonton_4532_idn_routes_correctly(self):
+        rm = _mock_rm("BOONTON,4532,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("GPIB0::17::INSTR", "PEAKPM")
+        self.assertEqual(drv.__class__.__name__, "Boonton4532")
+
     def test_lakeshore_336_idn_routes_correctly(self):
         # Real Model 336 hardware reports "LSCI,MODEL336,<serial>,<firmware>"
         # in its *IDN? response.
