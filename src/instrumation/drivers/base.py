@@ -651,3 +651,72 @@ class FunctionGenerator(SignalGenerator):
     def set_offset(self, volts: float) -> None: pass
     @abstractmethod
     def set_waveform(self, shape: str) -> None: pass # SIN, SQU, PULS, RAMP, NOIS, DC
+
+class PowerMeter(InstrumentDriver):
+    """Abstract Base for RF Power Meters (CW and peak/pulse).
+
+    Distinct from a bench `PowerSupply`: a power meter is a measurement
+    instrument only, reading RF power from an external sensor rather
+    than sourcing voltage/current. Covers both CW average-power meters
+    and wideband peak/pulse power meters (e.g. Boonton 4530 Series).
+    """
+
+    @abstractmethod
+    def measure_power(self) -> MeasurementResult:
+        """Measures the current (CW average) RF power reading."""
+        pass
+
+    @abstractmethod
+    def set_frequency(self, hz: float) -> None:
+        """Sets the CW frequency used for the sensor's cal-factor lookup."""
+        pass
+
+    @abstractmethod
+    def get_frequency(self) -> float:
+        """Returns the configured CW frequency."""
+        pass
+
+    @abstractmethod
+    def set_power_unit(self, unit: str) -> None:
+        """Sets the readout unit, e.g. 'DBM' or 'W'."""
+        pass
+
+    @abstractmethod
+    def set_offset(self, db: float) -> None:
+        """Sets a relative gain/loss offset applied to the reading (dB)."""
+        pass
+
+    def measure_peak_power(self) -> MeasurementResult:
+        """Measures the peak (pulse) RF power reading, if supported."""
+        self._unsupported_feature("measure_peak_power")
+        return MeasurementResult(0.0, "dBm")
+
+    def set_video_bandwidth(self, hz: float) -> None:
+        """Sets the video bandwidth used for pulse/peak demodulation."""
+        self._unsupported_feature("set_video_bandwidth")
+
+    def set_trigger_source(self, source: str) -> None:
+        """Sets the trigger source, e.g. 'INTERNAL', 'EXTERNAL', 'FREE_RUN'."""
+        self._unsupported_feature("set_trigger_source")
+
+    def set_trigger_level(self, dbm: float) -> None:
+        """Sets the trigger level for peak/pulse capture (dBm)."""
+        self._unsupported_feature("set_trigger_level")
+
+    def measure_pulse_width(self) -> MeasurementResult:
+        """Measures the pulse width of the last captured pulse, if supported."""
+        self._unsupported_feature("measure_pulse_width")
+        return MeasurementResult(0.0, "s")
+
+    def zero(self) -> None:
+        """Performs a sensor zero calibration."""
+        self._unsupported_feature("zero")
+
+    def measure_frequency(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "Hz")
+
+    def measure_duty_cycle(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "%")
+
+    def measure_v_peak_to_peak(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "V")

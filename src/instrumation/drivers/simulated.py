@@ -2,7 +2,7 @@ import random
 import time
 import math
 from typing import Optional, List, Tuple, Union
-from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, FunctionGenerator, ElectronicLoad, FrequencyCounter, LCRMeter, LockInAmplifier
+from .base import InstrumentDriver, Multimeter, PowerSupply, SpectrumAnalyzer, NetworkAnalyzer, Oscilloscope, FunctionGenerator, ElectronicLoad, FrequencyCounter, LCRMeter, LockInAmplifier, PowerMeter
 from .registry import register_driver
 from ..results import MeasurementResult
 
@@ -741,3 +741,53 @@ class SimulatedLockInAmplifier(SimulatedBaseDriver, LockInAmplifier):
         time.sleep(self.latency)
         noise = random.gauss(0, 1e-6)
         return MeasurementResult((1.1e-3 + noise, 26.57), "V,deg")
+
+@register_driver("PEAKPM")
+class SimulatedPeakPowerMeter(SimulatedBaseDriver, PowerMeter):
+    """Simulated RF Peak Power Meter (Boonton 4530-style)."""
+
+    def __init__(self, resource: str) -> None:
+        super().__init__(resource)
+        self._frequency = 1e9
+        self._unit = "DBM"
+        self._offset = 0.0
+        self._video_bandwidth = 4e6
+
+    def connect(self) -> None:
+        super().connect()
+        self.identity = {"manufacturer": "SIM", "model": "SIM_PEAKPM", "serial": "453", "version": "1.0"}
+
+    def get_id(self) -> str: return "SIM_PEAKPM"
+
+    def set_frequency(self, hz: float) -> None:
+        self._frequency = hz
+        print(f"[SIM] PeakPM Frequency: {hz} Hz")
+
+    def get_frequency(self) -> float:
+        return self._frequency
+
+    def set_power_unit(self, unit: str) -> None:
+        self._unit = unit.upper()
+        print(f"[SIM] PeakPM Unit: {self._unit}")
+
+    def set_offset(self, db: float) -> None:
+        self._offset = db
+        print(f"[SIM] PeakPM Offset: {db} dB")
+
+    def measure_power(self) -> MeasurementResult:
+        time.sleep(self.latency)
+        noise = random.gauss(0, 0.05)
+        return MeasurementResult(-10.0 + self._offset + noise, "dBm")
+
+    def measure_peak_power(self) -> MeasurementResult:
+        time.sleep(self.latency)
+        noise = random.gauss(0, 0.05)
+        return MeasurementResult(-5.0 + self._offset + noise, "dBm")
+
+    def set_video_bandwidth(self, hz: float) -> None:
+        self._video_bandwidth = hz
+        print(f"[SIM] PeakPM Video Bandwidth: {hz} Hz")
+
+    def measure_pulse_width(self) -> MeasurementResult:
+        time.sleep(self.latency)
+        return MeasurementResult(1e-6, "s")
