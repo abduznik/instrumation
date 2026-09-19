@@ -720,3 +720,72 @@ class PowerMeter(InstrumentDriver):
 
     def measure_v_peak_to_peak(self) -> MeasurementResult:
         return MeasurementResult(0.0, "V")
+
+class TemperatureController(InstrumentDriver):
+    """Abstract Base for Cryogenic/Process Temperature Controllers.
+
+    Unlike a `PowerSupply`, a temperature controller reads cryogenic
+    sensors (Si diodes, RTDs, thermocouples) on multiple inputs and
+    drives one or more closed-loop PID heater outputs against a
+    setpoint -- there is no single voltage/current source concept.
+    """
+
+    @abstractmethod
+    def get_temperature(self, input_channel: str) -> MeasurementResult:
+        """Returns the temperature reading (Kelvin) for the given sensor input."""
+        pass
+
+    @abstractmethod
+    def set_setpoint(self, loop: int, temperature: float) -> None:
+        """Sets the control-loop setpoint temperature (Kelvin) for the given loop."""
+        pass
+
+    @abstractmethod
+    def get_setpoint(self, loop: int) -> float:
+        """Returns the control-loop setpoint temperature (Kelvin)."""
+        pass
+
+    @abstractmethod
+    def set_pid(self, loop: int, p: float, i: float, d: float) -> None:
+        """Sets the PID gains for the given control loop."""
+        pass
+
+    @abstractmethod
+    def get_pid(self, loop: int) -> tuple:
+        """Returns the (P, I, D) gains for the given control loop."""
+        pass
+
+    @abstractmethod
+    def set_heater_range(self, loop: int, range_setting: str) -> None:
+        """Sets the heater output range, e.g. 'OFF', 'LOW', 'MEDIUM', 'HIGH'."""
+        pass
+
+    @abstractmethod
+    def get_heater_output(self, loop: int) -> MeasurementResult:
+        """Returns the heater output level as a percentage of the current range."""
+        pass
+
+    def set_ramp_rate(self, loop: int, rate_k_per_min: float, state: bool = True) -> None:
+        """Sets/enables the setpoint ramp rate in K/min (warm-up/cool-down limiting)."""
+        self._unsupported_feature("set_ramp_rate")
+
+    def set_sensor_type(self, input_channel: str, sensor_type: str) -> None:
+        """Configures a sensor input's type (diode, RTD, thermocouple, ...)."""
+        self._unsupported_feature("set_sensor_type")
+
+    def set_control_mode(self, loop: int, mode: str) -> None:
+        """Sets the loop control mode, e.g. 'MANUAL', 'PID', 'ZONE', 'OPENLOOP'."""
+        self._unsupported_feature("set_control_mode")
+
+    def autotune(self, loop: int, mode: str = "PI") -> None:
+        """Starts the autotune routine for the given control loop."""
+        self._unsupported_feature("autotune")
+
+    def measure_frequency(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "Hz")
+
+    def measure_duty_cycle(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "%")
+
+    def measure_v_peak_to_peak(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "V")

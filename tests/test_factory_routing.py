@@ -368,6 +368,14 @@ class TestFactoryGenericFallback(unittest.TestCase):
             drv = get_instrument("GPIB0::17::INSTR", "PEAKPM")
         self.assertEqual(drv.__class__.__name__, "Boonton4532")
 
+    def test_lakeshore_336_idn_routes_correctly(self):
+        # Real Model 336 hardware reports "LSCI,MODEL336,<serial>,<firmware>"
+        # in its *IDN? response.
+        rm = _mock_rm("LSCI,MODEL336,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("GPIB0::15::INSTR", "TEMP")
+        self.assertEqual(drv.__class__.__name__, "LakeShore336")
+
 
 class TestFactoryGenericSimMode(unittest.TestCase):
     """Covers GH #142/#147: SIM-mode GENERIC must not secretly be a DMM."""
