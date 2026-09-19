@@ -727,6 +727,38 @@ off, 0V, 0A limit.
 
 ---
 
+## AC Power Sources
+
+### Keysight AC6800B Series
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `KeysightAC6800B` | AC6800B Series | AC6800B Series Programming Guide | `KEYSIGHT` + `AC68` |
+
+New `ACPowerSource` base class (`src/instrumation/drivers/base.py`) --
+every `PowerSupply` driver in this library is DC-only (a single
+voltage/current setpoint with no frequency/phase/output-mode concept),
+which does not fit an AC source needing frequency programming and an
+explicit AC/DC/AC+DC output mode. Covers voltage/frequency setpoints
+(`SOURce:VOLTage`/`:FREQuency`), output mode select
+(`SOURce:VOLTage:MODE {AC|DC|AC+DC}`), output on/off, true-RMS
+voltage/current/power measurement (`MEASure:VOLTage:AC?`/
+`:CURRent:AC?`/`:POWer:AC?`), OVP/OCP, and DC offset (for `AC+DC` mode).
+Registered under a new `"ACPSU"` driver type to avoid conflating it
+with the DC-only `"PSU"` category.
+
+Per issue #192's scope, transient/waveform-step programming and
+arbitrary-waveform output are **not implemented** in this initial
+driver -- left as a follow-up, consistent with how `SorensenSG`
+deferred its `:PROGram` subsystem.
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
+---
+
 ## Electronic Loads
 
 ### Siglent SDL1000X
@@ -981,6 +1013,38 @@ mode uses the same standard SCPI-99 counter subsystem shape as
 
 ---
 
+## Data Acquisition Units
+
+### Keysight DAQ970A/DAQ973A
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `KeysightDAQ970A` | DAQ970A | DAQ970A/DAQ973A Programming Guide | `KEYSIGHT`/`AGILENT` + (`DAQ970`, `DAQ973`) |
+
+New `DataAcquisitionUnit` base class (`src/instrumation/drivers/base.py`),
+registered under a new `"DAQ"` driver type -- the direct,
+backward-compatible successor to the 34970A/34972A Data
+Acquisition/Switch Unit. Unlike a `Multimeter`, a DAQ/switch unit
+multiplexes many channels through plug-in modules behind a single
+measurement engine, addressed with SCPI channel-list syntax (slot is
+the hundreds digit, channel the tens/units -- e.g. `(@101,102,203)`).
+`DataAcquisitionUnit.format_channel_list()` builds this syntax from a
+plain list (`[101, 102, 203]`) or a range string (`"101:110"`).
+
+Covers per-channel measurement-function configuration
+(`CONFigure:VOLTage:DC`/`:AC`, `:RESistance`/`:FRESistance` 2W/4W,
+`:TEMPerature`, `:FREQuency`), scan-list setup and triggering
+(`ROUTe:SCAN`, `INITiate`, `TRIGger:SOURce`, `FETCh?`), immediate
+per-channel reads (`READ?`), and relay open/close for switch modules
+(`ROUTe:CLOSe`/`:OPEN`/`:CLOSe?`).
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
+---
+
 ## USB Power Sensors
 
 New instrument category (issue #204). `"SENSOR"` is a new canonical
@@ -1047,6 +1111,40 @@ Roadmap #174.
 
 ---
 
+## RF Peak Power Meters
+
+### Boonton 4530 Series
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `Boonton4531` | 4531 (single-channel) | SCPI 1993 | `BOONTON` + (`4531`, `4530`) |
+| `Boonton4532` | 4532 (dual-channel) | SCPI 1993 | `BOONTON` + `4532` |
+
+New `PowerMeter` base class (`src/instrumation/drivers/base.py`) --
+distinct from the `POWERMETER`-keyed `TektronixPA1000`/`YokogawaWT310`
+AC power *analyzers* (registered separately, no shared ABC), this
+covers wideband RF *peak/pulse* power measurement: CW average power
+(`MEAS:POWER?`), peak/pulse power (`MEAS:PEAK?`), video bandwidth for
+pulse demodulation (`SENS:BAND:VIDEO`), trigger source/level
+(`TRIG:SOURCE`/`TRIG:LEVEL`), pulse-width measurement
+(`MEAS:PULSE:WIDTH?`), relative gain/loss offset (`CAL1:OFFSET`), and
+sensor zero calibration (`CAL:ZERO`). Registered under a dedicated
+`"PEAKPM"` driver type to avoid ambiguity with the existing
+`"POWERMETER"` category.
+
+`Boonton4532` (dual-channel) overrides `measure_power`/
+`measure_peak_power` with an optional `channel` argument (1 or 2);
+`Boonton4531` (single-channel) omits the parameter entirely. GPIB and
+RS-232 only -- no USB/LAN on this generation, which fits the existing
+PyVISA `RealDriver` path directly.
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
+---
+
 ## Power Analyzers
 
 New instrument category (issue #204). `"POWERMETER"` is a new
@@ -1103,6 +1201,37 @@ PyVISA usage notes and documents several real quirks:
 
 ---
 
+## Temperature Controllers
+
+### Lake Shore Model 336
+
+| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `LakeShore336` | 336 | Model 336/335 ASCII mnemonic set | `LSCI`/`LAKE SHORE`/`LAKESHORE` + (`336`, `335`) |
+
+New `TemperatureController` base class (`src/instrumation/drivers/base.py`)
+-- a cryogenic temperature controller reads multiple sensor inputs
+(lettered `A`-`D`) and drives PID heater-output control loops (numbered
+`1`-`2`), which has no equivalent in the DC-only `PowerSupply` ABC.
+Covers Kelvin/Celsius/sensor-units readings (`KRDG?`/`CRDG?`/`SRDG?`),
+per-loop setpoint and PID gain configuration (`SETP`/`PID`), heater
+range and output queries (`RANGE`/`HTR?`), ramp-rate warm-up/cool-down
+limiting (`RAMP`), control-mode selection (`CMODE`), and autotune
+(`ATUNE`). Alarm status (`ALARMST?`) is also exposed. Sensor input
+curve/type configuration (`INTYPE`) is passed through as a raw
+comma-separated parameter string, since the exact field encoding varies
+by sensor family (diode, RTD, thermocouple) and firmware revision.
+
+**Also likely compatible** (same ASCII mnemonic command set):
+- Model 335 (2 inputs / 1 loop -- use loop `1` only)
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit a command error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
+---
+
 ## GENERIC (Universal Fallback)
 
 | Driver | Purpose | Auto-Detect IDN Keywords |
@@ -1129,14 +1258,18 @@ default, never a silent DMM/SA misread — see issue #148.
 | Network Analyzers | 4 | N5232A, N9913A, MS2035B, SNA5012A |
 | Multimeters | 6 | 34461A, 2000, 8846A, SDM3055, DM3068, DMM6500 |
 | Power Supplies | 12 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P, GPP-4323, 6632B, CPX400DP, HMP4040, SG Series, 1685B |
+| AC Power Sources | 1 | AC6800B Series |
 | Electronic Loads | 6 | SDL1000X, 8600, DL3021, IT8512+, 63200A, 3311F |
 | Lock-In Amplifiers | 1 | SR830 |
 | LCR Meters | 3 | E4980A, IM3536, E4990A |
 | Frequency Counters | 2 | 53230A, PM6690 |
+| Data Acquisition Units | 1 | DAQ970A |
 | RF Switches | 1 | RC-4SPDT-A18 |
 | USB Power Sensors | 2 | U2004A, NRP-Z21 |
 | Power Analyzers | 2 | WT310, PA1000 |
-| **Total** | **56** | |
+| RF Peak Power Meters | 2 | 4531, 4532 |
+| Temperature Controllers | 1 | Model 336 |
+| **Total** | **61** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed
