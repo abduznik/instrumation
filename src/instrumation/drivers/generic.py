@@ -15,6 +15,11 @@ class GenericDriver(RealDriver):
     :meth:`write`/:meth:`query` directly for anything instrument-specific.
     """
 
+    def preset(self, automation_optimized: bool = True) -> None:
+        # Unknown instrument: don't assume *OPC? support, just clear and wait.
+        self.write("*RST")
+        self.sync_config()
+
     def connect(self) -> None:
         super().connect()
         logger.warning(

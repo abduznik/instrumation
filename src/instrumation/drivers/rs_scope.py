@@ -47,10 +47,6 @@ class RohdeSchwarzHMOCompact(RealDriver, Oscilloscope):
         if channel < 1 or channel > self._channel_count:
             raise ValueError(f"Channel must be 1..{self._channel_count}, got {channel}")
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def run(self) -> None:
         self.write("RUN")
 

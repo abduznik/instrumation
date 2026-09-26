@@ -38,8 +38,7 @@ class SorensenSG(RealDriver, PowerSupply):
         self.safe_send(f"SOUR:CURR {current}")
 
     def get_current(self) -> MeasurementResult:
-        val = self.query_ascii("SOUR:CURR?")
-        return MeasurementResult(float(val), "A")
+        return self._meas("SOUR:CURR?", "A")
 
     def set_output(self, state: bool) -> None:
         self.safe_send(f"OUTP:STAT {'ON' if state else 'OFF'}")
@@ -57,12 +56,10 @@ class SorensenSG(RealDriver, PowerSupply):
         self.safe_send("OUTP:PROT:CLE")
 
     def measure_voltage_actual(self) -> MeasurementResult:
-        val = self.query_ascii("MEAS:VOLT?")
-        return MeasurementResult(float(val), "V")
+        return self._meas("MEAS:VOLT?", "V")
 
     def measure_current(self) -> MeasurementResult:
-        val = self.query_ascii("MEAS:CURR?")
-        return MeasurementResult(float(val), "A")
+        return self._meas("MEAS:CURR?", "A")
 
     def shutdown_safety(self) -> None:
         self.set_output(False)

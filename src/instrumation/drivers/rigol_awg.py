@@ -38,10 +38,6 @@ class RigolDG4000(RealDriver, FunctionGenerator):
         self.channel = channel
         self._src = f"SOUR{channel}"
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def set_frequency(self, hz: float) -> None:
         self.write(f"{self._src}:FREQ {hz}")
 
