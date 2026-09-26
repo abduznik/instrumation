@@ -36,6 +36,7 @@ class RigolDP832(SaveRecallSlots, RealDriver, PowerSupply):
     """
 
     STATE_SLOTS = range(1, 11)
+    CHANNELS = (1, 2, 3)
 
     def _ch(self, channel: int = None) -> str:
         return f"CH{channel}" if channel else "CH1"
@@ -98,7 +99,7 @@ class RigolDP832(SaveRecallSlots, RealDriver, PowerSupply):
         self.write(f"OUTP:TRAC {self._ch(channel)},{'ON' if enable else 'OFF'}")
 
     def shutdown_safety(self) -> None:
-        for ch in (1, 2, 3):
+        for ch in self.CHANNELS:
             self.set_output(False, channel=ch)
             self.set_voltage(0.0, channel=ch)
         self.sync_config()
