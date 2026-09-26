@@ -107,14 +107,6 @@ class RigolDM3068(RealDriver, Multimeter):
         subsystem = "FRES" if four_wire else "RES"
         self.safe_send(f":MEAS:{subsystem}:DIGIT {digits}")
 
-    def measure_duty_cycle(self) -> MeasurementResult:
-        self._unsupported_feature("Duty Cycle")
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        self._unsupported_feature("Vpp")
-        return MeasurementResult(0.0, "V")
-
     def shutdown_safety(self) -> None:
         self.configure_voltage_dc()
         self.sync_config()

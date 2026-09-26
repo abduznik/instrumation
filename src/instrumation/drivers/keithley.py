@@ -43,14 +43,6 @@ class Keithley2000(RealDriver, Multimeter):
         val = self.query_ascii(":MEAS:FREQ?")
         return MeasurementResult(float(val.split(',')[0]), "Hz")
 
-    def measure_duty_cycle(self) -> MeasurementResult:
-        self._unsupported_feature("Duty Cycle")
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        self._unsupported_feature("Vpp")
-        return MeasurementResult(0.0, "V")
-
     def shutdown_safety(self) -> None:
         self.set_auto_range(True)
         self.sync_config()

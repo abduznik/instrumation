@@ -1,7 +1,6 @@
 from .base import InstrumentDriver
 from .registry import register_driver
 from .real import RealDriver
-from ..results import MeasurementResult
 
 
 @register_driver("SWITCH")
@@ -85,15 +84,6 @@ class MiniCircuitsRCSwitch(RealDriver, InstrumentDriver):
 
     def get_firmware_version(self) -> str:
         return self.query("FIRMWARE?")
-
-    def measure_frequency(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "V")
 
     def shutdown_safety(self) -> None:
         pass

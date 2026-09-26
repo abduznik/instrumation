@@ -1,12 +1,28 @@
 from abc import ABC, abstractmethod
 from typing import List, Union, Dict, Any, Optional
 import asyncio
+import functools
 import logging
 
 from ..results import MeasurementResult
 from ..exceptions import OverloadError, ConfigurationError
 
 logger = logging.getLogger(__name__)
+
+
+def _unsupported(fn):
+    """Marks a base-class default as 'feature not supported'.
+
+    The wrapped default logs a warning via ``_unsupported_feature`` and then
+    returns the placeholder value of ``fn``. ``InstrumentDriver.supports``
+    reports False for any method still carrying this marker.
+    """
+    @functools.wraps(fn)
+    def wrapper(self, *args, **kwargs):
+        self._unsupported_feature(fn.__name__)
+        return fn(self, *args, **kwargs)
+    wrapper._unsupported = True
+    return wrapper
 
 class InstrumentDriver(ABC):
     """Abstract Base Class for all instrument drivers following the 'Abstract Hardware' spec."""
@@ -127,13 +143,13 @@ class InstrumentDriver(ABC):
         """Queries SYST:ERR? and updates local error_stack."""
         pass
 
+    @_unsupported
     def save_state(self, index: Union[int, str]) -> None:
         """Saves current state to memory."""
-        self._unsupported_feature("save_state")
 
+    @_unsupported
     def load_state(self, index: Union[int, str]) -> None:
         """Recalls state from memory."""
-        self._unsupported_feature("load_state")
 
     # --- Unit Guards & Formatting ---
     def format_frequency(self, val: Union[float, str]) -> str:
@@ -166,13 +182,27 @@ class InstrumentDriver(ABC):
         if dbm > self.max_power_dbm:
             raise OverloadError(f"Power {dbm} dBm exceeds safety limit")
 
-    # --- Measurements ---
-    @abstractmethod
-    def measure_frequency(self) -> MeasurementResult: pass
-    @abstractmethod
-    def measure_duty_cycle(self) -> MeasurementResult: pass
-    @abstractmethod
-    def measure_v_peak_to_peak(self) -> MeasurementResult: pass
+    def supports(self, feature: str) -> bool:
+        """True if this driver implements ``feature`` (a method name).
+
+        A method counts as unsupported when the driver inherits the
+        library's generic ``_unsupported_feature`` default for it.
+        """
+        method = getattr(type(self), feature, None)
+        return callable(method) and not getattr(method, "_unsupported", False)
+
+    # --- Measurements (optional; Oscilloscope / FrequencyCounter make them required) ---
+    @_unsupported
+    def measure_frequency(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "Hz")
+
+    @_unsupported
+    def measure_duty_cycle(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "%")
+
+    @_unsupported
+    def measure_v_peak_to_peak(self) -> MeasurementResult:
+        return MeasurementResult(0.0, "V")
 
     def __enter__(self) -> "InstrumentDriver":
         self.connect()
@@ -261,22 +291,22 @@ class ElectronicLoad(InstrumentDriver):
         """Measures the actual power being consumed by the load."""
         pass
 
-    @abstractmethod
+    @_unsupported
     def set_ovp(self, voltage: float) -> None:
         """Sets the over-voltage protection limit."""
         pass
 
-    @abstractmethod
+    @_unsupported
     def set_ocp(self, current: float) -> None:
         """Sets the over-current protection limit."""
         pass
 
-    @abstractmethod
+    @_unsupported
     def set_opp(self, power: float) -> None:
         """Sets the over-power protection limit."""
         pass
 
-    @abstractmethod
+    @_unsupported
     def clear_protection(self) -> None:
         """Clears any tripped protection status."""
         pass
@@ -356,26 +386,17 @@ class LCRMeter(InstrumentDriver):
         """
         pass
 
+    @_unsupported
     def set_bias_voltage(self, volts: float) -> None:
         """Sets the DC bias voltage level (if supported)."""
-        self._unsupported_feature("set_bias_voltage")
 
+    @_unsupported
     def set_bias_state(self, state: bool) -> None:
         """Enables/disables the DC bias output (if supported)."""
-        self._unsupported_feature("set_bias_state")
 
+    @_unsupported
     def set_auto_range(self, state: bool) -> None:
         """Enables or disables auto-ranging."""
-        self._unsupported_feature("set_auto_range")
-
-    def measure_frequency(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "V")
 
 class LockInAmplifier(InstrumentDriver):
     """Abstract Base for Lock-In Amplifiers."""
@@ -420,26 +441,20 @@ class LockInAmplifier(InstrumentDriver):
         """Returns a simultaneous (R, theta) reading as a MeasurementResult."""
         pass
 
+    @_unsupported
     def set_harmonic(self, n: int) -> None:
         """Sets the detection harmonic (default 1st harmonic)."""
-        self._unsupported_feature("set_harmonic")
 
+    @_unsupported
     def auto_gain(self) -> None:
         """Triggers an auto-gain/auto-sensitivity routine."""
-        self._unsupported_feature("auto_gain")
 
+    @_unsupported
     def auto_phase(self) -> None:
         """Triggers an auto-phase routine."""
-        self._unsupported_feature("auto_phase")
 
     def measure_frequency(self) -> MeasurementResult:
         return MeasurementResult(self.get_reference_frequency(), "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "V")
 
 class Multimeter(InstrumentDriver):
     @abstractmethod
@@ -471,9 +486,9 @@ class PowerSupply(InstrumentDriver):
     def set_output(self, state: bool) -> None: pass
     @abstractmethod
     def get_output(self) -> bool: pass
-    @abstractmethod
+    @_unsupported
     def set_ovp(self, voltage: float) -> None: pass
-    @abstractmethod
+    @_unsupported
     def set_ocp(self, current: float) -> None: pass
     @abstractmethod
     def measure_voltage_actual(self) -> MeasurementResult: pass
@@ -488,29 +503,29 @@ class PowerSupply(InstrumentDriver):
         """Generalized alias for measure_voltage_actual."""
         return self.measure_voltage_actual()
 
-    @abstractmethod
+    @_unsupported
     def clear_protection(self) -> None: pass
 
+    @_unsupported
     def measure_power(self) -> MeasurementResult:
         """Queries the actual measured output power (Watts)."""
-        self._unsupported_feature("measure_power")
         return MeasurementResult(0.0, "W")
 
+    @_unsupported
     def set_foldback_mode(self, mode: str) -> None:
         """Sets the foldback protection mode (OFF, CC, or CV)."""
-        self._unsupported_feature("set_foldback_mode")
 
+    @_unsupported
     def set_foldback_delay(self, seconds: float) -> None:
         """Sets the delay for foldback protection."""
-        self._unsupported_feature("set_foldback_delay")
 
+    @_unsupported
     def set_autostart(self, state: bool) -> None:
         """Sets the Power-ON state (SAFE/OFF or AUTO/ON)."""
-        self._unsupported_feature("set_autostart")
 
+    @_unsupported
     def get_mode(self) -> str:
         """Returns the current operation mode (CV, CC, or OFF)."""
-        self._unsupported_feature("get_mode")
         return "OFF"
 
 class SpectrumAnalyzer(InstrumentDriver):
@@ -544,33 +559,40 @@ class NetworkAnalyzer(InstrumentDriver):
     @abstractmethod
     def set_stop_frequency(self, freq_hz: float) -> None: pass
     
+    @_unsupported
     def set_center_freq(self, freq_hz: float) -> None: 
-        self._unsupported_feature("set_center_freq")
+        pass
 
     def set_center_frequency(self, freq_hz: float) -> None:
         """Alias for set_center_freq."""
         self.set_center_freq(freq_hz)
     
+    @_unsupported
     def set_span(self, span_hz: float) -> None: 
-        self._unsupported_feature("set_span")
+        pass
     
     @abstractmethod
     def set_points(self, num_points: int) -> None: pass
     
+    @_unsupported
     def set_if_bandwidth(self, hz: float) -> None: 
-        self._unsupported_feature("set_if_bandwidth")
+        pass
     
+    @_unsupported
     def set_power_level(self, dbm: float) -> None: 
-        self._unsupported_feature("set_power_level")
+        pass
     
+    @_unsupported
     def set_sweep_type(self, sweep_type: str) -> None: 
-        self._unsupported_feature("set_sweep_type")
+        pass
     
+    @_unsupported
     def set_averaging(self, state: bool, count: int = 10) -> None: 
-        self._unsupported_feature("set_averaging")
+        pass
     
+    @_unsupported
     def set_continuous(self, state: bool) -> None: 
-        self._unsupported_feature("set_continuous")
+        pass
     
     @abstractmethod
     def set_parameter(self, parameter: str) -> None: pass  # e.g., "S11", "S21"
@@ -581,29 +603,33 @@ class NetworkAnalyzer(InstrumentDriver):
     @abstractmethod
     def get_complex_trace(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult: pass
     
-    @abstractmethod
-    def get_smith_data(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult: pass
+    @_unsupported
+    def get_smith_data(self, measurement_name: str = "CH1_S11_1") -> MeasurementResult:
+        return MeasurementResult([], "Z")
     
+    @_unsupported
     def peak_search(self, marker: int = 1) -> None: 
-        self._unsupported_feature("peak_search")
+        pass
     
+    @_unsupported
     def get_marker_x(self, marker: int = 1) -> float: 
-        self._unsupported_feature("get_marker_x")
         return 0.0
     
+    @_unsupported
     def get_marker_y(self, marker: int = 1) -> float: 
-        self._unsupported_feature("get_marker_y")
         return 0.0
     
+    @_unsupported
     def save_state(self, filename: str) -> None: 
-        self._unsupported_feature("save_state")
+        pass
     
+    @_unsupported
     def load_state(self, filename: str) -> None: 
-        self._unsupported_feature("load_state")
+        pass
 
+    @_unsupported
     def wait_for_sweep(self) -> None:
         """Wait for the current sweep to complete."""
-        self._unsupported_feature("wait_for_sweep")
 
 class Oscilloscope(InstrumentDriver):
     @abstractmethod
@@ -638,7 +664,7 @@ class SignalGenerator(InstrumentDriver):
     def set_mod_state(self, mod_type: str, state: bool) -> None: pass
     @abstractmethod
     def start_sweep(self, start: float, stop: float, points: int, dwell: float) -> None: pass
-    @abstractmethod
+    @_unsupported
     def configure_list_sweep(self, freq_list: List[float], power_list: List[float]) -> None: pass
     @abstractmethod
     def set_reference_clock(self, source: str) -> None: pass
@@ -722,37 +748,31 @@ class ACPowerSource(InstrumentDriver):
         """Sets the output current limit (Amps RMS)."""
         pass
 
-    @abstractmethod
+    @_unsupported
     def set_ovp(self, volts: float) -> None:
         """Sets the over-voltage protection trip point."""
         pass
 
-    @abstractmethod
+    @_unsupported
     def set_ocp(self, amps: float) -> None:
         """Sets the over-current protection trip point."""
         pass
 
-    @abstractmethod
+    @_unsupported
     def clear_protection(self) -> None:
         """Clears any tripped protection status."""
         pass
 
+    @_unsupported
     def set_dc_offset(self, volts: float) -> None:
         """Sets the DC offset voltage (used in 'AC+DC' output mode)."""
-        self._unsupported_feature("set_dc_offset")
 
+    @_unsupported
     def set_voltage_range(self, range_name: str) -> None:
         """Selects a fixed voltage range, e.g. 'LOW'/'HIGH' (if supported)."""
-        self._unsupported_feature("set_voltage_range")
 
     def measure_frequency(self) -> MeasurementResult:
         return MeasurementResult(self.get_frequency() if hasattr(self, "get_frequency") else 0.0, "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "V")
 
 class DataAcquisitionUnit(InstrumentDriver):
     """Abstract Base for Data Acquisition / Switch Units (DAQ + relay mux).
@@ -810,31 +830,22 @@ class DataAcquisitionUnit(InstrumentDriver):
         """Returns True if the given channel's relay is closed."""
         pass
 
+    @_unsupported
     def set_scan_list(self, channels: Union[List[int], List[str], str]) -> None:
         """Defines the scan list used by a subsequent triggered scan."""
-        self._unsupported_feature("set_scan_list")
 
+    @_unsupported
     def start_scan(self) -> None:
         """Initiates a scan over the configured scan list."""
-        self._unsupported_feature("start_scan")
 
+    @_unsupported
     def get_scan_data(self) -> MeasurementResult:
         """Fetches the results of the most recent scan."""
-        self._unsupported_feature("get_scan_data")
         return MeasurementResult([], "")
 
+    @_unsupported
     def set_trigger_source(self, source: str) -> None:
         """Sets the scan trigger source, e.g. 'IMMEDIATE', 'BUS', 'EXTERNAL'."""
-        self._unsupported_feature("set_trigger_source")
-
-    def measure_frequency(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "V")
 
 class PowerMeter(InstrumentDriver):
     """Abstract Base for RF Power Meters (CW and peak/pulse).
@@ -870,40 +881,31 @@ class PowerMeter(InstrumentDriver):
         """Sets a relative gain/loss offset applied to the reading (dB)."""
         pass
 
+    @_unsupported
     def measure_peak_power(self) -> MeasurementResult:
         """Measures the peak (pulse) RF power reading, if supported."""
-        self._unsupported_feature("measure_peak_power")
         return MeasurementResult(0.0, "dBm")
 
+    @_unsupported
     def set_video_bandwidth(self, hz: float) -> None:
         """Sets the video bandwidth used for pulse/peak demodulation."""
-        self._unsupported_feature("set_video_bandwidth")
 
+    @_unsupported
     def set_trigger_source(self, source: str) -> None:
         """Sets the trigger source, e.g. 'INTERNAL', 'EXTERNAL', 'FREE_RUN'."""
-        self._unsupported_feature("set_trigger_source")
 
+    @_unsupported
     def set_trigger_level(self, dbm: float) -> None:
         """Sets the trigger level for peak/pulse capture (dBm)."""
-        self._unsupported_feature("set_trigger_level")
 
+    @_unsupported
     def measure_pulse_width(self) -> MeasurementResult:
         """Measures the pulse width of the last captured pulse, if supported."""
-        self._unsupported_feature("measure_pulse_width")
         return MeasurementResult(0.0, "s")
 
+    @_unsupported
     def zero(self) -> None:
         """Performs a sensor zero calibration."""
-        self._unsupported_feature("zero")
-
-    def measure_frequency(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "V")
 
 class TemperatureController(InstrumentDriver):
     """Abstract Base for Cryogenic/Process Temperature Controllers.
@@ -949,27 +951,18 @@ class TemperatureController(InstrumentDriver):
         """Returns the heater output level as a percentage of the current range."""
         pass
 
+    @_unsupported
     def set_ramp_rate(self, loop: int, rate_k_per_min: float, state: bool = True) -> None:
         """Sets/enables the setpoint ramp rate in K/min (warm-up/cool-down limiting)."""
-        self._unsupported_feature("set_ramp_rate")
 
+    @_unsupported
     def set_sensor_type(self, input_channel: str, sensor_type: str) -> None:
         """Configures a sensor input's type (diode, RTD, thermocouple, ...)."""
-        self._unsupported_feature("set_sensor_type")
 
+    @_unsupported
     def set_control_mode(self, loop: int, mode: str) -> None:
         """Sets the loop control mode, e.g. 'MANUAL', 'PID', 'ZONE', 'OPENLOOP'."""
-        self._unsupported_feature("set_control_mode")
 
+    @_unsupported
     def autotune(self, loop: int, mode: str = "PI") -> None:
         """Starts the autotune routine for the given control loop."""
-        self._unsupported_feature("autotune")
-
-    def measure_frequency(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "V")
