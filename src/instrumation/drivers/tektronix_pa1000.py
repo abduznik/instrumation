@@ -126,11 +126,5 @@ class TektronixPA1000(RealDriver, InstrumentDriver):
         val = res.value[0] if res.value else 0.0
         return MeasurementResult(val, "Hz")
 
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "V")
-
     def shutdown_safety(self) -> None:
         self.sync_config()

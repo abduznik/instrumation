@@ -93,14 +93,6 @@ class SiglentSDM3055(RealDriver, Multimeter):
         subsystem = "CURR" if ac else "VOLT"
         self.safe_send(f"{subsystem}:DC:NPLC {plc}")
 
-    def measure_duty_cycle(self) -> MeasurementResult:
-        self._unsupported_feature("Duty Cycle")
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        self._unsupported_feature("Vpp")
-        return MeasurementResult(0.0, "V")
-
     def shutdown_safety(self) -> None:
         self.set_auto_range(True)
         self.sync_config()

@@ -52,15 +52,6 @@ class RigolDSA(RealDriver, SpectrumAnalyzer):
         data = self.query_ascii_values(":TRAC:DATA? TRACE1")
         return MeasurementResult(list(data), "dBm")
 
-    def measure_frequency(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "V")
-
     def shutdown_safety(self) -> None:
         self.sync_config()
 

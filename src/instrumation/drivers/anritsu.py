@@ -84,10 +84,6 @@ class AnritsuVNA(RealDriver, NetworkAnalyzer):
         data = [complex(raw_data[i], raw_data[i+1]) for i in range(0, len(raw_data), 2)]
         return MeasurementResult(data, "IQ")
 
-    def get_smith_data(self, measurement_name: str = "S11") -> MeasurementResult:
-        self._unsupported_feature("get_smith_data")
-        return MeasurementResult([], "Z")
-
 @register_driver("NA")
 class AnritsuShockLineVNA(RealDriver, NetworkAnalyzer):
     """Driver for Anritsu ShockLine MS46522B/MS46524B VNAs."""
@@ -146,10 +142,6 @@ class AnritsuShockLineVNA(RealDriver, NetworkAnalyzer):
         )
         data = [complex(raw[i], raw[i+1]) for i in range(0, len(raw), 2)]
         return MeasurementResult(data, "IQ")
-
-    def get_smith_data(self, measurement_name: str = "S21") -> MeasurementResult:
-        self._unsupported_feature("get_smith_data")
-        return MeasurementResult([], "Z")
 
     def shutdown_safety(self) -> None:
         self.write(":SYSTem:DISPlay:UPDate ON")
@@ -222,10 +214,6 @@ class AnritsuMS2035B(RealDriver, SpectrumAnalyzer, NetworkAnalyzer):
     def set_parameter(self, parameter: str) -> None:
         self._set_mode(self.VNA_MODE)
         self.write(f":CALC:PAR:SEL '{parameter}'")
-
-    def get_smith_data(self, measurement_name: str = "S11") -> MeasurementResult:
-        self._unsupported_feature("get_smith_data")
-        return MeasurementResult([], "Z")
 
     def preset(self, automation_optimized: bool = True) -> None:
         self.write("*RST")

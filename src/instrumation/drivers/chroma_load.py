@@ -34,6 +34,8 @@ class Chroma63200A(RealDriver, ElectronicLoad):
         - LOAD:PROTection?              — protection trip status
         - LOAD:PROTection:CLEar
         - MEASure:VOLTage? / MEASure:CURRent? / MEASure:POWer?
+
+    Unsupported: set_ovp (no dedicated software OVP command), set_ocp/set_opp (OCP/OPP are dedicated MODEs, not trip-level commands).
     """
 
     _MODE_MAP = {"CC": "CCH", "CV": "CVH", "CR": "CRH", "CP": "CPH"}
@@ -102,15 +104,6 @@ class Chroma63200A(RealDriver, ElectronicLoad):
     def measure_resistance(self) -> MeasurementResult:
         self._unsupported_feature("measure_resistance (63200A has no direct MEAS:RES? query)")
         return MeasurementResult(0.0, "Ohm")
-
-    def set_ovp(self, voltage: float) -> None:
-        self._unsupported_feature("set_ovp (63200A has no dedicated software OVP command)")
-
-    def set_ocp(self, current: float) -> None:
-        self._unsupported_feature("set_ocp (63200A OCP is a dedicated MODE, not a trip-level command)")
-
-    def set_opp(self, power: float) -> None:
-        self._unsupported_feature("set_opp (63200A OPP is a dedicated MODE, not a trip-level command)")
 
     def get_protection_status(self) -> str:
         """Returns the protection status flags reported by LOAD:PROTection?."""

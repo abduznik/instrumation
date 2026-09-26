@@ -95,3 +95,25 @@ def test_unsupported_feature_includes_real_model_name(probe, caplog):
 
     assert len(caplog.records) == 1
     assert "is not supported by MS2720T" in caplog.records[0].getMessage()
+
+
+def test_supports_reports_implemented_vs_default():
+    """GH #245: supports() is False for inherited unsupported defaults."""
+    from instrumation.drivers.rigol_psu import RigolDP832
+    from instrumation.drivers.siglent_psu import SiglentSPD3303X
+
+    rigol = RigolDP832("TCPIP::1::INSTR")
+    siglent = SiglentSPD3303X("TCPIP::2::INSTR")
+    assert rigol.supports("set_ovp")
+    assert not siglent.supports("set_ovp")
+    assert not rigol.supports("measure_frequency")
+    assert not rigol.supports("no_such_method")
+
+
+def test_psu_measure_frequency_warns_instead_of_silent_zero(caplog):
+    """GH #245: non-applicable measurements log a warning (were silent 0.0 stubs)."""
+    from instrumation.drivers.rigol_psu import RigolDP832
+
+    with caplog.at_level(logging.WARNING, logger="instrumation.drivers.base"):
+        assert RigolDP832("TCPIP::1::INSTR").measure_frequency().value == 0.0
+    assert "measure_frequency" in caplog.text

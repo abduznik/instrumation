@@ -1,7 +1,6 @@
 from .base import FunctionGenerator
 from .registry import register_driver
 from .real import RealDriver
-from ..results import MeasurementResult
 
 
 @register_driver("SG")
@@ -29,6 +28,8 @@ class SRSDS345(RealDriver, FunctionGenerator):
         - PCLR      — zeroes the current waveform phase
         - AECL      — sets output to ECL levels (1Vpp, -1.3V offset)
         - ATTL      — sets output to TTL levels (5Vpp, 2.5V offset)
+
+    Unsupported: configure_list_sweep (no frequency-list sweep mode).
     """
 
     _FUNC_CODE = {"SIN": 0, "SQU": 1, "TRI": 2, "RAMP": 3, "NOIS": 4, "ARB": 5}
@@ -89,20 +90,8 @@ class SRSDS345(RealDriver, FunctionGenerator):
         self.write(f"SPAN {stop - start}")
         self.write("SSWP 1")
 
-    def configure_list_sweep(self, freq_list: list, power_list: list) -> None:
-        self._unsupported_feature("configure_list_sweep (DS345 has no frequency-list sweep mode)")
-
     def set_reference_clock(self, source: str) -> None:
         self.write(f"FSRC {1 if source.upper() == 'EXTERNAL' else 0}")
-
-    def measure_frequency(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "V")
 
     def shutdown_safety(self) -> None:
         self.set_voltage(0.0)
