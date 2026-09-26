@@ -32,6 +32,8 @@ class GWInstekGPP4323(RealDriver, PowerSupply):
         - OUTPut:SERies {ON|OFF}[FAST] / OUTPut:PARallel {ON|OFF}[FAST]
     """
 
+    CHANNELS = (1, 2, 3, 4)
+
     def _n(self, channel: int = None) -> str:
         return str(channel) if channel else "1"
 
@@ -94,7 +96,7 @@ class GWInstekGPP4323(RealDriver, PowerSupply):
         self.write(f"OUTP:PAR {'ON' if state else 'OFF'}")
 
     def shutdown_safety(self) -> None:
-        for ch in (1, 2, 3, 4):
+        for ch in self.CHANNELS:
             self.set_output(False, channel=ch)
             self.set_voltage(0.0, channel=ch)
         self.sync_config()

@@ -28,6 +28,8 @@ class KeysightE36313A(RealDriver, PowerSupply):
         - APPLy P6V|P25V|N25V|CH1|CH2|CH3[,<voltage>[,<current>]]
     """
 
+    CHANNELS = (1, 2, 3)
+
     def _chan(self, channel: int = None) -> str:
         return f"(@{channel})" if channel else "(@1)"
 
@@ -81,7 +83,7 @@ class KeysightE36313A(RealDriver, PowerSupply):
         self.write(f"OUTP:PAIR {mode_upper}")
 
     def shutdown_safety(self) -> None:
-        for ch in (1, 2, 3):
+        for ch in self.CHANNELS:
             self.set_output(False, channel=ch)
             self.set_voltage(0.0, channel=ch)
         self.sync_config()
