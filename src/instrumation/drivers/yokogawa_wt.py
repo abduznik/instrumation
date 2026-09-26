@@ -29,10 +29,6 @@ class YokogawaWT310(RealDriver, InstrumentDriver):
         - *CAL?                              — zero calibration
     """
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def set_output_item(self, index: int, function: str, element: int = 1) -> None:
         """Configures numeric output slot `index` (1-255) with a function/element."""
         self.safe_send(f"NUM:ITEM{index} {function.upper()},{element}")

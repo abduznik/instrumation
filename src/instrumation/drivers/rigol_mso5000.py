@@ -32,10 +32,6 @@ class RigolMSO5000(RealDriver, Oscilloscope):
         self.max_voltage = 40.0
         self._channel_count = 4
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def run(self) -> None:
         self.write(":RUN")
 

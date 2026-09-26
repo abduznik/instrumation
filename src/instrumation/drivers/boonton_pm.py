@@ -25,10 +25,6 @@ class _Boonton4530Base(RealDriver, PowerMeter):
         - *IDN? / *RST / *CLS / *OPC?
     """
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def set_frequency(self, hz: float) -> None:
         self.safe_send(f"FREQ {hz}")
 
@@ -48,12 +44,10 @@ class _Boonton4530Base(RealDriver, PowerMeter):
         return float(self.query_ascii("CAL1:OFFSET?"))
 
     def measure_power(self) -> MeasurementResult:
-        val = self.query_ascii("MEAS:POWER?")
-        return MeasurementResult(float(val), "dBm")
+        return self._meas("MEAS:POWER?", "dBm")
 
     def measure_peak_power(self) -> MeasurementResult:
-        val = self.query_ascii("MEAS:PEAK?")
-        return MeasurementResult(float(val), "dBm")
+        return self._meas("MEAS:PEAK?", "dBm")
 
     def set_video_bandwidth(self, hz: float) -> None:
         self.safe_send(f"SENS:BAND:VIDEO {hz}")
@@ -72,8 +66,7 @@ class _Boonton4530Base(RealDriver, PowerMeter):
         self.safe_send(f"TRIG:LEVEL {dbm}")
 
     def measure_pulse_width(self) -> MeasurementResult:
-        val = self.query_ascii("MEAS:PULSE:WIDTH?")
-        return MeasurementResult(float(val), "s")
+        return self._meas("MEAS:PULSE:WIDTH?", "s")
 
     def zero(self) -> None:
         self.write("CAL:ZERO")

@@ -25,10 +25,6 @@ class SiglentSDS2000XPlus(RealDriver, Oscilloscope):
         - :PRINt? {BMP|PNG}
     """
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def run(self) -> None:
         self.write(":TRIG:RUN")
 

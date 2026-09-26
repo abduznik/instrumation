@@ -31,10 +31,6 @@ class RigolDM3068(RealDriver, Multimeter):
         - *IDN? / *RST
     """
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def configure_voltage_dc(self) -> None:
         self.safe_send(":FUNC:VOLT:DC")
 

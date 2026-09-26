@@ -12,10 +12,6 @@ class Fluke8846A(RealDriver, Multimeter):
     Temperature, Capacitance, and Diode test via SCPI (IEEE 488.2).
     """
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def configure_voltage_dc(self) -> None:
         self.safe_send(":CONF:VOLT:DC")
 
@@ -46,24 +42,19 @@ class Fluke8846A(RealDriver, Multimeter):
         self.safe_send(f":VOLT:RANG:AUTO {val}")
 
     def measure_frequency(self) -> MeasurementResult:
-        val = self.query_ascii(":MEAS:FREQ?")
-        return MeasurementResult(float(val), "Hz")
+        return self._meas(":MEAS:FREQ?", "Hz")
 
     def measure_period(self) -> MeasurementResult:
-        val = self.query_ascii(":MEAS:PER?")
-        return MeasurementResult(float(val), "s")
+        return self._meas(":MEAS:PER?", "s")
 
     def measure_temperature(self, probe_type: str = "TC", probe: str = "K") -> MeasurementResult:
-        val = self.query_ascii(f":MEAS:TEMP? {probe_type},{probe}")
-        return MeasurementResult(float(val), "C")
+        return self._meas(f":MEAS:TEMP? {probe_type},{probe}", "C")
 
     def measure_capacitance(self) -> MeasurementResult:
-        val = self.query_ascii(":MEAS:CAP?")
-        return MeasurementResult(float(val), "F")
+        return self._meas(":MEAS:CAP?", "F")
 
     def measure_diode(self) -> MeasurementResult:
-        val = self.query_ascii(":MEAS:DIOD?")
-        return MeasurementResult(float(val), "V")
+        return self._meas(":MEAS:DIOD?", "V")
 
     def shutdown_safety(self) -> None:
         self.set_auto_range(True)

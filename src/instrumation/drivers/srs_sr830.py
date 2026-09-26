@@ -40,10 +40,6 @@ class SRSSR830(RealDriver, LockInAmplifier):
         300e-3, 1.0, 3.0, 10.0, 30.0, 100.0, 300.0, 1e3, 3e3, 10e3, 30e3,
     ]
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def set_reference_frequency(self, hz: float) -> None:
         self.write(f"FREQ {hz}")
 

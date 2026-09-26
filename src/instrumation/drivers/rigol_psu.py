@@ -1,11 +1,11 @@
 from .base import PowerSupply
 from .registry import register_driver
-from .real import RealDriver
+from .real import RealDriver, SaveRecallSlots
 from ..results import MeasurementResult
 
 
 @register_driver("PSU")
-class RigolDP832(RealDriver, PowerSupply):
+class RigolDP832(SaveRecallSlots, RealDriver, PowerSupply):
     """Driver for Rigol DP800 Series Triple-Output DC Power Supplies.
 
     Validated Model: DP832. Unlike the BK Precision 9130B's
@@ -35,6 +35,8 @@ class RigolDP832(RealDriver, PowerSupply):
         - *SAV {1-10} / *RCL {1-10}
     """
 
+    STATE_SLOTS = range(1, 11)
+
     def _ch(self, channel: int = None) -> str:
         return f"CH{channel}" if channel else "CH1"
 
@@ -55,8 +57,7 @@ class RigolDP832(RealDriver, PowerSupply):
         self.safe_send(f"{self._src(channel)}:CURR {current}")
 
     def get_current(self, channel: int = None) -> MeasurementResult:
-        val = self.query_ascii(f"{self._src(channel)}:CURR?")
-        return MeasurementResult(float(val), "A")
+        return self._meas(f"{self._src(channel)}:CURR?", "A")
 
     def set_output(self, state: bool, channel: int = None) -> None:
         self.write(f"OUTP {self._ch(channel)},{'ON' if state else 'OFF'}")
@@ -84,30 +85,17 @@ class RigolDP832(RealDriver, PowerSupply):
         self.write(f"{self._src(channel)}:CURR:PROT:CLE")
 
     def measure_voltage_actual(self, channel: int = None) -> MeasurementResult:
-        val = self.query_ascii(f"MEAS:VOLT? {self._ch(channel)}")
-        return MeasurementResult(float(val), "V")
+        return self._meas(f"MEAS:VOLT? {self._ch(channel)}", "V")
 
     def measure_current(self, channel: int = None) -> MeasurementResult:
-        val = self.query_ascii(f"MEAS:CURR? {self._ch(channel)}")
-        return MeasurementResult(float(val), "A")
+        return self._meas(f"MEAS:CURR? {self._ch(channel)}", "A")
 
     def measure_power(self, channel: int = None) -> MeasurementResult:
-        val = self.query_ascii(f"MEAS:POWE? {self._ch(channel)}")
-        return MeasurementResult(float(val), "W")
+        return self._meas(f"MEAS:POWE? {self._ch(channel)}", "W")
 
     def set_tracking_mode(self, enable: bool, channel: int = None) -> None:
         """Enables/disables output tracking for the given channel (CH2/CH3)."""
         self.write(f"OUTP:TRAC {self._ch(channel)},{'ON' if enable else 'OFF'}")
-
-    def save_state(self, index: int) -> None:
-        if not (1 <= index <= 10):
-            raise ValueError("Index must be 1-10")
-        self.write(f"*SAV {index}")
-
-    def load_state(self, index: int) -> None:
-        if not (1 <= index <= 10):
-            raise ValueError("Index must be 1-10")
-        self.write(f"*RCL {index}")
 
     def shutdown_safety(self) -> None:
         for ch in (1, 2, 3):

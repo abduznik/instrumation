@@ -28,10 +28,6 @@ class SiglentSNA5000A(RealDriver, NetworkAnalyzer):
         - CALCulate:MARKer<n>:FUNCtion:EXECute
     """
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def set_start_frequency(self, freq_hz: float) -> None:
         self.safe_send(f"SENS:FREQ:STAR {freq_hz}")
 

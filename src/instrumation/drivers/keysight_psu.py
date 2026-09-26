@@ -45,8 +45,7 @@ class KeysightE36313A(RealDriver, PowerSupply):
         self.safe_send(f"CURR {current}, {self._chan(channel)}")
 
     def get_current(self, channel: int = None) -> MeasurementResult:
-        val = self.query_ascii(f"CURR? {self._chan(channel)}")
-        return MeasurementResult(float(val), "A")
+        return self._meas(f"CURR? {self._chan(channel)}", "A")
 
     def set_output(self, state: bool, channel: int = None) -> None:
         self.write(f"OUTP {'ON' if state else 'OFF'}, {self._chan(channel)}")
@@ -69,12 +68,10 @@ class KeysightE36313A(RealDriver, PowerSupply):
         self.write(f"CURR:PROT:CLE {self._chan(channel)}")
 
     def measure_voltage_actual(self, channel: int = None) -> MeasurementResult:
-        val = self.query_ascii(f"MEAS:VOLT? {self._chan(channel)}")
-        return MeasurementResult(float(val), "V")
+        return self._meas(f"MEAS:VOLT? {self._chan(channel)}", "V")
 
     def measure_current(self, channel: int = None) -> MeasurementResult:
-        val = self.query_ascii(f"MEAS:CURR? {self._chan(channel)}")
-        return MeasurementResult(float(val), "A")
+        return self._meas(f"MEAS:CURR? {self._chan(channel)}", "A")
 
     def set_output_pairing(self, mode: str) -> None:
         """Sets CH1/CH2 pairing: 'OFF', 'PAR' (parallel), or 'SER' (series)."""

@@ -42,10 +42,6 @@ class KeysightDAQ970A(RealDriver, DataAcquisitionUnit):
         "FREQ": "FREQ",
     }
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def configure_channel(self, channel: Union[List[int], List[str], str], function: str, **kwargs) -> None:
         func_key = function.upper()
         if func_key not in self._FUNC_MAP:

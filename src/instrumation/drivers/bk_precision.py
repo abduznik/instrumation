@@ -1,11 +1,11 @@
 from .base import PowerSupply, ElectronicLoad
 from .registry import register_driver
-from .real import RealDriver
+from .real import RealDriver, SaveRecallSlots
 from ..results import MeasurementResult
 
 
 @register_driver("PSU")
-class BKPrecision9130B(RealDriver, PowerSupply):
+class BKPrecision9130B(SaveRecallSlots, RealDriver, PowerSupply):
     """Driver for BK Precision 9130B Series Triple Output DC Power Supplies.
 
     Three independent channels selected via ``INST:NSEL {1|2|3}``; once
@@ -28,6 +28,8 @@ class BKPrecision9130B(RealDriver, PowerSupply):
         - OUTP:TRAC {ON|OFF}        — enable/disable tracking mode (CH2/CH3)
         - *SAV {index} / *RCL {index} — memory store/recall (1-9)
     """
+
+    STATE_SLOTS = range(1, 10)
 
     def __init__(self, resource: str) -> None:
         super().__init__(resource)
@@ -111,18 +113,6 @@ class BKPrecision9130B(RealDriver, PowerSupply):
         """Enables or disables tracking mode (CH2/CH3 outputs linked)."""
         self.write(f"OUTP:TRAC {'ON' if enable else 'OFF'}")
 
-    def save_state(self, index: int) -> None:
-        """Saves current state to memory (1-9)."""
-        if not (1 <= index <= 9):
-            raise ValueError("Index must be 1-9")
-        self.write(f"*SAV {index}")
-
-    def load_state(self, index: int) -> None:
-        """Recalls state from memory (1-9)."""
-        if not (1 <= index <= 9):
-            raise ValueError("Index must be 1-9")
-        self.write(f"*RCL {index}")
-
     def shutdown_safety(self) -> None:
         """Safety first: disable output and zero voltage on all channels."""
         for ch in (1, 2, 3):
@@ -153,10 +143,6 @@ class BKPrecision8600(RealDriver, ElectronicLoad):
         - :SOUR:BATT:MODE {ON|OFF}         — battery test mode
         - :SOUR:BATT:LEV:VOLT {volts}      — battery test cutoff voltage
     """
-
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
 
     def set_mode(self, mode: str) -> None:
         mode_upper = mode.upper()
@@ -200,16 +186,13 @@ class BKPrecision8600(RealDriver, ElectronicLoad):
         return self.query_ascii(":SOUR:INP:STAT?").strip().upper() in ("1", "ON")
 
     def measure_voltage(self) -> MeasurementResult:
-        val = self.query_ascii(":MEAS:VOLT?")
-        return MeasurementResult(float(val), "V")
+        return self._meas(":MEAS:VOLT?", "V")
 
     def measure_current(self) -> MeasurementResult:
-        val = self.query_ascii(":MEAS:CURR?")
-        return MeasurementResult(float(val), "A")
+        return self._meas(":MEAS:CURR?", "A")
 
     def measure_power(self) -> MeasurementResult:
-        val = self.query_ascii(":MEAS:POW?")
-        return MeasurementResult(float(val), "W")
+        return self._meas(":MEAS:POW?", "W")
 
     def set_ovp(self, voltage: float) -> None:
         self.safe_send(f":SOUR:VOLT:PROT {voltage}")
@@ -233,8 +216,7 @@ class BKPrecision8600(RealDriver, ElectronicLoad):
 
     def get_battery_test_capacity(self) -> MeasurementResult:
         """Returns the measured discharge capacity (Ah) from the last/current battery test."""
-        val = self.query_ascii(":SOUR:BATT:DCH:CAP?")
-        return MeasurementResult(float(val), "Ah")
+        return self._meas(":SOUR:BATT:DCH:CAP?", "Ah")
 
     def shutdown_safety(self) -> None:
         self.set_input(False)

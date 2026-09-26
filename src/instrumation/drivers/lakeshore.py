@@ -44,10 +44,6 @@ class LakeShore336(RealDriver, TemperatureController):
     _RANGE_MAP = {"OFF": 0, "LOW": 1, "MEDIUM": 2, "MED": 2, "HIGH": 3}
     _RANGE_MAP_REV = {0: "OFF", 1: "LOW", 2: "MEDIUM", 3: "HIGH"}
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def get_temperature(self, input_channel: str) -> MeasurementResult:
         val = self.query_ascii(f"KRDG? {input_channel.upper()}")
         return MeasurementResult(float(val), "K", channel=input_channel.upper())

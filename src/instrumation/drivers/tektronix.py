@@ -8,10 +8,6 @@ from ..results import MeasurementResult
 class TektronixTDS(RealDriver, Oscilloscope):
     """Refined Driver for Tektronix TDS Series Oscilloscopes."""
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def run(self) -> None: self.write(":ACQUIRE:STATE ON")
     def stop(self) -> None: self.write(":ACQUIRE:STATE OFF")
     def single(self) -> None:
@@ -82,10 +78,6 @@ class TektronixAFG(RealDriver, FunctionGenerator):
         super().__init__(resource)
         self.channel = channel
         self.ch_prefix = f"SOURce{channel}"
-
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
 
     def set_frequency(self, hz: float) -> None:
         self.write(f"{self.ch_prefix}:FREQuency:FIXed {hz}")

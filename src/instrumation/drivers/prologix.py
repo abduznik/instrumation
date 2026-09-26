@@ -11,6 +11,11 @@ class PrologixDriver(RealDriver):
     This acts as a bridge to communicate with GPIB instruments via a Serial port.
     """
 
+    def preset(self, automation_optimized: bool = True) -> None:
+        # Unknown instrument: don't assume *OPC? support, just clear and wait.
+        self.write("*RST")
+        self.sync_config()
+
     def __init__(self, resource_address: str, gpib_address: int = 1) -> None:
         # Prologix is a serial device, usually /dev/cu.usbserial...
         super().__init__(resource_address)
