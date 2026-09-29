@@ -1216,7 +1216,7 @@ New `TemperatureController` base class (`src/instrumation/drivers/base.py`)
 Covers Kelvin/Celsius/sensor-units readings (`KRDG?`/`CRDG?`/`SRDG?`),
 per-loop setpoint and PID gain configuration (`SETP`/`PID`), heater
 range and output queries (`RANGE`/`HTR?`), ramp-rate warm-up/cool-down
-limiting (`RAMP`), control-mode selection (`CMODE`), and autotune
+limiting (`RAMP`), control-mode selection (`OUTMODE`), and autotune
 (`ATUNE`). Alarm status (`ALARMST?`) is also exposed. Sensor input
 curve/type configuration (`INTYPE`) is passed through as a raw
 comma-separated parameter string, since the exact field encoding varies
