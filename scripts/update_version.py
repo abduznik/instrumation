@@ -20,7 +20,7 @@ def update_file(file_path, new_version):
     
     if re.search(pattern, content, flags=re.MULTILINE):
         # We replace Group 2 (the old version) with the new_version
-        new_content = re.sub(pattern, f'\g<1>{new_version}\g<3>', content, flags=re.MULTILINE)
+        new_content = re.sub(pattern, rf'\g<1>{new_version}\g<3>', content, flags=re.MULTILINE)
         
         with open(file_path, 'w') as f:
             f.write(new_content)
