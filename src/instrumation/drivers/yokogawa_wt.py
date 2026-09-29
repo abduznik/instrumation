@@ -90,14 +90,5 @@ class YokogawaWT310(RealDriver, InstrumentDriver):
     def reset_integration(self) -> None:
         self.write("INTEG:RES")
 
-    def measure_frequency(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "V")
-
     def shutdown_safety(self) -> None:
         self.sync_config()

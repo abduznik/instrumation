@@ -97,15 +97,6 @@ class GWInstekGPP4323(RealDriver, PowerSupply):
         """Links CH1+CH2 (and CH3+CH4 where present) in parallel."""
         self.write(f"OUTP:PAR {'ON' if state else 'OFF'}")
 
-    def measure_frequency(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "V")
-
     def shutdown_safety(self) -> None:
         for ch in (1, 2, 3, 4):
             self.set_output(False, channel=ch)

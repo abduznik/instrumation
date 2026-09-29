@@ -28,6 +28,8 @@ class SiglentSPD3303X(RealDriver, PowerSupply):
         - OUTPut:TRACK {0|1|2}      — 0=independent, 1=series, 2=parallel
         - INSTrument {CH1|CH2}
         - *SAV {1-5} / *RCL {1-5}
+
+    Unsupported: set_ovp/set_ocp (no software OVP/OCP commands), clear_protection.
     """
 
     def _ch(self, channel: int = None) -> str:
@@ -75,15 +77,6 @@ class SiglentSPD3303X(RealDriver, PowerSupply):
             raise ValueError("mode must be 0 (independent), 1 (series), or 2 (parallel)")
         self.write(f"OUTP:TRACK {mode}")
 
-    def set_ovp(self, voltage: float, channel: int = None) -> None:
-        self._unsupported_feature("set_ovp (SPD3303X has no software OVP command)")
-
-    def set_ocp(self, current: float, channel: int = None) -> None:
-        self._unsupported_feature("set_ocp (SPD3303X has no software OCP command)")
-
-    def clear_protection(self) -> None:
-        self._unsupported_feature("clear_protection")
-
     def save_state(self, index: int) -> None:
         if not (1 <= index <= 5):
             raise ValueError("Index must be 1-5")
@@ -93,15 +86,6 @@ class SiglentSPD3303X(RealDriver, PowerSupply):
         if not (1 <= index <= 5):
             raise ValueError("Index must be 1-5")
         self.write(f"*RCL {index}")
-
-    def measure_frequency(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "V")
 
     def shutdown_safety(self) -> None:
         for ch in (1, 2, 3):

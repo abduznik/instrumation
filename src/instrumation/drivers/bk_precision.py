@@ -123,15 +123,6 @@ class BKPrecision9130B(RealDriver, PowerSupply):
             raise ValueError("Index must be 1-9")
         self.write(f"*RCL {index}")
 
-    def measure_frequency(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "V")
-
     def shutdown_safety(self) -> None:
         """Safety first: disable output and zero voltage on all channels."""
         for ch in (1, 2, 3):

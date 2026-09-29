@@ -31,6 +31,8 @@ class RigolDL3021(RealDriver, ElectronicLoad):
         - MEASure:CAPability?       — battery-test discharge capacity (Ah)
         - MEASure:WATThours?        — accumulated energy (Wh)
         - MEASure:DISChargingTime?  — elapsed battery-test discharge time (s)
+
+    Unsupported: set_ovp/set_ocp/set_opp (no software trip-point commands), clear_protection.
     """
 
     def preset(self, automation_optimized: bool = True) -> None:
@@ -93,18 +95,6 @@ class RigolDL3021(RealDriver, ElectronicLoad):
     def measure_resistance(self) -> MeasurementResult:
         val = self.query_ascii(":MEAS:RES?")
         return MeasurementResult(float(val), "Ohm")
-
-    def set_ovp(self, voltage: float) -> None:
-        self._unsupported_feature("set_ovp (DL3000 has no software OVP trip-point command)")
-
-    def set_ocp(self, current: float) -> None:
-        self._unsupported_feature("set_ocp (DL3000 has no software OCP trip-point command)")
-
-    def set_opp(self, power: float) -> None:
-        self._unsupported_feature("set_opp (DL3000 has no software OPP trip-point command)")
-
-    def clear_protection(self) -> None:
-        self._unsupported_feature("clear_protection")
 
     def set_battery_test_mode(self, enable: bool) -> None:
         """Switches the source function mode to/from BATTery discharge testing."""

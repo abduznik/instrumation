@@ -1,7 +1,6 @@
 from .base import FunctionGenerator
 from .registry import register_driver
 from .real import RealDriver
-from ..results import MeasurementResult
 
 
 @register_driver("SG")
@@ -28,6 +27,8 @@ class SiglentSDG2000X(RealDriver, FunctionGenerator):
         - C<n>:SWWV START,<hz>              — sweep start frequency
         - C<n>:SWWV STOP,<hz>               — sweep stop frequency
         - C<n>:SWWV TIME,<seconds>          — sweep time
+
+    Unsupported: configure_list_sweep (no frequency-list sweep mode).
     """
 
     def __init__(self, resource: str, channel: int = 1) -> None:
@@ -80,20 +81,8 @@ class SiglentSDG2000X(RealDriver, FunctionGenerator):
         self.write(f"{self._ch}:SWWV TIME,{dwell * points}")
         self.write(f"{self._ch}:SWWV STATE,ON")
 
-    def configure_list_sweep(self, freq_list: list, power_list: list) -> None:
-        self._unsupported_feature("configure_list_sweep (SDG2000X has no frequency-list sweep mode)")
-
     def set_reference_clock(self, source: str) -> None:
         self.write(f"ROSC {source.upper()}")
-
-    def measure_frequency(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "V")
 
     def shutdown_safety(self) -> None:
         self.set_output(False)

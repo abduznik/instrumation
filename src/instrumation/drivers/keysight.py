@@ -65,9 +65,6 @@ class KeysightMXA(RealDriver, SpectrumAnalyzer):
         data = self.query_binary_values(":TRAC? TRACE1", datatype='f', is_big_endian=False)
         self.write(":INIT:CONT ON")   # Restore continuous sweep
         return MeasurementResult(list(data), "dBm")
-    def measure_frequency(self) -> MeasurementResult: return MeasurementResult(0.0, "Hz")
-    def measure_duty_cycle(self) -> MeasurementResult: return MeasurementResult(0.0, "%")
-    def measure_v_peak_to_peak(self) -> MeasurementResult: return MeasurementResult(0.0, "V")
 
 @register_driver("SA")
 class KeysightPXA(KeysightMXA):
@@ -529,10 +526,6 @@ class KeysightPNA(RealDriver, NetworkAnalyzer):
         """Wait for the current sweep to complete."""
         self.query("*OPC?")
 
-    def measure_frequency(self) -> MeasurementResult: return MeasurementResult(0.0, "Hz")
-    def measure_duty_cycle(self) -> MeasurementResult: return MeasurementResult(0.0, "%")
-    def measure_v_peak_to_peak(self) -> MeasurementResult: return MeasurementResult(0.0, "V")
-    
     def shutdown_safety(self) -> None:
         """Restore display and ensure sync."""
         self.write("DISP:ENAB ON")
@@ -730,9 +723,6 @@ class KeysightSG(RealDriver, SignalGenerator):
         raw = self.query(":RAD:ARB:CAT?")
         return [name.strip().strip('"') for name in raw.split(",") if name.strip()]
 
-    def measure_frequency(self) -> MeasurementResult: return MeasurementResult(0.0, "Hz")
-    def measure_duty_cycle(self) -> MeasurementResult: return MeasurementResult(0.0, "%")
-    def measure_v_peak_to_peak(self) -> MeasurementResult: return MeasurementResult(0.0, "V")
 @register_driver("COMBO_VNA_SA")
 class KeysightFieldFox(RealDriver, SpectrumAnalyzer, NetworkAnalyzer):
     """
@@ -982,14 +972,6 @@ class Keysight34461A(RealDriver, Multimeter):
         val = self.query_ascii(":MEAS:DIODe?")
         return MeasurementResult(float(val), "V")
 
-    def measure_duty_cycle(self) -> MeasurementResult:
-        self._unsupported_feature("Duty Cycle")
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        self._unsupported_feature("Vpp")
-        return MeasurementResult(0.0, "V")
-
     def shutdown_safety(self) -> None:
         self.set_auto_range(True)
         self.sync_config()
@@ -1075,11 +1057,3 @@ class Keysight53230A(RealDriver, FrequencyCounter):
         self.safe_send(f":{ch}:RANG:AUTO {val}")
 
     # ── InstrumentDriver abstract methods ──────────────────
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        self._unsupported_feature("Duty Cycle")
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        self._unsupported_feature("Vpp")
-        return MeasurementResult(0.0, "V")

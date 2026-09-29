@@ -109,15 +109,6 @@ class RigolDP832(RealDriver, PowerSupply):
             raise ValueError("Index must be 1-10")
         self.write(f"*RCL {index}")
 
-    def measure_frequency(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "V")
-
     def shutdown_safety(self) -> None:
         for ch in (1, 2, 3):
             self.set_output(False, channel=ch)

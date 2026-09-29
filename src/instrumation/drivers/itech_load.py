@@ -27,6 +27,8 @@ class ItechIT8512Plus(RealDriver, ElectronicLoad):
         - [SOURce:]POWer:PROTection[:LEVel] <watts>
         - MEASure[:SCALar]:VOLTage[:DC]? / :CURRent[:DC]? / :POWer[:DC]?
         - MEASure[:SCALar]:RESistance[:DC]?
+
+    Unsupported: set_ovp (no software OVP trip-point command), clear_protection.
     """
 
     def preset(self, automation_optimized: bool = True) -> None:
@@ -94,17 +96,11 @@ class ItechIT8512Plus(RealDriver, ElectronicLoad):
         val = self.query_ascii("MEAS:RES?")
         return MeasurementResult(float(val), "Ohm")
 
-    def set_ovp(self, voltage: float) -> None:
-        self._unsupported_feature("set_ovp (IT8500+ has no software OVP trip-point command)")
-
     def set_ocp(self, current: float) -> None:
         self.safe_send(f"CURR:PROT:LEV {current}")
 
     def set_opp(self, power: float) -> None:
         self.safe_send(f"POW:PROT:LEV {power}")
-
-    def clear_protection(self) -> None:
-        self._unsupported_feature("clear_protection")
 
     def shutdown_safety(self) -> None:
         self.set_input(False)

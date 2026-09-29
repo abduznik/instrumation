@@ -3,7 +3,6 @@ import re
 import time
 from typing import List, Tuple
 from .base import InstrumentDriver
-from ..results import MeasurementResult
 from ..exceptions import ConnectionLost, ConfigurationError, InstrumentTimeout
 
 # Marker for real SCPI SYST:ERR responses: [+-]<code>,"<msg>"
@@ -156,7 +155,4 @@ class RealDriver(InstrumentDriver):
     def shutdown_safety(self) -> None:
         """Default safety: Clear and Wait."""
         self.sync_config()
-        
-    def measure_frequency(self) -> MeasurementResult: return MeasurementResult(0.0, "Hz")
-    def measure_duty_cycle(self) -> MeasurementResult: return MeasurementResult(0.0, "%")
-    def measure_v_peak_to_peak(self) -> MeasurementResult: return MeasurementResult(0.0, "V")
+
