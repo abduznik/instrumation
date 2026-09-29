@@ -35,8 +35,7 @@ class Agilent6632B(RealDriver, PowerSupply):
         self.safe_send(f"CURR {current}")
 
     def get_current(self) -> MeasurementResult:
-        val = self.query_ascii("CURR?")
-        return MeasurementResult(float(val), "A")
+        return self._meas("CURR?", "A")
 
     def set_output(self, state: bool) -> None:
         self.safe_send(f"OUTP {'ON' if state else 'OFF'}")
@@ -55,12 +54,10 @@ class Agilent6632B(RealDriver, PowerSupply):
         self.safe_send("OUTP:PROT:CLE")
 
     def measure_voltage_actual(self) -> MeasurementResult:
-        val = self.query_ascii("MEAS:VOLT?")
-        return MeasurementResult(float(val), "V")
+        return self._meas("MEAS:VOLT?", "V")
 
     def measure_current(self) -> MeasurementResult:
-        val = self.query_ascii("MEAS:CURR?")
-        return MeasurementResult(float(val), "A")
+        return self._meas("MEAS:CURR?", "A")
 
     def set_autostart(self, state: bool) -> None:
         """Sets the power-on state: RCL0 (last state) if True, RST (reset defaults) if False."""

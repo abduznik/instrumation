@@ -29,10 +29,6 @@ class KeithleyDMM6500(RealDriver, Multimeter):
         - *RST
     """
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def _select_function(self, func: str) -> None:
         self.safe_send(f'SENS:FUNC "{func}"')
 

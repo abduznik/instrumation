@@ -34,10 +34,6 @@ class SiglentSDM3055(RealDriver, Multimeter):
         - *RST / *CLS / SYSTem:ERRor?
     """
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def configure_voltage_dc(self) -> None:
         self.safe_send("CONF:VOLT:DC")
 
@@ -64,29 +60,23 @@ class SiglentSDM3055(RealDriver, Multimeter):
         self.safe_send(f"VOLT:DC:RANG:AUTO {val}")
 
     def measure_frequency(self) -> MeasurementResult:
-        val = self.query_ascii("MEAS:FREQ?")
-        return MeasurementResult(float(val), "Hz")
+        return self._meas("MEAS:FREQ?", "Hz")
 
     def measure_period(self) -> MeasurementResult:
-        val = self.query_ascii("MEAS:PER?")
-        return MeasurementResult(float(val), "s")
+        return self._meas("MEAS:PER?", "s")
 
     def measure_capacitance(self) -> MeasurementResult:
-        val = self.query_ascii("MEAS:CAP?")
-        return MeasurementResult(float(val), "F")
+        return self._meas("MEAS:CAP?", "F")
 
     def measure_continuity(self) -> MeasurementResult:
         """Measures resistance in continuity-test mode (Ohms)."""
-        val = self.query_ascii("MEAS:CONT?")
-        return MeasurementResult(float(val), "Ohm")
+        return self._meas("MEAS:CONT?", "Ohm")
 
     def measure_diode(self) -> MeasurementResult:
-        val = self.query_ascii("MEAS:DIOD?")
-        return MeasurementResult(float(val), "V")
+        return self._meas("MEAS:DIOD?", "V")
 
     def measure_temperature(self, probe_type: str = "RTD", probe: str = "PT100") -> MeasurementResult:
-        val = self.query_ascii(f"MEAS:TEMP? {probe_type},{probe}")
-        return MeasurementResult(float(val), "C")
+        return self._meas(f"MEAS:TEMP? {probe_type},{probe}", "C")
 
     def set_nplc(self, plc: float, ac: bool = False) -> None:
         """Sets integration time in power-line cycles for the active DC/AC function."""

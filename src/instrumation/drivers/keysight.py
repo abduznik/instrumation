@@ -24,8 +24,7 @@ class KeysightMXA(RealDriver, SpectrumAnalyzer):
         self.wait_ready()
 
     def get_marker_amplitude(self) -> MeasurementResult:
-        val = self.query_ascii(":CALC:MARK1:Y?")
-        return MeasurementResult(float(val), "dBm")
+        return self._meas(":CALC:MARK1:Y?", "dBm")
 
     def set_center_freq(self, hz: float) -> None:
         self._validate_frequency(hz)
@@ -189,8 +188,7 @@ class KeysightPXA(KeysightMXA):
 
         SCPI: :CALC:MARK1:X?
         """
-        val = self.query_ascii(":CALC:MARK1:X?")
-        return MeasurementResult(float(val), "Hz")
+        return self._meas(":CALC:MARK1:X?", "Hz")
 
     def set_marker_position(self, freq_hz: float) -> None:
         """Set marker 1 position to a specific frequency.
@@ -219,8 +217,7 @@ class KeysightPXA(KeysightMXA):
 
         SCPI: :CALC:MARK1:NOIS?
         """
-        val = self.query_ascii(":CALC:MARK1:NOIS?")
-        return MeasurementResult(float(val), "dBm/Hz")
+        return self._meas(":CALC:MARK1:NOIS?", "dBm/Hz")
 
     # ── Bandwidth & Sweep ───────────────────────────────────────────────────────
 
@@ -287,8 +284,7 @@ class KeysightPXA(KeysightMXA):
 
         SCPI: :CALC:MARK1:FUNC?
         """
-        val = self.query_ascii(":CALC:MARK1:FUNC?")
-        return MeasurementResult(float(val), "dBm/Hz")
+        return self._meas(":CALC:MARK1:FUNC?", "dBm/Hz")
 
     # ── System ──────────────────────────────────────────────────────────────────
 
@@ -740,10 +736,6 @@ class KeysightFieldFox(RealDriver, SpectrumAnalyzer, NetworkAnalyzer):
             self.write(f":INST:SEL {target}")
             self.wait_ready()
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     # SA Interface
 
     def get_center_freq(self) -> float:
@@ -853,10 +845,6 @@ class KeysightFieldFox(RealDriver, SpectrumAnalyzer, NetworkAnalyzer):
 class KeysightInfiniiVision(RealDriver, Oscilloscope):
     """Driver for Keysight InfiniiVision Series Oscilloscopes (DSOX/MSOX)."""
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def run(self) -> None: self.write(":RUN")
     def stop(self) -> None: self.write(":STOP")
     def single(self) -> None: self.write(":SINGLE")
@@ -919,10 +907,6 @@ class Keysight34461A(RealDriver, Multimeter):
     Frequency, Period, Temperature, Capacitance, and Diode test.
     """
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def configure_voltage_dc(self) -> None:
         self.safe_send(":CONF:VOLT:DC")
 
@@ -953,24 +937,19 @@ class Keysight34461A(RealDriver, Multimeter):
         self.safe_send(f":VOLT:RANG:AUTO {val}")
 
     def measure_frequency(self) -> MeasurementResult:
-        val = self.query_ascii(":MEAS:FREQ?")
-        return MeasurementResult(float(val), "Hz")
+        return self._meas(":MEAS:FREQ?", "Hz")
 
     def measure_period(self) -> MeasurementResult:
-        val = self.query_ascii(":MEAS:PER?")
-        return MeasurementResult(float(val), "s")
+        return self._meas(":MEAS:PER?", "s")
 
     def measure_temperature(self, probe_type: str = "TC", probe: str = "K") -> MeasurementResult:
-        val = self.query_ascii(f":MEAS:TEMP? {probe},{probe}")
-        return MeasurementResult(float(val), "C")
+        return self._meas(f":MEAS:TEMP? {probe},{probe}", "C")
 
     def measure_capacitance(self) -> MeasurementResult:
-        val = self.query_ascii(":MEAS:CAP?")
-        return MeasurementResult(float(val), "F")
+        return self._meas(":MEAS:CAP?", "F")
 
     def measure_diode(self) -> MeasurementResult:
-        val = self.query_ascii(":MEAS:DIODe?")
-        return MeasurementResult(float(val), "V")
+        return self._meas(":MEAS:DIODe?", "V")
 
     def shutdown_safety(self) -> None:
         self.set_auto_range(True)
@@ -1034,8 +1013,7 @@ class Keysight53230A(RealDriver, FrequencyCounter):
             start_trigger: Trigger source + slope, e.g. 'POS,1' (positive slope, channel 1)
             stop_trigger:  Trigger source + slope, e.g. 'POS,2' (positive slope, channel 2)
         """
-        val = self.query_ascii(f":MEAS:TINT? {start_trigger},{stop_trigger}")
-        return MeasurementResult(float(val), "s")
+        return self._meas(f":MEAS:TINT? {start_trigger},{stop_trigger}", "s")
 
     # ── Configuration ─────────────────────────────────────
 

@@ -49,8 +49,7 @@ class GWInstekGPP4323(RealDriver, PowerSupply):
         self.safe_send(f"SOUR{self._n(channel)}:CURR {current}")
 
     def get_current(self, channel: int = None) -> MeasurementResult:
-        val = self.query_ascii(f"SOUR{self._n(channel)}:CURR?")
-        return MeasurementResult(float(val), "A")
+        return self._meas(f"SOUR{self._n(channel)}:CURR?", "A")
 
     def set_output(self, state: bool, channel: int = None) -> None:
         self.write(f"OUTP{self._n(channel)}:STAT {'ON' if state else 'OFF'}")
@@ -78,16 +77,13 @@ class GWInstekGPP4323(RealDriver, PowerSupply):
         self.write(f"OUTP{self._n(channel)}:OCP:STAT OFF")
 
     def measure_voltage_actual(self, channel: int = None) -> MeasurementResult:
-        val = self.query_ascii(f"MEAS{self._n(channel)}:VOLT?")
-        return MeasurementResult(float(val), "V")
+        return self._meas(f"MEAS{self._n(channel)}:VOLT?", "V")
 
     def measure_current(self, channel: int = None) -> MeasurementResult:
-        val = self.query_ascii(f"MEAS{self._n(channel)}:CURR?")
-        return MeasurementResult(float(val), "A")
+        return self._meas(f"MEAS{self._n(channel)}:CURR?", "A")
 
     def measure_power(self, channel: int = None) -> MeasurementResult:
-        val = self.query_ascii(f"MEAS{self._n(channel)}:POW?")
-        return MeasurementResult(float(val), "W")
+        return self._meas(f"MEAS{self._n(channel)}:POW?", "W")
 
     def set_series_mode(self, state: bool) -> None:
         """Links CH1+CH2 (and CH3+CH4 where present) in series."""

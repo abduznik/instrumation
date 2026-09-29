@@ -40,10 +40,6 @@ class Prodigit3311F(RealDriver, ElectronicLoad):
     def _select_slot(self, slot: int = None) -> None:
         self.write(f"CHAN{slot if slot else self._slot}")
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def set_mode(self, mode: str, slot: int = None) -> None:
         mode_upper = mode.upper()
         if mode_upper not in ("CC", "CV", "CR", "CP"):

@@ -35,10 +35,6 @@ class SRSDS345(RealDriver, FunctionGenerator):
     _FUNC_CODE = {"SIN": 0, "SQU": 1, "TRI": 2, "RAMP": 3, "NOIS": 4, "ARB": 5}
     _FUNC_NAME = {v: k for k, v in _FUNC_CODE.items()}
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def set_frequency(self, hz: float) -> None:
         self.write(f"FREQ {hz}")
 

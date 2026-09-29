@@ -1,13 +1,15 @@
 import time
 from .base import PowerSupply
 from .registry import register_driver
-from .real import RealDriver
+from .real import RealDriver, SaveRecallSlots
 from ..results import MeasurementResult
 from ..exceptions import InstrumentError
 
 @register_driver("PSU")
-class TDKLambdaZPlus(RealDriver, PowerSupply):
+class TDKLambdaZPlus(SaveRecallSlots, RealDriver, PowerSupply):
     """Driver for TDK-Lambda Z+ Series Power Supplies."""
+
+    STATE_SLOTS = range(1, 5)
 
     def connect(self) -> None:
         """Overrides connect to send INST:NSEL command before identity check."""
@@ -64,8 +66,7 @@ class TDKLambdaZPlus(RealDriver, PowerSupply):
 
     def measure_current(self) -> MeasurementResult:
         """Queries the actual measured output current."""
-        val = self.query_ascii(":MEAS:CURR?")
-        return MeasurementResult(float(val), "A")
+        return self._meas(":MEAS:CURR?", "A")
 
     def set_output(self, state: bool) -> None:
         self.write(f":OUTP {'ON' if state else 'OFF'}")
@@ -105,13 +106,11 @@ class TDKLambdaZPlus(RealDriver, PowerSupply):
 
     def measure_voltage_actual(self) -> MeasurementResult:
         """Queries the actual measured output voltage."""
-        val = self.query_ascii(":MEAS:VOLT?")
-        return MeasurementResult(float(val), "V")
+        return self._meas(":MEAS:VOLT?", "V")
 
     def measure_power(self) -> MeasurementResult:
         """Queries the actual measured output power (Watts)."""
-        val = self.query_ascii(":MEAS:POW?")
-        return MeasurementResult(float(val), "W")
+        return self._meas(":MEAS:POW?", "W")
 
     def set_foldback_mode(self, mode: str) -> None:
         """Sets the foldback protection mode (OFF, CC, or CV)."""
@@ -138,18 +137,6 @@ class TDKLambdaZPlus(RealDriver, PowerSupply):
         if state not in ["LOC", "REM", "LLO"]:
             raise ValueError("State must be LOC, REM, or LLO")
         self.write(f":SYST:REM {state}")
-
-    def save_state(self, index: int) -> None:
-        """Saves current state to memory (1-4)."""
-        if not (1 <= index <= 4):
-            raise ValueError("Index must be 1-4")
-        self.write(f"*SAV {index}")
-
-    def load_state(self, index: int) -> None:
-        """Recalls state from memory (1-4)."""
-        if not (1 <= index <= 4):
-            raise ValueError("Index must be 1-4")
-        self.write(f"*RCL {index}")
 
     def shutdown_safety(self) -> None:
         """Safety first: Disable output and zero voltage."""

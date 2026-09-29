@@ -35,10 +35,6 @@ class RigolDL3021(RealDriver, ElectronicLoad):
     Unsupported: set_ovp/set_ocp/set_opp (no software trip-point commands), clear_protection.
     """
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def set_mode(self, mode: str) -> None:
         mode_upper = mode.upper()
         if mode_upper not in ["CC", "CV", "CR", "CP"]:
@@ -81,20 +77,16 @@ class RigolDL3021(RealDriver, ElectronicLoad):
         return self.query_ascii(":SOUR:INP:STAT?").strip() in ("1", "ON")
 
     def measure_voltage(self) -> MeasurementResult:
-        val = self.query_ascii(":MEAS:VOLT?")
-        return MeasurementResult(float(val), "V")
+        return self._meas(":MEAS:VOLT?", "V")
 
     def measure_current(self) -> MeasurementResult:
-        val = self.query_ascii(":MEAS:CURR?")
-        return MeasurementResult(float(val), "A")
+        return self._meas(":MEAS:CURR?", "A")
 
     def measure_power(self) -> MeasurementResult:
-        val = self.query_ascii(":MEAS:POW?")
-        return MeasurementResult(float(val), "W")
+        return self._meas(":MEAS:POW?", "W")
 
     def measure_resistance(self) -> MeasurementResult:
-        val = self.query_ascii(":MEAS:RES?")
-        return MeasurementResult(float(val), "Ohm")
+        return self._meas(":MEAS:RES?", "Ohm")
 
     def set_battery_test_mode(self, enable: bool) -> None:
         """Switches the source function mode to/from BATTery discharge testing."""
@@ -102,18 +94,15 @@ class RigolDL3021(RealDriver, ElectronicLoad):
 
     def get_battery_test_capacity(self) -> MeasurementResult:
         """Returns the measured discharge capacity (Ah) from the current battery test."""
-        val = self.query_ascii(":MEAS:CAP?")
-        return MeasurementResult(float(val), "Ah")
+        return self._meas(":MEAS:CAP?", "Ah")
 
     def get_watt_hours(self) -> MeasurementResult:
         """Returns accumulated energy consumed (Wh)."""
-        val = self.query_ascii(":MEAS:WATT?")
-        return MeasurementResult(float(val), "Wh")
+        return self._meas(":MEAS:WATT?", "Wh")
 
     def get_discharging_time(self) -> MeasurementResult:
         """Returns elapsed discharge time (s) during a battery test."""
-        val = self.query_ascii(":MEAS:DISC?")
-        return MeasurementResult(float(val), "s")
+        return self._meas(":MEAS:DISC?", "s")
 
     def shutdown_safety(self) -> None:
         self.set_input(False)

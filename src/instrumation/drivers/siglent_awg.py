@@ -36,10 +36,6 @@ class SiglentSDG2000X(RealDriver, FunctionGenerator):
         self.channel = channel
         self._ch = f"C{channel}"
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def set_frequency(self, hz: float) -> None:
         self.write(f"{self._ch}:BSWV FRQ,{hz}")
 

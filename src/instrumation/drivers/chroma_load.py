@@ -41,10 +41,6 @@ class Chroma63200A(RealDriver, ElectronicLoad):
     _MODE_MAP = {"CC": "CCH", "CV": "CVH", "CR": "CRH", "CP": "CPH"}
     _MODE_MAP_REV = {v: k for k, v in _MODE_MAP.items()}
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def set_mode(self, mode: str) -> None:
         mode_upper = mode.upper()
         if mode_upper not in self._MODE_MAP:
@@ -90,16 +86,13 @@ class Chroma63200A(RealDriver, ElectronicLoad):
         self.safe_send(f"LOAD:SHOR {'ON' if state else 'OFF'}")
 
     def measure_voltage(self) -> MeasurementResult:
-        val = self.query_ascii("MEAS:VOLT?")
-        return MeasurementResult(float(val), "V")
+        return self._meas("MEAS:VOLT?", "V")
 
     def measure_current(self) -> MeasurementResult:
-        val = self.query_ascii("MEAS:CURR?")
-        return MeasurementResult(float(val), "A")
+        return self._meas("MEAS:CURR?", "A")
 
     def measure_power(self) -> MeasurementResult:
-        val = self.query_ascii("MEAS:POW?")
-        return MeasurementResult(float(val), "W")
+        return self._meas("MEAS:POW?", "W")
 
     def measure_resistance(self) -> MeasurementResult:
         self._unsupported_feature("measure_resistance (63200A has no direct MEAS:RES? query)")

@@ -22,16 +22,11 @@ class SiglentSSA3000X(RealDriver, SpectrumAnalyzer):
         - :TRACe:DATA? 1                     — trace data
     """
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def peak_search(self) -> None:
         self.safe_send(":CALC:MARK1:MAX")
 
     def get_marker_amplitude(self) -> MeasurementResult:
-        val = self.query_ascii(":CALC:MARK1:Y?")
-        return MeasurementResult(float(val), "dBm")
+        return self._meas(":CALC:MARK1:Y?", "dBm")
 
     def set_center_freq(self, hz: float) -> None:
         self.safe_send(f":SENS:FREQ:CENT {self.format_frequency(hz)}")

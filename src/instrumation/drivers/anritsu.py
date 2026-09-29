@@ -7,16 +7,11 @@ from ..results import MeasurementResult
 class AnritsuSA(RealDriver, SpectrumAnalyzer):
     """Generic Driver for Anritsu Spectrum Analyzers."""
     
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def peak_search(self) -> None:
         self.safe_send(":CALC:MARK1:MAX") 
 
     def get_marker_amplitude(self) -> MeasurementResult:
-        val = self.query_ascii(":CALC:MARK1:Y?")
-        return MeasurementResult(float(val), "dBm")
+        return self._meas(":CALC:MARK1:Y?", "dBm")
 
     def set_center_freq(self, hz: float) -> None:
         self.safe_send(f":FREQ:CENT {self.format_frequency(hz)}")
@@ -55,10 +50,6 @@ class AnritsuSA(RealDriver, SpectrumAnalyzer):
 class AnritsuVNA(RealDriver, NetworkAnalyzer):
     """Generic Driver for Anritsu Vector Network Analyzers (Handheld/Legacy)."""
     
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def set_start_frequency(self, freq_hz: float) -> None:
         self.safe_send(f":SENS:FREQ:STAR {freq_hz}")
 
@@ -214,7 +205,3 @@ class AnritsuMS2035B(RealDriver, SpectrumAnalyzer, NetworkAnalyzer):
     def set_parameter(self, parameter: str) -> None:
         self._set_mode(self.VNA_MODE)
         self.write(f":CALC:PAR:SEL '{parameter}'")
-
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()

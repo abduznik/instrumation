@@ -29,10 +29,6 @@ class KeysightAC6800B(RealDriver, ACPowerSource):
 
     _MODE_MAP = {"AC": "AC", "DC": "DC", "AC+DC": "AC+DC", "ACDC": "AC+DC"}
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def set_voltage(self, volts_rms: float) -> None:
         self.safe_send(f"SOUR:VOLT {volts_rms}")
 
@@ -61,16 +57,13 @@ class KeysightAC6800B(RealDriver, ACPowerSource):
         return self.query_ascii("OUTP?").strip() in ("1", "ON")
 
     def measure_voltage(self) -> MeasurementResult:
-        val = self.query_ascii("MEAS:VOLT:AC?")
-        return MeasurementResult(float(val), "Vrms")
+        return self._meas("MEAS:VOLT:AC?", "Vrms")
 
     def measure_current(self) -> MeasurementResult:
-        val = self.query_ascii("MEAS:CURR:AC?")
-        return MeasurementResult(float(val), "Arms")
+        return self._meas("MEAS:CURR:AC?", "Arms")
 
     def measure_power(self) -> MeasurementResult:
-        val = self.query_ascii("MEAS:POW:AC?")
-        return MeasurementResult(float(val), "W")
+        return self._meas("MEAS:POW:AC?", "W")
 
     def set_current_limit(self, amps_rms: float) -> None:
         self.safe_send(f"SOUR:CURR {amps_rms}")

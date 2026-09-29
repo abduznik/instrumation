@@ -47,10 +47,6 @@ class LakeShore336(RealDriver, TemperatureController):
     _CONTROL_MODES = {"OFF": 0, "PID": 1, "CLOSEDLOOP": 1, "ZONE": 2,
                       "OPENLOOP": 3, "MANUAL": 3}
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def get_temperature(self, input_channel: str) -> MeasurementResult:
         val = self.query_ascii(f"KRDG? {input_channel.upper()}")
         return MeasurementResult(float(val), "K", channel=input_channel.upper())

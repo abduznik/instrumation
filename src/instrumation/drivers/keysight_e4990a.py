@@ -39,10 +39,6 @@ class KeysightE4990A(RealDriver, LCRMeter):
         self.min_frequency = 1e6
         self.max_frequency = 120e6
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def set_frequency(self, hz: float) -> None:
         """Sets the CW test frequency (SENS:FREQ:CW) for single-point measurement."""
         self.safe_send(f"SENS:FREQ:CW {hz}")
