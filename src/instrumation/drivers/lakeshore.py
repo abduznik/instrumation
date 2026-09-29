@@ -34,15 +34,18 @@ class LakeShore336(RealDriver, TemperatureController):
         - HTR? <loop>                — heater output (% of current range)
         - RAMP <loop>,<onoff>,<rate> — setpoint ramp rate (K/min) enable
         - RAMP? <loop>               — query ramp configuration
-        - CMODE <loop>,<mode>        — control loop mode select
-        - OUTMODE <loop>,<mode>,<in> — output mode / input assignment
-        - ATUNE <loop>,<mode>        — start autotune (1=P,2=PI,3=PID)
+        - OUTMODE <loop>,<mode>,<in>,<pwr> — output mode / input assignment
+                           (0=Off, 1=Closed Loop PID, 2=Zone, 3=Open Loop)
+        - ATUNE <loop>,<mode>        — start autotune (0=P,1=P and I,2=P,I,D)
         - ALARMST? <input>           — alarm status for an input
         - *IDN? / *RST / *CLS / *OPC?
     """
 
     _RANGE_MAP = {"OFF": 0, "LOW": 1, "MEDIUM": 2, "MED": 2, "HIGH": 3}
     _RANGE_MAP_REV = {0: "OFF", 1: "LOW", 2: "MEDIUM", 3: "HIGH"}
+    # Model 336 User's Manual, OUTMODE <output>,<mode>,<input>,<powerup enable>
+    _CONTROL_MODES = {"OFF": 0, "PID": 1, "CLOSEDLOOP": 1, "ZONE": 2,
+                      "OPENLOOP": 3, "MANUAL": 3}
 
     def preset(self, automation_optimized: bool = True) -> None:
         self.write("*RST")
@@ -114,11 +117,19 @@ class LakeShore336(RealDriver, TemperatureController):
         return self.query_ascii(f"INTYPE? {input_channel.upper()}").strip()
 
     def set_control_mode(self, loop: int, mode: str) -> None:
-        modes = {"MANUAL": 3, "PID": 1, "ZONE": 2, "OPENLOOP": 4}
+        """Selects the loop control mode (OUTMODE).
+
+        `OUTMODE` takes four parameters, so the output's current control input
+        and powerup-enable settings are read back with `OUTMODE?` and preserved.
+        """
         key = mode.upper()
-        if key not in modes:
+        if key not in self._CONTROL_MODES:
             raise ValueError(f"Invalid control mode: {mode}")
-        self.safe_send(f"CMODE {loop},{modes[key]}")
+        parts = [p.strip() for p in self.query_ascii(f"OUTMODE? {loop}").split(",")]
+        if len(parts) < 3:
+            raise ValueError(f"Unexpected OUTMODE? response: {parts!r}")
+        in_ch, powerup = parts[1], parts[2]
+        self.safe_send(f"OUTMODE {loop},{self._CONTROL_MODES[key]},{in_ch},{powerup}")
 
     def autotune(self, loop: int, mode: str = "PI") -> None:
         modes = {"P": 0, "PI": 1, "PID": 2}
