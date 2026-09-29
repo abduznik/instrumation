@@ -25,10 +25,6 @@ class RohdeSchwarzNRPZ(RealDriver, InstrumentDriver):
         - CALibration:ZERO:AUTO {ONCE|ON|OFF}
     """
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def set_frequency(self, hz: float) -> None:
         """Sets the CW frequency used for the sensor's cal-factor table lookup."""
         self.safe_send(f"SENS:FREQ {hz}")
@@ -66,17 +62,7 @@ class RohdeSchwarzNRPZ(RealDriver, InstrumentDriver):
         self.wait_ready()
 
     def measure_power(self) -> MeasurementResult:
-        val = self.query_ascii("FETC?")
-        return MeasurementResult(float(val), "dBm")
-
-    def measure_frequency(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "V")
+        return self._meas("FETC?", "dBm")
 
     def shutdown_safety(self) -> None:
         self.sync_config()

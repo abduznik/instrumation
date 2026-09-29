@@ -13,16 +13,11 @@ except ImportError:
 class RigolDSA(RealDriver, SpectrumAnalyzer):
     """Driver for Rigol DSA Series Spectrum Analyzers."""
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def peak_search(self) -> None:
         self.safe_send(":CALC:MARK:MAX")
 
     def get_marker_amplitude(self) -> MeasurementResult:
-        val = self.query_ascii(":CALC:MARK:Y?")
-        return MeasurementResult(float(val), "dBm")
+        return self._meas(":CALC:MARK:Y?", "dBm")
 
     def set_center_freq(self, hz: float) -> None:
         self.safe_send(f":SENS:FREQ:CENT {self.format_frequency(hz)}")
@@ -52,15 +47,6 @@ class RigolDSA(RealDriver, SpectrumAnalyzer):
         data = self.query_ascii_values(":TRAC:DATA? TRACE1")
         return MeasurementResult(list(data), "dBm")
 
-    def measure_frequency(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "V")
-
     def shutdown_safety(self) -> None:
         self.sync_config()
 
@@ -86,11 +72,6 @@ class RigolDS1054Z(RealDriver, Oscilloscope):
         self.write("*WAI")
 
     # ── IEEE-488.2 Common Commands ─────────────────────────────
-
-    def preset(self, automation_optimized: bool = True) -> None:
-        """*RST — Factory default reset."""
-        self.write("*RST")
-        self.wait_ready()
 
     def clear_status(self) -> None:
         """*CLS — Clear status registers."""

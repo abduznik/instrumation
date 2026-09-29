@@ -8,10 +8,6 @@ from ..results import MeasurementResult
 class TektronixTDS(RealDriver, Oscilloscope):
     """Refined Driver for Tektronix TDS Series Oscilloscopes."""
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def run(self) -> None: self.write(":ACQUIRE:STATE ON")
     def stop(self) -> None: self.write(":ACQUIRE:STATE OFF")
     def single(self) -> None:
@@ -73,16 +69,15 @@ class TektronixTDS(RealDriver, Oscilloscope):
 
 @register_driver("SG")
 class TektronixAFG(RealDriver, FunctionGenerator):
-    """Driver for Tektronix AFG3000 Series Arbitrary Function Generators."""
+    """Driver for Tektronix AFG3000 Series Arbitrary Function Generators.
+
+    Unsupported: configure_list_sweep (use ARB mode instead).
+    """
 
     def __init__(self, resource: str, channel: int = 1) -> None:
         super().__init__(resource)
         self.channel = channel
         self.ch_prefix = f"SOURce{channel}"
-
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
 
     def set_frequency(self, hz: float) -> None:
         self.write(f"{self.ch_prefix}:FREQuency:FIXed {hz}")
@@ -123,9 +118,6 @@ class TektronixAFG(RealDriver, FunctionGenerator):
         self.write(f"{self.ch_prefix}:SWEep:STOP {stop}")
         self.write(f"{self.ch_prefix}:SWEep:TIME {dwell * points}")
         self.write(f"{self.ch_prefix}:SWEep:STATe ON")
-
-    def configure_list_sweep(self, freq_list: List[float], power_list: List[float]) -> None:
-        self._unsupported_feature("List Sweep (Use ARB mode instead)")
 
     def set_reference_clock(self, source: str) -> None:
         self.write(f"SOURce:ROSCillator:SOURce {source.upper()}")

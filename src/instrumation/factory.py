@@ -6,6 +6,7 @@ entry point, :func:`get_instrument`.
 """
 
 import pyvisa
+import importlib
 import json
 import logging
 import os
@@ -171,6 +172,121 @@ def _discover_mdns_resources() -> list:
         except socket.gaierror:
             pass
     return resources
+
+# IDN routing table. Order matters: the first brand block whose token is in
+# the upper-cased *IDN? reply is chosen, then the first model entry in that
+# block that matches wins. A model entry matches if any alternative is in the
+# IDN; an alternative that is a tuple needs all of its tokens. An empty model
+# tuple is the brand's fallback. Targets are "module.Class" under
+# instrumation.drivers, imported lazily.
+_IDN_ROUTES = [
+    (("TEKTRONIX",), [
+        (("AFG",), "tektronix.TektronixAFG"),
+        (("PA1000",), "tektronix_pa1000.TektronixPA1000"),
+        ((), "tektronix.TektronixTDS"),
+    ]),
+    (("KEYSIGHT", "AGILENT", "HEWLETT-PACKARD", "HP"), [
+        (("DSO-X", "MSO-X", "DSOX", "MSOX"), "keysight.KeysightInfiniiVision"),
+        (("N9030", "N9020", "N9010", "PXA", "MXA", "EXA"), "keysight.KeysightPXA"),
+        (("E8257", "N5181", "N5182", "N5183", "PSG", "MXG", "EXG"), "keysight.KeysightSG"),
+        (("N99", "FIELD FOX"), "keysight.KeysightFieldFox"),
+        (("34461", "34460"), "keysight.Keysight34461A"),
+        (("E83", "N52", "PNA"), "keysight.KeysightPNA"),
+        (("34401", "34410", "34411", "34420"), "keysight.Keysight34461A"),
+        (("E3631", "E36313", "E3633"), "keysight_psu.KeysightE36313A"),
+        (("E4980",), "keysight_lcr.KeysightE4980A"),
+        (("E4990",), "keysight_e4990a.KeysightE4990A"),
+        (("53230", "53220", "53181"), "keysight.Keysight53230A"),
+        (("U2000", "U200"), "keysight_powersensor.KeysightU2000"),
+        (("6632", "6633", "6634", "6631"), "agilent_psu.Agilent6632B"),
+        (("AC6800", "AC68"), "keysight_ac_psu.KeysightAC6800B"),
+        (("DAQ970", "DAQ973"), "keysight_daq.KeysightDAQ970A"),
+    ]),
+    (("SIGLENT",), [
+        (("SDM",), "siglent_dmm.SiglentSDM3055"),
+        (("SPD",), "siglent_psu.SiglentSPD3303X"),
+        ((("PLUS", "SDS1"), ("PLUS", "SDS2"), ("PLUS", "SDS5")), "siglent_scope.SiglentSDS2000XPlus"),
+        (("SSA",), "siglent_sa.SiglentSSA3000X"),
+        (("SDG",), "siglent_awg.SiglentSDG2000X"),
+        (("SNA",), "siglent_vna.SiglentSNA5000A"),
+        ((), "siglent.SiglentSDS"),
+    ]),
+    (("RIGOL",), [
+        (("DS1054Z", "DS1104Z", "DS1074Z", "DS1102Z", "MSO1054Z", "MSO1104Z",
+          "MSO1074Z", "DS1000Z", "MSO1000Z"), "rigol.RigolDS1054Z"),
+        (("MSO5",), "rigol_mso5000.RigolMSO5000"),
+        (("DM3",), "rigol_dmm.RigolDM3068"),
+        (("DP8",), "rigol_psu.RigolDP832"),
+        (("DL3",), "rigol_load.RigolDL3021"),
+        (("DG4", "DG5", "DG1000Z"), "rigol_awg.RigolDG4000"),
+        ((), "rigol.RigolDSA"),
+    ]),
+    (("KEITHLEY",), [
+        (("2400",), "keithley.Keithley2400"),
+        (("2000",), "keithley.Keithley2000"),
+        (("DMM6500", "6500"), "keithley_dmm6500.KeithleyDMM6500"),
+    ]),
+    (("TDK-LAMBDA", "Z+"), [((), "tdk.TDKLambdaZPlus")]),
+    (("KORAD",), [((), "korad.KoradKA3005P")]),
+    (("STANFORD",), [
+        (("DS345",), "srs_ds345.SRSDS345"),
+        (("SR830",), "srs_sr830.SRSSR830"),
+    ]),
+    (("HIOKI",), [(("IM35",), "hioki_lcr.HiokiIM3536")]),
+    (("MINI-CIRCUITS", "MINICIRCUITS"), [((), "minicircuits_switch.MiniCircuitsRCSwitch")]),
+    (("YOKOGAWA",), [(("WT3",), "yokogawa_wt.YokogawaWT310")]),
+    (("ANRITSU",), [
+        (("MS2035",), "anritsu.AnritsuMS2035B"),
+        (("SHOCKLINE", "MS4"), "anritsu.AnritsuShockLineVNA"),
+        (("VNA", "MS20"), "anritsu.AnritsuVNA"),
+        ((), "anritsu.AnritsuSA"),
+    ]),
+    (("PROLOGIX",), [((), "prologix.PrologixDriver")]),
+    (("FLUKE",), [
+        (("8845", "8846"), "fluke.Fluke8846A"),
+        (("PM6690",), "fluke_counter.FlukePM6690"),
+    ]),
+    (("B&K", "BK PRECISION"), [
+        (("9130",), "bk_precision.BKPrecision9130B"),
+        (("8600", "8601", "8602", "8610", "8612", "8614", "8620"), "bk_precision.BKPrecision8600"),
+        (("1685", "1687", "1688"), "bk_precision_1685b.BKPrecision1685B"),
+    ]),
+    (("HAMEG", "ROHDE", "ROHDE&SCHWARZ"), [
+        (("HMO",), "rs_scope.RohdeSchwarzHMOCompact"),
+        (("NRP",), "rs_powersensor.RohdeSchwarzNRPZ"),
+        (("HMP",), "rs_psu.RohdeSchwarzHMP4040"),
+    ]),
+    (("GW", "GWINSTEK", "GW INSTEK"), [
+        (("GPP",), "gwinstek_psu.GWInstekGPP4323"),
+        (("MFG",), "gwinstek_awg.GWInstekMFG2000"),
+    ]),
+    (("ITECH",), [(("IT85",), "itech_load.ItechIT8512Plus")]),
+    (("CHROMA",), [(("632",), "chroma_load.Chroma63200A")]),
+    (("AIM-TTI", "THURLBY THANDAR", "AIMTTI"), [(("CPX400",), "aimtti_psu.AimTTiCPX400DP")]),
+    (("SORENSEN",), [(("SG",), "sorensen_psu.SorensenSG")]),
+    (("PRODIGIT",), [(("3311", "3310"), "prodigit_load.Prodigit3311F")]),
+    (("BOONTON",), [
+        (("4532",), "boonton_pm.Boonton4532"),
+        (("4531", "4530"), "boonton_pm.Boonton4531"),
+    ]),
+    (("LAKE SHORE", "LAKESHORE", "LSCI"), [(("336", "335"), "lakeshore.LakeShore336")]),
+]
+
+
+def route_idn(idn: str):
+    """Returns the driver class for an upper-cased ``*IDN?`` reply, or None."""
+    for brands, models in _IDN_ROUTES:
+        if not any(b in idn for b in brands):
+            continue
+        for alts, target in models:
+            if not alts or any(
+                all(tok in idn for tok in ((a,) if isinstance(a, str) else a)) for a in alts
+            ):
+                module, cls = target.rsplit(".", 1)
+                return getattr(importlib.import_module(f".drivers.{module}", __package__), cls)
+        return None  # brand matched but model unknown, as in the old if/elif chain
+    return None
+
 
 def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_asrl: bool = True) -> any:
     """Connect to an instrument and return a driver instance for it.
@@ -401,224 +517,8 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
         idn = ""
 
     # Smart Routing based on IDN
-    final_drv = None
-    if "TEKTRONIX" in idn:
-        if "AFG" in idn:
-            from .drivers.tektronix import TektronixAFG
-            final_drv = TektronixAFG(resource_address)
-        elif "PA1000" in idn:
-            from .drivers.tektronix_pa1000 import TektronixPA1000
-            final_drv = TektronixPA1000(resource_address)
-        else:
-            from .drivers.tektronix import TektronixTDS
-            final_drv = TektronixTDS(resource_address)
-    elif "KEYSIGHT" in idn or "AGILENT" in idn or "HEWLETT-PACKARD" in idn or "HP" in idn:
-        if any(m in idn for m in ["DSO-X", "MSO-X", "DSOX", "MSOX"]):
-            from .drivers.keysight import KeysightInfiniiVision
-            final_drv = KeysightInfiniiVision(resource_address)
-        elif any(m in idn for m in ["N9030", "N9020", "N9010", "PXA", "MXA", "EXA"]):
-            from .drivers.keysight import KeysightPXA
-            final_drv = KeysightPXA(resource_address)
-        elif any(m in idn for m in ["E8257", "N5181", "N5182", "N5183", "PSG", "MXG", "EXG"]):
-            from .drivers.keysight import KeysightSG
-            final_drv = KeysightSG(resource_address)
-        elif "N99" in idn or "FIELD FOX" in idn:
-            from .drivers.keysight import KeysightFieldFox
-            final_drv = KeysightFieldFox(resource_address)
-        elif "34461" in idn or "34460" in idn:
-            from .drivers.keysight import Keysight34461A
-            final_drv = Keysight34461A(resource_address)
-        elif "E83" in idn or "N52" in idn or "PNA" in idn:
-            from .drivers.keysight import KeysightPNA
-            final_drv = KeysightPNA(resource_address)
-        elif any(m in idn for m in ["34401", "34410", "34411", "34420"]):
-            from .drivers.keysight import Keysight34461A
-            final_drv = Keysight34461A(resource_address)
-        elif "E3631" in idn or "E36313" in idn or "E3633" in idn:
-            from .drivers.keysight_psu import KeysightE36313A
-            final_drv = KeysightE36313A(resource_address)
-        elif "E4980" in idn:
-            from .drivers.keysight_lcr import KeysightE4980A
-            final_drv = KeysightE4980A(resource_address)
-        elif "E4990" in idn:
-            from .drivers.keysight_e4990a import KeysightE4990A
-            final_drv = KeysightE4990A(resource_address)
-        elif any(m in idn for m in ["53230", "53220", "53181"]):
-            from .drivers.keysight import Keysight53230A
-            final_drv = Keysight53230A(resource_address)
-        elif "U2000" in idn or "U200" in idn:
-            from .drivers.keysight_powersensor import KeysightU2000
-            final_drv = KeysightU2000(resource_address)
-        elif any(m in idn for m in ["6632", "6633", "6634", "6631"]):
-            from .drivers.agilent_psu import Agilent6632B
-            final_drv = Agilent6632B(resource_address)
-        elif "AC6800" in idn or "AC68" in idn:
-            from .drivers.keysight_ac_psu import KeysightAC6800B
-            final_drv = KeysightAC6800B(resource_address)
-        elif "DAQ970" in idn or "DAQ973" in idn:
-            from .drivers.keysight_daq import KeysightDAQ970A
-            final_drv = KeysightDAQ970A(resource_address)
-    elif "SIGLENT" in idn:
-        if "SDM" in idn:
-            from .drivers.siglent_dmm import SiglentSDM3055
-            final_drv = SiglentSDM3055(resource_address)
-        elif "SPD" in idn:
-            from .drivers.siglent_psu import SiglentSPD3303X
-            final_drv = SiglentSPD3303X(resource_address)
-        elif "PLUS" in idn and any(m in idn for m in ["SDS1", "SDS2", "SDS5"]):
-            from .drivers.siglent_scope import SiglentSDS2000XPlus
-            final_drv = SiglentSDS2000XPlus(resource_address)
-        elif "SSA" in idn:
-            from .drivers.siglent_sa import SiglentSSA3000X
-            final_drv = SiglentSSA3000X(resource_address)
-        elif "SDG" in idn:
-            from .drivers.siglent_awg import SiglentSDG2000X
-            final_drv = SiglentSDG2000X(resource_address)
-        elif "SNA" in idn:
-            from .drivers.siglent_vna import SiglentSNA5000A
-            final_drv = SiglentSNA5000A(resource_address)
-        else:
-            from .drivers.siglent import SiglentSDS
-            final_drv = SiglentSDS(resource_address)
-    elif "RIGOL" in idn:
-        if any(m in idn for m in ["DS1054Z", "DS1104Z", "DS1074Z", "DS1102Z",
-                                   "MSO1054Z", "MSO1104Z", "MSO1074Z",
-                                   "DS1000Z", "MSO1000Z"]):
-            from .drivers.rigol import RigolDS1054Z
-            final_drv = RigolDS1054Z(resource_address)
-        elif "MSO5" in idn:
-            from .drivers.rigol_mso5000 import RigolMSO5000
-            final_drv = RigolMSO5000(resource_address)
-        elif "DM3" in idn:
-            from .drivers.rigol_dmm import RigolDM3068
-            final_drv = RigolDM3068(resource_address)
-        elif "DP8" in idn:
-            from .drivers.rigol_psu import RigolDP832
-            final_drv = RigolDP832(resource_address)
-        elif "DL3" in idn:
-            from .drivers.rigol_load import RigolDL3021
-            final_drv = RigolDL3021(resource_address)
-        elif "DG4" in idn or "DG5" in idn or "DG1000Z" in idn:
-            from .drivers.rigol_awg import RigolDG4000
-            final_drv = RigolDG4000(resource_address)
-        else:
-            from .drivers.rigol import RigolDSA
-            final_drv = RigolDSA(resource_address)
-    elif "KEITHLEY" in idn:
-        if "2400" in idn:
-            from .drivers.keithley import Keithley2400
-            final_drv = Keithley2400(resource_address)
-        elif "2000" in idn:
-            from .drivers.keithley import Keithley2000
-            final_drv = Keithley2000(resource_address)
-        elif "DMM6500" in idn or "6500" in idn:
-            from .drivers.keithley_dmm6500 import KeithleyDMM6500
-            final_drv = KeithleyDMM6500(resource_address)
-    elif "TDK-LAMBDA" in idn or "Z+" in idn:
-        from .drivers.tdk import TDKLambdaZPlus
-        final_drv = TDKLambdaZPlus(resource_address)
-    elif "KORAD" in idn:
-        from .drivers.korad import KoradKA3005P
-        final_drv = KoradKA3005P(resource_address)
-    elif "STANFORD" in idn:
-        if "DS345" in idn:
-            from .drivers.srs_ds345 import SRSDS345
-            final_drv = SRSDS345(resource_address)
-        elif "SR830" in idn:
-            from .drivers.srs_sr830 import SRSSR830
-            final_drv = SRSSR830(resource_address)
-    elif "HIOKI" in idn:
-        if "IM35" in idn:
-            from .drivers.hioki_lcr import HiokiIM3536
-            final_drv = HiokiIM3536(resource_address)
-    elif "MINI-CIRCUITS" in idn or "MINICIRCUITS" in idn:
-        from .drivers.minicircuits_switch import MiniCircuitsRCSwitch
-        final_drv = MiniCircuitsRCSwitch(resource_address)
-    elif "YOKOGAWA" in idn:
-        if "WT3" in idn:
-            from .drivers.yokogawa_wt import YokogawaWT310
-            final_drv = YokogawaWT310(resource_address)
-    elif "ANRITSU" in idn:
-        if "MS2035" in idn:
-            from .drivers.anritsu import AnritsuMS2035B
-            final_drv = AnritsuMS2035B(resource_address)
-        elif "SHOCKLINE" in idn or "MS4" in idn:
-            from .drivers.anritsu import AnritsuShockLineVNA
-            final_drv = AnritsuShockLineVNA(resource_address)
-        elif "VNA" in idn or "MS20" in idn:
-            from .drivers.anritsu import AnritsuVNA
-            final_drv = AnritsuVNA(resource_address)
-        else:
-            from .drivers.anritsu import AnritsuSA
-            final_drv = AnritsuSA(resource_address)
-    elif "PROLOGIX" in idn:
-        from .drivers.prologix import PrologixDriver
-        final_drv = PrologixDriver(resource_address)
-    elif "FLUKE" in idn:
-        if any(m in idn for m in ["8845", "8846"]):
-            from .drivers.fluke import Fluke8846A
-            final_drv = Fluke8846A(resource_address)
-        elif "PM6690" in idn:
-            from .drivers.fluke_counter import FlukePM6690
-            final_drv = FlukePM6690(resource_address)
-    elif "B&K" in idn or "BK PRECISION" in idn:
-        if "9130" in idn:
-            from .drivers.bk_precision import BKPrecision9130B
-            final_drv = BKPrecision9130B(resource_address)
-        elif any(m in idn for m in ["8600", "8601", "8602", "8610", "8612", "8614", "8620"]):
-            from .drivers.bk_precision import BKPrecision8600
-            final_drv = BKPrecision8600(resource_address)
-        elif any(m in idn for m in ["1685", "1687", "1688"]):
-            from .drivers.bk_precision_1685b import BKPrecision1685B
-            final_drv = BKPrecision1685B(resource_address)
-    elif "HAMEG" in idn or "ROHDE" in idn or "ROHDE&SCHWARZ" in idn:
-        if "HMO" in idn:
-            from .drivers.rs_scope import RohdeSchwarzHMOCompact
-            final_drv = RohdeSchwarzHMOCompact(resource_address)
-        elif "NRP" in idn:
-            from .drivers.rs_powersensor import RohdeSchwarzNRPZ
-            final_drv = RohdeSchwarzNRPZ(resource_address)
-        elif "HMP" in idn:
-            from .drivers.rs_psu import RohdeSchwarzHMP4040
-            final_drv = RohdeSchwarzHMP4040(resource_address)
-    elif "GW" in idn or "GWINSTEK" in idn or "GW INSTEK" in idn:
-        if "GPP" in idn:
-            from .drivers.gwinstek_psu import GWInstekGPP4323
-            final_drv = GWInstekGPP4323(resource_address)
-        elif "MFG" in idn:
-            from .drivers.gwinstek_awg import GWInstekMFG2000
-            final_drv = GWInstekMFG2000(resource_address)
-    elif "ITECH" in idn:
-        if "IT85" in idn:
-            from .drivers.itech_load import ItechIT8512Plus
-            final_drv = ItechIT8512Plus(resource_address)
-    elif "CHROMA" in idn:
-        if "632" in idn:
-            from .drivers.chroma_load import Chroma63200A
-            final_drv = Chroma63200A(resource_address)
-    elif "AIM-TTI" in idn or "THURLBY THANDAR" in idn or "AIMTTI" in idn:
-        if "CPX400" in idn:
-            from .drivers.aimtti_psu import AimTTiCPX400DP
-            final_drv = AimTTiCPX400DP(resource_address)
-    elif "SORENSEN" in idn:
-        if "SG" in idn:
-            from .drivers.sorensen_psu import SorensenSG
-            final_drv = SorensenSG(resource_address)
-    elif "PRODIGIT" in idn:
-        if "3311" in idn or "3310" in idn:
-            from .drivers.prodigit_load import Prodigit3311F
-            final_drv = Prodigit3311F(resource_address)
-    elif "BOONTON" in idn:
-        if "4532" in idn:
-            from .drivers.boonton_pm import Boonton4532
-            final_drv = Boonton4532(resource_address)
-        elif "4531" in idn or "4530" in idn:
-            from .drivers.boonton_pm import Boonton4531
-            final_drv = Boonton4531(resource_address)
-    elif "LAKE SHORE" in idn or "LAKESHORE" in idn or "LSCI" in idn:
-        if "336" in idn or "335" in idn:
-            from .drivers.lakeshore import LakeShore336
-            final_drv = LakeShore336(resource_address)
+    drv_cls = route_idn(idn)
+    final_drv = drv_cls(resource_address) if drv_cls else None
 
     if not final_drv:
         # No brand matched the IDN. If exactly one driver is registered for the

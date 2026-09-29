@@ -140,15 +140,6 @@ class KoradKA3005P(RealDriver, PowerSupply):
             raise ValueError("Index must be 1-5")
         self.write(f"RCL{index}")
 
-    def measure_frequency(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "V")
-
     def shutdown_safety(self) -> None:
         self.set_output(False)
         self.set_voltage(0.0)

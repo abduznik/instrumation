@@ -495,3 +495,27 @@ class TestFactoryIDNErrorHandling(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_every_idn_route_target_resolves():
+    """GH #247: each _IDN_ROUTES target must name a real driver class."""
+    import importlib
+    from instrumation.factory import _IDN_ROUTES
+    from instrumation.drivers.base import InstrumentDriver
+
+    for _, models in _IDN_ROUTES:
+        for _, target in models:
+            module, cls = target.rsplit(".", 1)
+            drv = getattr(importlib.import_module(f"instrumation.drivers.{module}"), cls)
+            assert issubclass(drv, InstrumentDriver), target
+
+
+def test_route_idn_brand_fallback_and_unknown_model():
+    from instrumation.factory import route_idn
+    from instrumation.drivers.siglent import SiglentSDS
+    from instrumation.drivers.siglent_scope import SiglentSDS2000XPlus
+
+    assert route_idn("SIGLENT,SDS2104X PLUS,SN,1.0") is SiglentSDS2000XPlus
+    assert route_idn("SIGLENT,SDS1202X-E,SN,1.0") is SiglentSDS
+    assert route_idn("HIOKI,XX9999,SN,1.0") is None
+    assert route_idn("ACME,WIDGET,SN,1.0") is None

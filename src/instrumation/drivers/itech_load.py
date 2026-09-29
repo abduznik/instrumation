@@ -27,11 +27,9 @@ class ItechIT8512Plus(RealDriver, ElectronicLoad):
         - [SOURce:]POWer:PROTection[:LEVel] <watts>
         - MEASure[:SCALar]:VOLTage[:DC]? / :CURRent[:DC]? / :POWer[:DC]?
         - MEASure[:SCALar]:RESistance[:DC]?
-    """
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
+    Unsupported: set_ovp (no software OVP trip-point command), clear_protection.
+    """
 
     def set_mode(self, mode: str) -> None:
         mode_upper = mode.upper()
@@ -79,32 +77,22 @@ class ItechIT8512Plus(RealDriver, ElectronicLoad):
         self.safe_send(f"INP:SHOR {'ON' if state else 'OFF'}")
 
     def measure_voltage(self) -> MeasurementResult:
-        val = self.query_ascii("MEAS:VOLT?")
-        return MeasurementResult(float(val), "V")
+        return self._meas("MEAS:VOLT?", "V")
 
     def measure_current(self) -> MeasurementResult:
-        val = self.query_ascii("MEAS:CURR?")
-        return MeasurementResult(float(val), "A")
+        return self._meas("MEAS:CURR?", "A")
 
     def measure_power(self) -> MeasurementResult:
-        val = self.query_ascii("MEAS:POW?")
-        return MeasurementResult(float(val), "W")
+        return self._meas("MEAS:POW?", "W")
 
     def measure_resistance(self) -> MeasurementResult:
-        val = self.query_ascii("MEAS:RES?")
-        return MeasurementResult(float(val), "Ohm")
-
-    def set_ovp(self, voltage: float) -> None:
-        self._unsupported_feature("set_ovp (IT8500+ has no software OVP trip-point command)")
+        return self._meas("MEAS:RES?", "Ohm")
 
     def set_ocp(self, current: float) -> None:
         self.safe_send(f"CURR:PROT:LEV {current}")
 
     def set_opp(self, power: float) -> None:
         self.safe_send(f"POW:PROT:LEV {power}")
-
-    def clear_protection(self) -> None:
-        self._unsupported_feature("clear_protection")
 
     def shutdown_safety(self) -> None:
         self.set_input(False)

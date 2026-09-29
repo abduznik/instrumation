@@ -1,11 +1,11 @@
 from .base import PowerSupply
 from .registry import register_driver
-from .real import RealDriver
+from .real import RealDriver, SaveRecallSlots
 from ..results import MeasurementResult
 
 
 @register_driver("PSU")
-class SiglentSPD3303X(RealDriver, PowerSupply):
+class SiglentSPD3303X(SaveRecallSlots, RealDriver, PowerSupply):
     """Driver for Siglent SPD3303X/SPD3303X-E Triple-Output DC Power Supplies.
 
     Validated Model: SPD3303X. CH1 and CH2 are independently controlled
@@ -28,7 +28,12 @@ class SiglentSPD3303X(RealDriver, PowerSupply):
         - OUTPut:TRACK {0|1|2}      — 0=independent, 1=series, 2=parallel
         - INSTrument {CH1|CH2}
         - *SAV {1-5} / *RCL {1-5}
+
+    Unsupported: set_ovp/set_ocp (no software OVP/OCP commands), clear_protection.
     """
+
+    STATE_SLOTS = range(1, 6)
+    CHANNELS = (1, 2, 3)
 
     def _ch(self, channel: int = None) -> str:
         return f"CH{channel}" if channel else "CH1"
@@ -47,8 +52,7 @@ class SiglentSPD3303X(RealDriver, PowerSupply):
         self.safe_send(f"{self._ch(channel)}:CURR {current}")
 
     def get_current(self, channel: int = None) -> MeasurementResult:
-        val = self.query_ascii(f"{self._ch(channel)}:CURR?")
-        return MeasurementResult(float(val), "A")
+        return self._meas(f"{self._ch(channel)}:CURR?", "A")
 
     def set_output(self, state: bool, channel: int = None) -> None:
         self.write(f"OUTP {self._ch(channel)},{'ON' if state else 'OFF'}")
@@ -58,16 +62,13 @@ class SiglentSPD3303X(RealDriver, PowerSupply):
         return state.strip().upper() == "ON"
 
     def measure_voltage_actual(self, channel: int = None) -> MeasurementResult:
-        val = self.query_ascii(f"MEAS:VOLT? {self._ch(channel)}")
-        return MeasurementResult(float(val), "V")
+        return self._meas(f"MEAS:VOLT? {self._ch(channel)}", "V")
 
     def measure_current(self, channel: int = None) -> MeasurementResult:
-        val = self.query_ascii(f"MEAS:CURR? {self._ch(channel)}")
-        return MeasurementResult(float(val), "A")
+        return self._meas(f"MEAS:CURR? {self._ch(channel)}", "A")
 
     def measure_power(self, channel: int = None) -> MeasurementResult:
-        val = self.query_ascii(f"MEAS:POWE? {self._ch(channel)}")
-        return MeasurementResult(float(val), "W")
+        return self._meas(f"MEAS:POWE? {self._ch(channel)}", "W")
 
     def set_track_mode(self, mode: int) -> None:
         """Sets CH1/CH2 coupling: 0=independent, 1=series, 2=parallel."""
@@ -75,35 +76,7 @@ class SiglentSPD3303X(RealDriver, PowerSupply):
             raise ValueError("mode must be 0 (independent), 1 (series), or 2 (parallel)")
         self.write(f"OUTP:TRACK {mode}")
 
-    def set_ovp(self, voltage: float, channel: int = None) -> None:
-        self._unsupported_feature("set_ovp (SPD3303X has no software OVP command)")
-
-    def set_ocp(self, current: float, channel: int = None) -> None:
-        self._unsupported_feature("set_ocp (SPD3303X has no software OCP command)")
-
-    def clear_protection(self) -> None:
-        self._unsupported_feature("clear_protection")
-
-    def save_state(self, index: int) -> None:
-        if not (1 <= index <= 5):
-            raise ValueError("Index must be 1-5")
-        self.write(f"*SAV {index}")
-
-    def load_state(self, index: int) -> None:
-        if not (1 <= index <= 5):
-            raise ValueError("Index must be 1-5")
-        self.write(f"*RCL {index}")
-
-    def measure_frequency(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "V")
-
     def shutdown_safety(self) -> None:
-        for ch in (1, 2, 3):
+        for ch in self.CHANNELS:
             self.set_output(False, channel=ch)
         self.sync_config()

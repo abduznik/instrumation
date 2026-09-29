@@ -29,10 +29,6 @@ class YokogawaWT310(RealDriver, InstrumentDriver):
         - *CAL?                              — zero calibration
     """
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def set_output_item(self, index: int, function: str, element: int = 1) -> None:
         """Configures numeric output slot `index` (1-255) with a function/element."""
         self.safe_send(f"NUM:ITEM{index} {function.upper()},{element}")
@@ -89,15 +85,6 @@ class YokogawaWT310(RealDriver, InstrumentDriver):
 
     def reset_integration(self) -> None:
         self.write("INTEG:RES")
-
-    def measure_frequency(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "V")
 
     def shutdown_safety(self) -> None:
         self.sync_config()

@@ -8,10 +8,6 @@ from ..results import MeasurementResult
 class Keithley2000(RealDriver, Multimeter):
     """Driver for Keithley 2000 Series Digital Multimeters."""
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def configure_voltage_dc(self) -> None:
         self.safe_send(":CONF:VOLT:DC")
 
@@ -42,14 +38,6 @@ class Keithley2000(RealDriver, Multimeter):
     def measure_frequency(self) -> MeasurementResult:
         val = self.query_ascii(":MEAS:FREQ?")
         return MeasurementResult(float(val.split(',')[0]), "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        self._unsupported_feature("Duty Cycle")
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        self._unsupported_feature("Vpp")
-        return MeasurementResult(0.0, "V")
 
     def shutdown_safety(self) -> None:
         self.set_auto_range(True)
@@ -94,7 +82,7 @@ class Keithley2400(Keithley2000, PowerSupply):
         self.safe_send(f":SOUR:CURR {current}")
 
     def get_current(self) -> MeasurementResult:
-        return MeasurementResult(float(self.query_ascii(":SENS:CURR:DC?")), "A")
+        return self._meas(":SENS:CURR:DC?", "A")
 
     def set_output(self, state: bool) -> None:
         self.safe_send(f":OUTP {'ON' if state else 'OFF'}")

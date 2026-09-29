@@ -1,7 +1,6 @@
 from .base import FunctionGenerator
 from .registry import register_driver
 from .real import RealDriver
-from ..results import MeasurementResult
 
 
 @register_driver("SG")
@@ -30,16 +29,14 @@ class RigolDG4000(RealDriver, FunctionGenerator):
         - OUTPut<n>[:STATe] {ON|OFF}
         - [:SOURce[<n>]]:SWEep:STATe {ON|OFF}
         - [:SOURce[<n>]]:ROSCillator:SOURce {INTernal|EXTernal}
+
+    Unsupported: configure_list_sweep (use arbitrary-waveform list mode instead).
     """
 
     def __init__(self, resource: str, channel: int = 1) -> None:
         super().__init__(resource)
         self.channel = channel
         self._src = f"SOUR{channel}"
-
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
 
     def set_frequency(self, hz: float) -> None:
         self.write(f"{self._src}:FREQ {hz}")
@@ -82,20 +79,8 @@ class RigolDG4000(RealDriver, FunctionGenerator):
         self.write(f"{self._src}:SWE:TIME {dwell * points}")
         self.write(f"{self._src}:SWE:STAT ON")
 
-    def configure_list_sweep(self, freq_list: list, power_list: list) -> None:
-        self._unsupported_feature("configure_list_sweep (use arbitrary-waveform list mode instead)")
-
     def set_reference_clock(self, source: str) -> None:
         self.write(f"{self._src}:ROSC:SOUR {source.upper()}")
-
-    def measure_frequency(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "V")
 
     def shutdown_safety(self) -> None:
         self.set_output(False)

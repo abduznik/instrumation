@@ -22,10 +22,6 @@ class KeysightE4980A(RealDriver, LCRMeter):
         - :TRIGger[:IMMediate]
     """
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def set_frequency(self, hz: float) -> None:
         self.safe_send(f"FREQ {hz}")
 

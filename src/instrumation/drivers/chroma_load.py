@@ -34,14 +34,12 @@ class Chroma63200A(RealDriver, ElectronicLoad):
         - LOAD:PROTection?              — protection trip status
         - LOAD:PROTection:CLEar
         - MEASure:VOLTage? / MEASure:CURRent? / MEASure:POWer?
+
+    Unsupported: set_ovp (no dedicated software OVP command), set_ocp/set_opp (OCP/OPP are dedicated MODEs, not trip-level commands).
     """
 
     _MODE_MAP = {"CC": "CCH", "CV": "CVH", "CR": "CRH", "CP": "CPH"}
     _MODE_MAP_REV = {v: k for k, v in _MODE_MAP.items()}
-
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
 
     def set_mode(self, mode: str) -> None:
         mode_upper = mode.upper()
@@ -88,29 +86,17 @@ class Chroma63200A(RealDriver, ElectronicLoad):
         self.safe_send(f"LOAD:SHOR {'ON' if state else 'OFF'}")
 
     def measure_voltage(self) -> MeasurementResult:
-        val = self.query_ascii("MEAS:VOLT?")
-        return MeasurementResult(float(val), "V")
+        return self._meas("MEAS:VOLT?", "V")
 
     def measure_current(self) -> MeasurementResult:
-        val = self.query_ascii("MEAS:CURR?")
-        return MeasurementResult(float(val), "A")
+        return self._meas("MEAS:CURR?", "A")
 
     def measure_power(self) -> MeasurementResult:
-        val = self.query_ascii("MEAS:POW?")
-        return MeasurementResult(float(val), "W")
+        return self._meas("MEAS:POW?", "W")
 
     def measure_resistance(self) -> MeasurementResult:
         self._unsupported_feature("measure_resistance (63200A has no direct MEAS:RES? query)")
         return MeasurementResult(0.0, "Ohm")
-
-    def set_ovp(self, voltage: float) -> None:
-        self._unsupported_feature("set_ovp (63200A has no dedicated software OVP command)")
-
-    def set_ocp(self, current: float) -> None:
-        self._unsupported_feature("set_ocp (63200A OCP is a dedicated MODE, not a trip-level command)")
-
-    def set_opp(self, power: float) -> None:
-        self._unsupported_feature("set_opp (63200A OPP is a dedicated MODE, not a trip-level command)")
 
     def get_protection_status(self) -> str:
         """Returns the protection status flags reported by LOAD:PROTection?."""

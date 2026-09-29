@@ -7,10 +7,6 @@ from ..results import MeasurementResult
 class SiglentSDS(RealDriver, Oscilloscope):
     """Refined Driver for Siglent SDS Series Oscilloscopes."""
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def run(self) -> None: self.write("ARM")
     def stop(self) -> None: self.write("STOP")
     def single(self) -> None: self.write("SING")
@@ -256,10 +252,6 @@ class SiglentSDS(RealDriver, Oscilloscope):
 class SiglentSDL1000X(RealDriver, ElectronicLoad):
     """Driver for Siglent SDL1000X series DC Electronic Loads."""
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def set_mode(self, mode: str) -> None:
         # Siglent SDL modes: CC, CV, CR, CP
         mode_upper = mode.upper()
@@ -301,16 +293,13 @@ class SiglentSDL1000X(RealDriver, ElectronicLoad):
         return self.query_ascii(":SOUR:INP:STAT?").strip().upper() in ("1", "ON")
 
     def measure_voltage(self) -> MeasurementResult:
-        val = self.query_ascii(":MEAS:VOLT?")
-        return MeasurementResult(float(val), "V")
+        return self._meas(":MEAS:VOLT?", "V")
 
     def measure_current(self) -> MeasurementResult:
-        val = self.query_ascii(":MEAS:CURR?")
-        return MeasurementResult(float(val), "A")
+        return self._meas(":MEAS:CURR?", "A")
 
     def measure_power(self) -> MeasurementResult:
-        val = self.query_ascii(":MEAS:POW?")
-        return MeasurementResult(float(val), "W")
+        return self._meas(":MEAS:POW?", "W")
 
     def set_ovp(self, voltage: float) -> None:
         self.safe_send(f":SOUR:VOLT:PROT {voltage}")

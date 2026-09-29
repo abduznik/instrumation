@@ -34,10 +34,6 @@ class FlukePM6690(RealDriver, FrequencyCounter):
         ch = channel if channel else self._active_channel
         return f"INP{ch}"
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def measure_frequency(self, range: str = "AUTO") -> MeasurementResult:
         if range.upper() == "AUTO":
             val = self.query_ascii(":MEAS:FREQ?")
@@ -53,8 +49,7 @@ class FlukePM6690(RealDriver, FrequencyCounter):
         return MeasurementResult(float(val), "s")
 
     def measure_time_interval(self, start_trigger: str, stop_trigger: str) -> MeasurementResult:
-        val = self.query_ascii(f":MEAS:TINT? {start_trigger},{stop_trigger}")
-        return MeasurementResult(float(val), "s")
+        return self._meas(f":MEAS:TINT? {start_trigger},{stop_trigger}", "s")
 
     def set_impedance(self, ohms: float, channel: int = None) -> None:
         self.safe_send(f"{self._ch(channel)}:IMP {ohms}")

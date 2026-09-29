@@ -7,16 +7,11 @@ from ..results import MeasurementResult
 class AnritsuSA(RealDriver, SpectrumAnalyzer):
     """Generic Driver for Anritsu Spectrum Analyzers."""
     
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def peak_search(self) -> None:
         self.safe_send(":CALC:MARK1:MAX") 
 
     def get_marker_amplitude(self) -> MeasurementResult:
-        val = self.query_ascii(":CALC:MARK1:Y?")
-        return MeasurementResult(float(val), "dBm")
+        return self._meas(":CALC:MARK1:Y?", "dBm")
 
     def set_center_freq(self, hz: float) -> None:
         self.safe_send(f":FREQ:CENT {self.format_frequency(hz)}")
@@ -55,10 +50,6 @@ class AnritsuSA(RealDriver, SpectrumAnalyzer):
 class AnritsuVNA(RealDriver, NetworkAnalyzer):
     """Generic Driver for Anritsu Vector Network Analyzers (Handheld/Legacy)."""
     
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def set_start_frequency(self, freq_hz: float) -> None:
         self.safe_send(f":SENS:FREQ:STAR {freq_hz}")
 
@@ -83,10 +74,6 @@ class AnritsuVNA(RealDriver, NetworkAnalyzer):
         raw_data = self.query_binary_values(":CALC:DATA? SDATA", datatype='f', is_big_endian=False)
         data = [complex(raw_data[i], raw_data[i+1]) for i in range(0, len(raw_data), 2)]
         return MeasurementResult(data, "IQ")
-
-    def get_smith_data(self, measurement_name: str = "S11") -> MeasurementResult:
-        self._unsupported_feature("get_smith_data")
-        return MeasurementResult([], "Z")
 
 @register_driver("NA")
 class AnritsuShockLineVNA(RealDriver, NetworkAnalyzer):
@@ -146,10 +133,6 @@ class AnritsuShockLineVNA(RealDriver, NetworkAnalyzer):
         )
         data = [complex(raw[i], raw[i+1]) for i in range(0, len(raw), 2)]
         return MeasurementResult(data, "IQ")
-
-    def get_smith_data(self, measurement_name: str = "S21") -> MeasurementResult:
-        self._unsupported_feature("get_smith_data")
-        return MeasurementResult([], "Z")
 
     def shutdown_safety(self) -> None:
         self.write(":SYSTem:DISPlay:UPDate ON")
@@ -222,11 +205,3 @@ class AnritsuMS2035B(RealDriver, SpectrumAnalyzer, NetworkAnalyzer):
     def set_parameter(self, parameter: str) -> None:
         self._set_mode(self.VNA_MODE)
         self.write(f":CALC:PAR:SEL '{parameter}'")
-
-    def get_smith_data(self, measurement_name: str = "S11") -> MeasurementResult:
-        self._unsupported_feature("get_smith_data")
-        return MeasurementResult([], "Z")
-
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()

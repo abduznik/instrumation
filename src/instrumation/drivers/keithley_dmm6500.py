@@ -29,10 +29,6 @@ class KeithleyDMM6500(RealDriver, Multimeter):
         - *RST
     """
 
-    def preset(self, automation_optimized: bool = True) -> None:
-        self.write("*RST")
-        self.wait_ready()
-
     def _select_function(self, func: str) -> None:
         self.safe_send(f'SENS:FUNC "{func}"')
 
@@ -98,14 +94,6 @@ class KeithleyDMM6500(RealDriver, Multimeter):
         self._select_function("TEMP")
         val = self.query_ascii("READ?")
         return MeasurementResult(float(val), "C")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        self._unsupported_feature("Duty Cycle")
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        self._unsupported_feature("Vpp")
-        return MeasurementResult(0.0, "V")
 
     def shutdown_safety(self) -> None:
         self.configure_voltage_dc()

@@ -28,6 +28,8 @@ class KeysightE36313A(RealDriver, PowerSupply):
         - APPLy P6V|P25V|N25V|CH1|CH2|CH3[,<voltage>[,<current>]]
     """
 
+    CHANNELS = (1, 2, 3)
+
     def _chan(self, channel: int = None) -> str:
         return f"(@{channel})" if channel else "(@1)"
 
@@ -45,8 +47,7 @@ class KeysightE36313A(RealDriver, PowerSupply):
         self.safe_send(f"CURR {current}, {self._chan(channel)}")
 
     def get_current(self, channel: int = None) -> MeasurementResult:
-        val = self.query_ascii(f"CURR? {self._chan(channel)}")
-        return MeasurementResult(float(val), "A")
+        return self._meas(f"CURR? {self._chan(channel)}", "A")
 
     def set_output(self, state: bool, channel: int = None) -> None:
         self.write(f"OUTP {'ON' if state else 'OFF'}, {self._chan(channel)}")
@@ -69,12 +70,10 @@ class KeysightE36313A(RealDriver, PowerSupply):
         self.write(f"CURR:PROT:CLE {self._chan(channel)}")
 
     def measure_voltage_actual(self, channel: int = None) -> MeasurementResult:
-        val = self.query_ascii(f"MEAS:VOLT? {self._chan(channel)}")
-        return MeasurementResult(float(val), "V")
+        return self._meas(f"MEAS:VOLT? {self._chan(channel)}", "V")
 
     def measure_current(self, channel: int = None) -> MeasurementResult:
-        val = self.query_ascii(f"MEAS:CURR? {self._chan(channel)}")
-        return MeasurementResult(float(val), "A")
+        return self._meas(f"MEAS:CURR? {self._chan(channel)}", "A")
 
     def set_output_pairing(self, mode: str) -> None:
         """Sets CH1/CH2 pairing: 'OFF', 'PAR' (parallel), or 'SER' (series)."""
@@ -83,17 +82,8 @@ class KeysightE36313A(RealDriver, PowerSupply):
             raise ValueError("mode must be 'OFF', 'PAR', or 'SER'")
         self.write(f"OUTP:PAIR {mode_upper}")
 
-    def measure_frequency(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "Hz")
-
-    def measure_duty_cycle(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "%")
-
-    def measure_v_peak_to_peak(self) -> MeasurementResult:
-        return MeasurementResult(0.0, "V")
-
     def shutdown_safety(self) -> None:
-        for ch in (1, 2, 3):
+        for ch in self.CHANNELS:
             self.set_output(False, channel=ch)
             self.set_voltage(0.0, channel=ch)
         self.sync_config()

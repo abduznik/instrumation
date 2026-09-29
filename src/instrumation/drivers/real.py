@@ -150,13 +150,35 @@ class RealDriver(InstrumentDriver):
         return self.query("*IDN?")
 
     def preset(self, automation_optimized: bool = True) -> None:
+        """*RST, then block on *OPC? until the reset has completed."""
         self.write("*RST")
-        self.sync_config()
+        self.wait_ready()
+
+    def _meas(self, command: str, unit: str) -> MeasurementResult:
+        """Error-checked query of a single numeric reading, wrapped with its unit."""
+        return MeasurementResult(float(self.query_ascii(command)), unit)
 
     def shutdown_safety(self) -> None:
         """Default safety: Clear and Wait."""
         self.sync_config()
-        
-    def measure_frequency(self) -> MeasurementResult: return MeasurementResult(0.0, "Hz")
-    def measure_duty_cycle(self) -> MeasurementResult: return MeasurementResult(0.0, "%")
-    def measure_v_peak_to_peak(self) -> MeasurementResult: return MeasurementResult(0.0, "V")
+
+
+class SaveRecallSlots:
+    """Mixin: numbered ``*SAV``/``*RCL`` state memory.
+
+    Drivers set ``STATE_SLOTS`` to the valid index range, e.g. ``range(1, 11)``.
+    """
+
+    STATE_SLOTS: range = range(0)
+
+    def _check_slot(self, index: int) -> None:
+        if index not in self.STATE_SLOTS:
+            raise ValueError(f"Index must be {self.STATE_SLOTS.start}-{self.STATE_SLOTS.stop - 1}")
+
+    def save_state(self, index: int) -> None:
+        self._check_slot(index)
+        self.write(f"*SAV {index}")
+
+    def load_state(self, index: int) -> None:
+        self._check_slot(index)
+        self.write(f"*RCL {index}")
