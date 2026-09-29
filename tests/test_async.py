@@ -40,3 +40,17 @@ async def test_async_spectrum_analyzer():
     res = await sa.async_get_marker_amplitude()
     assert res.unit == "dBm"
     assert -25 < res.value < -15
+
+
+@pytest.mark.asyncio
+async def test_wrap_async_forwards_kwargs():
+    """GH #244: async wrappers must forward kwargs such as channel=."""
+    from unittest.mock import MagicMock
+    from instrumation.drivers.async_driver import wrap_async
+    from instrumation.drivers.rigol_psu import RigolDP832
+
+    psu = RigolDP832("TCPIP::1::INSTR")
+    psu.inst = MagicMock()
+    psu.check_errors_enabled = False
+    await wrap_async(psu).set_voltage(3.3, channel=2)
+    psu.inst.write.assert_called_with("SOUR2:VOLT 3.3")

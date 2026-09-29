@@ -104,8 +104,30 @@ def test_get_sensor_type(mock_ctrl):
 
 
 def test_set_control_mode(mock_ctrl):
+    mock_ctrl.inst.query.return_value = "1,1,0"
     mock_ctrl.set_control_mode(1, "pid")
-    mock_ctrl.inst.write.assert_any_call("CMODE 1,1")
+    mock_ctrl.inst.query.assert_any_call("OUTMODE? 1")
+    mock_ctrl.inst.write.assert_any_call("OUTMODE 1,1,1,0")
+
+
+def test_set_control_mode_preserves_input_and_powerup(mock_ctrl):
+    mock_ctrl.inst.query.return_value = "0,3,1"
+    mock_ctrl.set_control_mode(2, "MANUAL")
+    mock_ctrl.inst.write.assert_any_call("OUTMODE 2,3,3,1")
+
+
+def test_set_control_mode_open_loop_maps_to_3(mock_ctrl):
+    # Regression: OPENLOOP used to be sent as 4 (= Monitor Out, invalid for
+    # heater outputs 1/2). Model 336 manual: 3 = Open Loop.
+    mock_ctrl.inst.query.return_value = "1,1,0"
+    mock_ctrl.set_control_mode(1, "OPENLOOP")
+    mock_ctrl.inst.write.assert_any_call("OUTMODE 1,3,1,0")
+
+
+def test_set_control_mode_bad_response_raises(mock_ctrl):
+    mock_ctrl.inst.query.return_value = "0"
+    with pytest.raises(ValueError):
+        mock_ctrl.set_control_mode(1, "PID")
 
 
 def test_set_control_mode_invalid_raises(mock_ctrl):
