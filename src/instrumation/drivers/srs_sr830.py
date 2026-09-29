@@ -1,6 +1,9 @@
+import time
+
 from .base import LockInAmplifier
 from .registry import register_driver
 from .real import RealDriver
+from ..exceptions import InstrumentTimeout
 from ..results import MeasurementResult
 
 
@@ -28,6 +31,9 @@ class SRSSR830(RealDriver, LockInAmplifier):
         - OFLT i     — sets/queries time constant by index (0-19)
         - OUTP? i    — reads X(1)/Y(2)/R(3)/theta(4)
         - SNAP? i,j{,k,l,m,n}  — simultaneous multi-parameter read
+        - *RST / *CLS          — reset / clear status registers
+        - *STB? bit1 (IFC)     — readiness poll; SR830 has NO *OPC?, *WAI,
+          or SYST:ERR? (see sync_config/wait_ready/check_errors overrides)
     """
 
     _SENS_TABLE = [
@@ -39,6 +45,37 @@ class SRSSR830(RealDriver, LockInAmplifier):
         10e-6, 30e-6, 100e-6, 300e-6, 1e-3, 3e-3, 10e-3, 30e-3, 100e-3,
         300e-3, 1.0, 3.0, 10.0, 30.0, 100.0, 300.0, 1e3, 3e3, 10e3, 30e3,
     ]
+
+    def sync_config(self) -> None:
+        # SR830 defines *CLS but no *WAI: sending *WAI is an illegal command
+        # (sets the standard-event CMD bit) on this instrument.
+        self.write("*CLS")
+
+    def wait_ready(self, timeout: float = 30.0) -> None:
+        # SR830 implements no *OPC? -- its standard-event bit 0 is INP (input
+        # queue overflow), not operation-complete. Poll *STB? bit 1 (IFC:
+        # "no command execution in progress"), the readiness signal the manual
+        # does define.
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            try:
+                if int(self.inst.query("*STB?")) & 0x02:
+                    return
+            except Exception:
+                pass
+            time.sleep(0.1)
+        raise InstrumentTimeout(
+            f"Timeout waiting for SR830 *STB? IFC on {self.resource}"
+        )
+
+    def check_errors(self) -> None:
+        """No SCPI error queue on the SR830 (no SYST:ERR?); errors are reported
+        through the ERRS? error status byte, not a message queue."""
+        pass
+
+    def _discover_options(self) -> None:
+        """No *OPT? query on the SR830 -- feature set is fixed, no options."""
+        self.options = []
 
     def preset(self, automation_optimized: bool = True) -> None:
         self.write("*RST")

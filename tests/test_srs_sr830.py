@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
 from instrumation.drivers.srs_sr830 import SRSSR830
+from instrumation.exceptions import InstrumentTimeout
 
 
 @pytest.fixture
@@ -83,3 +84,45 @@ def test_measure_frequency_uses_reference(mock_lockin):
 def test_shutdown_safety(mock_lockin):
     mock_lockin.shutdown_safety()
     mock_lockin.inst.write.assert_any_call("SLVL 0.004")
+
+
+# --- SR830 has no *OPC? / *WAI / SYST:ERR? / *OPT? (SR830 manual, 203 pp) ---
+
+def test_wait_ready_polls_stb_ifc_not_opc(mock_lockin):
+    mock_lockin.inst.query.return_value = "2"  # serial poll status: bit1 IFC set
+    mock_lockin.wait_ready(timeout=1.0)
+    mock_lockin.inst.query.assert_called_with("*STB?")
+    assert all(c.args[0] != "*OPC?" for c in mock_lockin.inst.query.call_args_list)
+
+
+def test_wait_ready_times_out_while_command_in_progress(mock_lockin):
+    mock_lockin.inst.query.return_value = "0"  # IFC clear -> busy
+    with pytest.raises(InstrumentTimeout):
+        mock_lockin.wait_ready(timeout=0.2)
+
+
+def test_preset_resets_then_polls_stb(mock_lockin):
+    mock_lockin.inst.query.return_value = "2"
+    mock_lockin.preset()
+    mock_lockin.inst.write.assert_any_call("*RST")
+    assert any(c.args[0] == "*STB?" for c in mock_lockin.inst.query.call_args_list)
+    assert all(c.args[0] != "*OPC?" for c in mock_lockin.inst.query.call_args_list)
+
+
+def test_sync_config_emits_cls_without_wai(mock_lockin):
+    mock_lockin.sync_config()
+    mock_lockin.inst.write.assert_called_with("*CLS")
+    assert all("*WAI" not in c.args[0] for c in mock_lockin.inst.write.call_args_list)
+
+
+def test_check_errors_does_not_query_error_queue(mock_lockin):
+    mock_lockin.check_errors_enabled = True
+    mock_lockin.safe_send("FREQ 1000")
+    mock_lockin.inst.write.assert_any_call("FREQ 1000")
+    assert all("SYST:ERR?" not in c.args[0] for c in mock_lockin.inst.query.call_args_list)
+
+
+def test_discover_options_skips_opt_query(mock_lockin):
+    mock_lockin._discover_options()
+    assert mock_lockin.options == []
+    assert all("*OPT?" not in c.args[0] for c in mock_lockin.inst.query.call_args_list)
