@@ -30,6 +30,7 @@ class BKPrecision9130B(SaveRecallSlots, RealDriver, PowerSupply):
     """
 
     STATE_SLOTS = range(1, 10)
+    CHANNELS = (1, 2, 3)
 
     def __init__(self, resource: str) -> None:
         super().__init__(resource)
@@ -115,7 +116,7 @@ class BKPrecision9130B(SaveRecallSlots, RealDriver, PowerSupply):
 
     def shutdown_safety(self) -> None:
         """Safety first: disable output and zero voltage on all channels."""
-        for ch in (1, 2, 3):
+        for ch in self.CHANNELS:
             self.set_output(False, channel=ch)
             self.set_voltage(0.0, channel=ch)
         self.sync_config()

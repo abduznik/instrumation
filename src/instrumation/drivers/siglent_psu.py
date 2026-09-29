@@ -33,6 +33,7 @@ class SiglentSPD3303X(SaveRecallSlots, RealDriver, PowerSupply):
     """
 
     STATE_SLOTS = range(1, 6)
+    CHANNELS = (1, 2, 3)
 
     def _ch(self, channel: int = None) -> str:
         return f"CH{channel}" if channel else "CH1"
@@ -76,6 +77,6 @@ class SiglentSPD3303X(SaveRecallSlots, RealDriver, PowerSupply):
         self.write(f"OUTP:TRACK {mode}")
 
     def shutdown_safety(self) -> None:
-        for ch in (1, 2, 3):
+        for ch in self.CHANNELS:
             self.set_output(False, channel=ch)
         self.sync_config()

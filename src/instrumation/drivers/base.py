@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Union, Dict, Any, Optional
+from typing import List, Union, Dict, Any, Optional, Tuple
 import asyncio
 import functools
 import logging
@@ -471,43 +471,58 @@ class Multimeter(InstrumentDriver):
     def set_auto_range(self, state: bool) -> None: pass
 
 class PowerSupply(InstrumentDriver):
+    """DC power supply.
+
+    Every per-output method takes ``channel``: ``None`` means the default
+    (first) output, so single-output drivers may ignore it. ``CHANNELS``
+    lists the addressable outputs.
+    """
+
+    CHANNELS: Tuple[int, ...] = (1,)
+
+    @staticmethod
+    def _ch_kw(channel: Optional[int]) -> Dict[str, int]:
+        # Only pass channel= through when set, so aliases also work on
+        # single-output drivers whose methods take no channel argument.
+        return {} if channel is None else {"channel": channel}
+
     @abstractmethod
-    def set_voltage(self, voltage: float) -> None: pass
+    def set_voltage(self, voltage: float, channel: Optional[int] = None) -> None: pass
     @abstractmethod
-    def get_voltage(self) -> float: pass
+    def get_voltage(self, channel: Optional[int] = None) -> float: pass
     @abstractmethod
-    def set_current_limit(self, current: float) -> None: pass
-    def set_current(self, current: float) -> None:
+    def set_current_limit(self, current: float, channel: Optional[int] = None) -> None: pass
+    def set_current(self, current: float, channel: Optional[int] = None) -> None:
         """Generalized alias for set_current_limit."""
-        self.set_current_limit(current)
+        self.set_current_limit(current, **self._ch_kw(channel))
     @abstractmethod
-    def get_current(self) -> MeasurementResult: pass
+    def get_current(self, channel: Optional[int] = None) -> MeasurementResult: pass
     @abstractmethod
-    def set_output(self, state: bool) -> None: pass
+    def set_output(self, state: bool, channel: Optional[int] = None) -> None: pass
     @abstractmethod
-    def get_output(self) -> bool: pass
+    def get_output(self, channel: Optional[int] = None) -> bool: pass
     @_unsupported
-    def set_ovp(self, voltage: float) -> None: pass
+    def set_ovp(self, voltage: float, channel: Optional[int] = None) -> None: pass
     @_unsupported
-    def set_ocp(self, current: float) -> None: pass
+    def set_ocp(self, current: float, channel: Optional[int] = None) -> None: pass
     @abstractmethod
-    def measure_voltage_actual(self) -> MeasurementResult: pass
+    def measure_voltage_actual(self, channel: Optional[int] = None) -> MeasurementResult: pass
     @abstractmethod
-    def measure_current(self) -> MeasurementResult: pass
+    def measure_current(self, channel: Optional[int] = None) -> MeasurementResult: pass
 
-    def set_voltage_limit(self, voltage: float) -> None:
+    def set_voltage_limit(self, voltage: float, channel: Optional[int] = None) -> None:
         """Generalized alias for Over-Voltage Protection (OVP)."""
-        self.set_ovp(voltage)
+        self.set_ovp(voltage, **self._ch_kw(channel))
 
-    def measure_voltage(self) -> MeasurementResult:
+    def measure_voltage(self, channel: Optional[int] = None) -> MeasurementResult:
         """Generalized alias for measure_voltage_actual."""
-        return self.measure_voltage_actual()
+        return self.measure_voltage_actual(**self._ch_kw(channel))
 
     @_unsupported
     def clear_protection(self) -> None: pass
 
     @_unsupported
-    def measure_power(self) -> MeasurementResult:
+    def measure_power(self, channel: Optional[int] = None) -> MeasurementResult:
         """Queries the actual measured output power (Watts)."""
         return MeasurementResult(0.0, "W")
 

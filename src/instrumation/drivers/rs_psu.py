@@ -29,6 +29,8 @@ class RohdeSchwarzHMP4040(RealDriver, PowerSupply):
         - *IDN? / *RST / SYST:ERR?
     """
 
+    CHANNELS = (1, 2, 3, 4)
+
     def __init__(self, resource: str) -> None:
         super().__init__(resource)
         self._active_channel = 1
@@ -93,7 +95,7 @@ class RohdeSchwarzHMP4040(RealDriver, PowerSupply):
         self.safe_send(f"OUTP:GEN {'ON' if state else 'OFF'}")
 
     def shutdown_safety(self) -> None:
-        for ch in (1, 2, 3, 4):
+        for ch in self.CHANNELS:
             self.set_output(False, channel=ch)
             self.set_voltage(0.0, channel=ch)
         self.set_global_output(False)

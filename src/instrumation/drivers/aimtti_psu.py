@@ -27,6 +27,8 @@ class AimTTiCPX400DP(RealDriver, PowerSupply):
         - *IDN? / *RST
     """
 
+    CHANNELS = (1, 2)
+
     def _n(self, channel: int = None) -> int:
         return channel if channel else 1
 
@@ -79,6 +81,6 @@ class AimTTiCPX400DP(RealDriver, PowerSupply):
         self.safe_send(f"CONFIG {mode}")
 
     def shutdown_safety(self) -> None:
-        for ch in (1, 2):
+        for ch in self.CHANNELS:
             self.set_output(False, channel=ch)
             self.set_voltage(0.0, channel=ch)
