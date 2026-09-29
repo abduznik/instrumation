@@ -99,6 +99,21 @@ class TestFactoryGenericFallback(unittest.TestCase):
             drv = get_instrument("TCPIP::10.0.0.27::INSTR", "SCOPE")
         self.assertEqual(drv.__class__.__name__, "KeysightInfiniiVision")
 
+    def test_keysight_msox4054a_4000x_idn_routes_to_infiniivision(self):
+        # GH #221: 4000 X-Series shares the InfiniiVision dialect and is
+        # caught by the generic MSOX keyword.
+        rm = _mock_rm("KEYSIGHT TECHNOLOGIES,MSOX4054A,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("TCPIP::10.0.0.62::INSTR", "SCOPE")
+        self.assertEqual(drv.__class__.__name__, "KeysightInfiniiVision")
+
+    def test_keysight_dsox4024a_4000x_idn_routes_to_infiniivision(self):
+        # GH #221: DSO-only 4000 X-Series sibling.
+        rm = _mock_rm("KEYSIGHT TECHNOLOGIES,DSOX4024A,SN1,1.0")
+        with patch("instrumation.factory.get_rm", return_value=rm):
+            drv = get_instrument("TCPIP::10.0.0.63::INSTR", "SCOPE")
+        self.assertEqual(drv.__class__.__name__, "KeysightInfiniiVision")
+
     def test_keysight_n9010b_exa_idn_routes_to_pxa(self):
         rm = _mock_rm("KEYSIGHT TECHNOLOGIES,N9010B,SN1,1.0")
         with patch("instrumation.factory.get_rm", return_value=rm):

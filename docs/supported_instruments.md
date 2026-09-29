@@ -29,9 +29,16 @@ the same SCPI command set.
 
 **Also likely compatible** (same InfiniiVision SCPI set):
 - DSOX1002A–DSOX1004A, DSOX1102G, DSOX1204G, DSOX2004A–DSOX2012A, DSOX3002T–DSOX3054T
-- MSOX1002A–MSOX1004A, MSOX2004A–MSOX3054T, MSOX4002A–MSOX4154A
+- MSOX1002A–MSOX1004A, MSOX2004A–MSOX3054T
+- DSOX4022A–DSOX4154A, MSOX4002A–MSOX4154A (4000 X-Series)
 - DSOX6002A–DSOX6054A, MSOX6002A–MSOX6054A
 - EDUX1052A/G
+
+The 4000 X-Series (DSOX4xxxA/MSOX4xxxA) shares the same core `:RUN`/`:STOP`/`:SINGLE`,
+`:WAVeform:*` (WORD/LSBFirst preamble scaling) and `:MEASure:*` dialect this driver
+uses, so it auto-detects and runs through the generic `DSOX`/`MSOX` IDN keywords.
+Its segmented-memory acquisition is a capability this driver does **not** expose;
+treat the 4000 X-Series as assumed-compatible for the shared scope/measure API only.
 
 ### Rigol DS1000Z / MSO1000Z
 
