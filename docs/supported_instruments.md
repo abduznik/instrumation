@@ -319,6 +319,12 @@ waveform shape is a numeric code (0=sine, 1=square, 2=triangle,
 has **no software output-enable command** -- the configured waveform
 is always live on the output BNC -- so `set_output()` logs an
 unsupported-feature warning and `get_output()` always reports `True`.
+Likewise there is **no reference-clock command**: `set_reference_clock()`
+logs an unsupported-feature warning (the rear-panel timebase input locks
+to an external 10 MHz on its own). Modulation is `MTYP` (type:
+0=lin sweep, 1=log sweep, 2=AM, 3=FM, 4=PM, 5=burst) plus `MENA`
+(enable), and a frequency sweep is `STFR`/`SPFR`/`RATE` + `MTYP 0` +
+`MENA 1`.
 
 > [!WARNING]
 > Not yet verified against real hardware. If you hit a command error,
