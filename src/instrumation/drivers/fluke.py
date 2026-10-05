@@ -47,8 +47,24 @@ class Fluke8846A(RealDriver, Multimeter):
     def measure_period(self) -> MeasurementResult:
         return self._meas(":MEAS:PER?", "s")
 
-    def measure_temperature(self, probe_type: str = "TC", probe: str = "K") -> MeasurementResult:
-        return self._meas(f":MEAS:TEMP? {probe_type},{probe}", "C")
+    def measure_temperature(self, four_wire: bool = False, rtd_type: str = "") -> MeasurementResult:
+        """Measure temperature with an RTD probe (Pt100).
+
+        The 8845A/8846A has no thermocouple support: ``MEASure:TEMPerature``
+        only exposes ``:RTD?`` (2-wire) and ``:FRTD?`` (4-wire), each taking an
+        optional RTD type (``PT100_385`` | ``PT100_392`` | ``CUST1``). There is
+        no bare ``:TEMPerature?`` leaf query, so ``probe``-style arguments are
+        not accepted (issue #260).
+
+        Args:
+            four_wire: Use the 4-wire (FRTD) input instead of 2-wire (RTD).
+            rtd_type: Optional RTD type selector; empty keeps the meter's
+                configured type.
+        """
+        cmd = ":MEAS:TEMP:FRTD?" if four_wire else ":MEAS:TEMP:RTD?"
+        if rtd_type:
+            cmd += f" {rtd_type}"
+        return self._meas(cmd, "C")
 
     def measure_capacitance(self) -> MeasurementResult:
         return self._meas(":MEAS:CAP?", "F")

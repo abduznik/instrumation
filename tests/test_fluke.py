@@ -81,6 +81,16 @@ def test_fluke_measure_temperature(mock_fluke):
     res = mock_fluke.measure_temperature()
     assert res.value == 23.45
     assert res.unit == "C"
+    # 8845A/8846A: MEASure:TEMPerature has only :RTD? / :FRTD? leaves and no
+    # thermocouple support (issue #260)
+    mock_fluke.inst.query.assert_any_call(":MEAS:TEMP:RTD?")
+
+
+def test_fluke_measure_temperature_four_wire(mock_fluke):
+    mock_fluke.inst.query.return_value = "23.45"
+    res = mock_fluke.measure_temperature(four_wire=True, rtd_type="PT100_385")
+    assert res.value == 23.45
+    mock_fluke.inst.query.assert_any_call(":MEAS:TEMP:FRTD? PT100_385")
 
 
 def test_fluke_measure_capacitance(mock_fluke):
