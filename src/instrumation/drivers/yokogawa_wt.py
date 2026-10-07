@@ -27,7 +27,13 @@ class YokogawaWT310(RealDriver, InstrumentDriver):
         - :INPut:VOLTage:RANGe / :INPut:CURRent:RANGe
         - :INTEGrate:MODE / :STARt / :STOP / :RESet
         - *CAL?                              — zero calibration
+        - :STATus:ERRor?                     — error queue (NOT SYST:ERR?: the
+          WT310 has no :SYSTem:ERRor? child; see IM WT310-17EN p. 6-33)
     """
+
+    # WT310 error queue lives at :STATus:ERRor? (p. 6-31); responses look
+    # like 0,"No error" / 113,"Undefined header", matching _SCPI_ERROR_RE.
+    ERROR_QUERY = "STAT:ERR?"
 
     def set_output_item(self, index: int, function: str, element: int = 1) -> None:
         """Configures numeric output slot `index` (1-255) with a function/element."""
@@ -65,7 +71,9 @@ class YokogawaWT310(RealDriver, InstrumentDriver):
         return MeasurementResult(val, "W")
 
     def measure_power_factor(self, element: int = 1) -> MeasurementResult:
-        self.set_output_item(1, "LAMB", element)
+        # Full spelling: LAMB is a unique prefix of neither LAMBda nor
+        # LAMBDAK (harmonic PF, /G5 option) in Function Option List (1).
+        self.set_output_item(1, "LAMBda", element)
         val = float(self.query_ascii("NUM:VAL?").split(",")[0])
         return MeasurementResult(val, "")
 

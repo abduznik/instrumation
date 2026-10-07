@@ -11,6 +11,12 @@ _SCPI_ERROR_RE = re.compile(r'^[+-]?\d+,"')
 
 class RealDriver(InstrumentDriver):
     """Refined RealDriver with Auto-Handshake Engine."""
+
+    # Error-queue query used by check_errors(). SCPI standard is SYST:ERR?,
+    # but instruments with a non-standard queue override this (e.g.
+    # YokogawaWT310 uses STAT:ERR? -- WT310 has no :SYSTem:ERRor?).
+    ERROR_QUERY = "SYST:ERR?"
+
     @staticmethod
     def scan() -> Tuple[str, ...]:
         """Scans for available instruments."""
@@ -135,7 +141,7 @@ class RealDriver(InstrumentDriver):
         """Queries SYST:ERR? and updates local error_stack."""
         if not self.check_errors_enabled:
             return
-        err = self.inst.query("SYST:ERR?").strip()
+        err = self.inst.query(self.ERROR_QUERY).strip()
         if not isinstance(err, str):
             return  # mock children / non-SCPI responses are not error-queue output
         # Only genuine SCPI error-queue responses (e.g. '-221,"Settings conflict"')
