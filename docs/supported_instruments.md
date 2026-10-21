@@ -230,11 +230,13 @@ Standard SCPI-99 spectrum-analyzer subsystem, the same command shape as
 **Also likely compatible:**
 - SMA100A/B, SMB100A, SMC100A, SMF100A
 
-### Anritsu
-
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `AnritsuSG` | MG3700A | MG3700 Series | `ANRITSU` (SG context) |
+> [!WARNING]
+> Anritsu signal generators (MG3700A and similar) have **no driver**. Every
+> `ANRITSU` IDN that does not match MS2035/ShockLine/VNA routes to
+> `AnritsuSA` (a spectrum-analyzer driver) even when `driver_type="SG"` is
+> requested, so SG commands silently go nowhere. An `AnritsuMG3700` driver
+> built from the MG3700A remote-control manual is required before this family
+> can be listed.
 
 ### Tektronix AFG
 
@@ -1266,8 +1268,8 @@ default, never a silent DMM/SA misread — see issue #148.
 | Category | Drivers | Validated Models |
 |:---|:---|:---|
 | Oscilloscopes | 7 | DSOX2002A, DS1054Z, SDS Series, TDS Series, HMO722, SDS2102X Plus, MSO5354 |
-| Spectrum Analyzers | 5 | MXA N9020A, PXA N9030A, DSA800, MS2830A, SSA3021X |
-| Signal Generators | 9 | N5183B, AFG3022C, SMA100B, MG3700A, SMA100A, SDG2042X, DG4062, MFG-2120, DS345 |
+| Spectrum Analyzers | 6 | MXA N9020A, PXA N9030A, DSA800, FSV/FSW, MS2830A, SSA3021X |
+| Signal Generators | 7 | N5183B, AFG3022C, SMA100B, SMA100A, SDG2042X, DG4062, MFG-2120, DS345 |
 | Network Analyzers | 4 | N5232A, N9913A, MS2035B, SNA5012A |
 | Multimeters | 6 | 34461A, 2000, 8846A, SDM3055, DM3068, DMM6500 |
 | Power Supplies | 12 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P, GPP-4323, 6632B, CPX400DP, HMP4040, SG Series, 1685B |
@@ -1282,7 +1284,7 @@ default, never a silent DMM/SA misread — see issue #148.
 | Power Analyzers | 2 | WT310, PA1000 |
 | RF Peak Power Meters | 2 | 4531, 4532 |
 | Temperature Controllers | 1 | Model 336 |
-| **Total** | **61** | |
+| **Total** | **64** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed
