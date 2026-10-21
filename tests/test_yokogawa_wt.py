@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
 from instrumation.drivers.yokogawa_wt import YokogawaWT310
+from instrumation.exceptions import ConfigurationError
 
 
 @pytest.fixture
@@ -68,7 +69,36 @@ def test_measure_power_factor(mock_meter):
     mock_meter.inst.query.return_value = "0.95"
     res = mock_meter.measure_power_factor(element=1)
     assert res.value == 0.95
-    mock_meter.inst.write.assert_any_call("NUM:ITEM1 LAMB,1")
+    # Full LAMBda spelling: Function Option List (1) also has LAMBDAK
+    # (harmonic PF, /G5), so the LAMB abbreviation is ambiguous.
+    mock_meter.inst.write.assert_any_call("NUM:ITEM1 LAMBDA,1")
+
+
+def test_error_query_is_wt310_error_queue_not_syst_err():
+    """WT310 has no :SYSTem:ERRor? -- check_errors must use STAT:ERR?.
+
+    IM WT310-17EN: SYSTem group has no ERRor child; the error queue
+    (p. 6-31) is :STATus:ERRor?, responding 0,"No error" / 113,"...".
+    """
+    assert YokogawaWT310.ERROR_QUERY == "STAT:ERR?"
+    # every other RealDriver keeps the SCPI-standard query
+    from instrumation.drivers.real import RealDriver
+    assert RealDriver.ERROR_QUERY == "SYST:ERR?"
+
+
+def test_check_errors_queries_wt310_error_queue(mock_meter):
+    mock_meter.check_errors_enabled = True
+    mock_meter.inst.query.return_value = '0,"No error"'
+    mock_meter.set_output_item(1, "U", 1)
+    mock_meter.inst.query.assert_called_with("STAT:ERR?")
+    assert "SYST:ERR?" not in [c.args[0] for c in mock_meter.inst.query.call_args_list]
+
+
+def test_check_errors_raises_on_wt310_error(mock_meter):
+    mock_meter.check_errors_enabled = True
+    mock_meter.inst.query.return_value = '113,"Undefined header"'
+    with pytest.raises(ConfigurationError):
+        mock_meter.set_output_item(1, "U", 1)
 
 
 def test_set_update_rate(mock_meter):
