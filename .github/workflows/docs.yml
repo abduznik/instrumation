@@ -34,7 +34,7 @@ jobs:
           
       - name: Install dependencies
         run: |
-          pip install mkdocs-material mkdocstrings[python]
+          pip install mkdocs-material "mkdocstrings[python]>=1.0.7"
           pip install -e .
           
       - name: Build
