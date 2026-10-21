@@ -76,9 +76,28 @@ def test_configure_list_sweep_unsupported(mock_awg):
     mock_awg.configure_list_sweep([1, 2], [3, 4])
 
 
-def test_set_reference_clock(mock_awg):
+def test_set_reference_clock_is_unsupported_no_rosc(mock_awg):
+    # The manual defines no ROSC/reference-oscillator command (0 hits in
+    # all 361 pages): nothing may be written.
+    mock_awg.inst.write.reset_mock()
     mock_awg.set_reference_clock("ext")
-    mock_awg.inst.write.assert_any_call("SOUR1:ROSC:SOUR EXT")
+    assert mock_awg.inst.write.call_args_list == []
+
+
+def test_discover_options_no_opt_query(mock_awg):
+    # *OPT? is undefined on the MFG-2000 (0 hits for OPT in the manual):
+    # querying it would queue -113 "Undefined header".
+    mock_awg._discover_options()
+    assert mock_awg.options == []
+    assert all("*OPT?" not in str(c) for c in mock_awg.inst.query.call_args_list)
+
+
+def test_start_sweep_time_clamped_to_spec(mock_awg):
+    # SWEep:TIME spec is 1 ms ~ 500 s (total sweep time).
+    mock_awg.start_sweep(100.0, 1000.0, 10, 100.0)   # 10 * 100 = 1000 s
+    mock_awg.inst.write.assert_any_call("SOUR1:SWE:TIME 500.0")
+    mock_awg.start_sweep(100.0, 1000.0, 1, 0.0001)   # 0.0001 s
+    mock_awg.inst.write.assert_any_call("SOUR1:SWE:TIME 0.001")
 
 
 def test_shutdown_safety(mock_awg):

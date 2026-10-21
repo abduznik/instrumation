@@ -25,7 +25,8 @@ class GWInstekMFG2000(RealDriver, FunctionGenerator):
         - SOURce<n>:FREQuency:STARt <hz> / :STOP <hz>
         - OUTPut<n> {ON|OFF}
 
-    Unsupported: configure_list_sweep (no frequency-list sweep mode).
+    Unsupported: configure_list_sweep (no frequency-list sweep mode) and
+    set_reference_clock (the manual defines no reference-oscillator command).
     """
 
     def __init__(self, resource: str, channel: int = 1) -> None:
@@ -71,11 +72,26 @@ class GWInstekMFG2000(RealDriver, FunctionGenerator):
     def start_sweep(self, start: float, stop: float, points: int, dwell: float) -> None:
         self.write(f"{self._src}:FREQ:STAR {start}")
         self.write(f"{self._src}:FREQ:STOP {stop}")
-        self.write(f"{self._src}:SWE:TIME {dwell * points}")
+        # SWEep:TIME is the TOTAL sweep time, spec 1 ms ~ 500 s; out-of-range
+        # values queue -113 data-out-of-range on hardware. Clamp to spec.
+        sweep_time = min(max(dwell * points, 0.001), 500.0)
+        self.write(f"{self._src}:SWE:TIME {sweep_time}")
         self.write(f"{self._src}:SWE:STAT ON")
 
     def set_reference_clock(self, source: str) -> None:
-        self.write(f"{self._src}:ROSC:SOUR {source.upper()}")
+        self._unsupported_feature(
+            "set_reference_clock (the MFG-2000 manual defines no reference-"
+            "oscillator command -- ROSC/ROSCillator has 0 hits in all 361 "
+            "pages; the unit has no external-reference input)"
+        )
+
+    def _discover_options(self) -> None:
+        """No *OPT? query on the MFG-2000 -- 0 hits for OPT in the manual.
+
+        Sending it would queue -113 "Undefined header", which the next
+        error-checked command would then surface as a hardware error.
+        """
+        self.options = []
 
     def shutdown_safety(self) -> None:
         self.set_output(False)
