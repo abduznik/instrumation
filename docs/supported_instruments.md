@@ -1112,17 +1112,18 @@ New instrument category (issue #204). `"SWITCH"` is a new canonical
 | `MiniCircuitsRCSwitch` | RF switch matrix control (RC-4SPDT, RC-1SP4T, RC-2SP4T, etc.) | `MINI-CIRCUITS`/`MINICIRCUITS` |
 
 **Not a SCPI instrument.** Uses Mini-Circuits' own flat ASCII command
-set over USB/Ethernet: `SET{switch}={0|1}` for individual SPDT
-switches (A-H), `SP{n}T:STATE:PORT {port}` for SPnT port selection.
-Roadmap #174.
+set over USB HID or Ethernet (Telnet/HTTP), per the *Mechanical Switch
+Systems* Programming Manual (Rev. B7): `SET{switch}={0|1}` for individual
+SPDT/transfer switches (A-H), `SWPORT?` for the all-switch bitmask,
+`SP{n}T{switch}:STATE:{port}` to select a port on an SP4T/SP6T switch
+(0 = all ports disconnected) and `MN?`/`SN?`/`FIRMWARE?` for identity.
+The command set defines no `*IDN?`, no `*OPT?` and no error queue, so
+`check_errors()` is a no-op. Roadmap #174.
 
 > [!WARNING]
-> Could not be verified against Mini-Circuits' official Programming
-> Manual PDF at write time (host was unreachable from this
-> environment). Confirmed only via third-party summaries of the
-> `SET[switch]=[state]` command. Not yet verified against real
-> hardware -- prefer `"GENERIC"` passthrough or file an issue with
-> the failing command.
+> Verified against the published programming manual, but not yet
+> exercised on physical hardware -- if a command errors, prefer
+> `"GENERIC"` passthrough and file an issue with the failing command.
 
 ---
 
