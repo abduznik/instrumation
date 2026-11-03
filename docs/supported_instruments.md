@@ -740,6 +740,40 @@ off, 0V, 0A limit.
 > prefer `"GENERIC"` passthrough or file an issue with the failing
 > command.
 
+### Kepco KLP Series
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
+|:---|:---|:---|:---|
+| `KepcoKLP` | KLP 75-33-1200 | KLP Series (1200 W single output) | `KEPCO` |
+
+SCPI, but not SCPI-99: the `[SOURce]` keyword is optional on this
+instrument, so the setpoints live at the root (`VOLT <v>`, `CURR <a>`,
+`OUTP {ON|OFF}`) and readbacks are `MEAS:VOLT?` / `MEAS:CURR?`.
+`get_voltage()`/`get_current()` return the *programmed* values;
+`measure_voltage_actual()`/`measure_current()` return the readings.
+`set_ovp()`/`set_ocp()` map to `VOLT:PROT`/`CURR:PROT`, which switch the
+output off as a side effect (per manual B.42/B.54) — re-enable with
+`set_output(True)`. `save_state()`/`load_state()` use the 40
+non-volatile cells (`*SAV`/`*RCL` 1-40). `get_mode()` reads `FUNC:MODE?`
+and reports `CV`/`CC`/`OFF`.
+
+The KLP implements a partial IEEE 488.2 set: there is no `*WAI` and no
+`*OPT?`, so `sync_config()` uses `*CLS` + `*OPC?` and option discovery is
+a no-op. `VOLT:LIMit:HIGH`/`CURR:LIMit:HIGH` (the password-protected
+"virtual model"), the `SYST:PASSword` tree and the calibration commands
+are deliberately not driven, and `clear_protection()` is unsupported
+because `VOLT:PROT:CLE` is named in the manual prose but missing from its
+command appendix.
+
+**Also likely compatible** (same Developer's Guide command set, different
+voltage/current ratings):
+- KLP 10-150-1200, 20-120-1200, 36-60-1200, 150-16-1200, 300-8-1200, 600-4-1200
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
 ---
 
 ## AC Power Sources
@@ -1273,7 +1307,7 @@ default, never a silent DMM/SA misread — see issue #148.
 | Signal Generators | 7 | N5183B, AFG3022C, SMA100B, SMA100A, SDG2042X, DG4062, MFG-2120, DS345 |
 | Network Analyzers | 4 | N5232A, N9913A, MS2035B, SNA5012A |
 | Multimeters | 6 | 34461A, 2000, 8846A, SDM3055, DM3068, DMM6500 |
-| Power Supplies | 12 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P, GPP-4323, 6632B, CPX400DP, HMP4040, SG Series, 1685B |
+| Power Supplies | 13 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P, GPP-4323, 6632B, CPX400DP, HMP4040, SG Series, 1685B, KLP 75-33-1200 |
 | AC Power Sources | 1 | AC6800B Series |
 | Electronic Loads | 6 | SDL1000X, 8600, DL3021, IT8512+, 63200A, 3311F |
 | Lock-In Amplifiers | 1 | SR830 |
@@ -1285,7 +1319,7 @@ default, never a silent DMM/SA misread — see issue #148.
 | Power Analyzers | 2 | WT310, PA1000 |
 | RF Peak Power Meters | 2 | 4531, 4532 |
 | Temperature Controllers | 1 | Model 336 |
-| **Total** | **64** | |
+| **Total** | **65** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed
