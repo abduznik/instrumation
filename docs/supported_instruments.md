@@ -1113,16 +1113,17 @@ New instrument category (issue #204). `"SWITCH"` is a new canonical
 
 **Not a SCPI instrument.** Uses Mini-Circuits' own flat ASCII command
 set over USB/Ethernet: `SET{switch}={0|1}` for individual SPDT
-switches (A-H), `SP{n}T:STATE:PORT {port}` for SPnT port selection.
-Roadmap #174.
+switches (A-H), `SP{n}T{switch}:STATE:{port}` for SPnT port selection
+(e.g. `SP4TA:STATE:3`), `SWPORT?` for a bitmask of all switch states
+(LSB = switch A), and `MN?` / `SN?` / `FIRMWARE?` for identification
+(no `*IDN?`). Per the Mechanical Switch Systems Programming Manual,
+Rev. B7 (7-Jun-24). Roadmap #174.
 
 > [!WARNING]
-> Could not be verified against Mini-Circuits' official Programming
-> Manual PDF at write time (host was unreachable from this
-> environment). Confirmed only via third-party summaries of the
-> `SET[switch]=[state]` command. Not yet verified against real
-> hardware -- prefer `"GENERIC"` passthrough or file an issue with
-> the failing command.
+> Command syntax verified against the Mini-Circuits Mechanical Switch
+> Systems Programming Manual Rev. B7 (7-Jun-24), but not yet verified
+> against real hardware (no RC-series unit on hand). Prefer
+> `"GENERIC"` passthrough or file an issue with the failing command.
 
 ---
 
