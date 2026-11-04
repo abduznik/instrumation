@@ -17,6 +17,15 @@ the same SCPI command set.
 > compatible" as best-effort: fall back to `"GENERIC"` passthrough if an
 > untested model raises SCPI errors on a typed command.
 
+> [!TIP]
+> **Validation column** (see issue #282): every driver table ends with a
+> **Validation** column recording the date and firmware of the last
+> real-hardware check, or `Not yet validated`. The six published reports
+> live under [Experiments](experiments/). To add your own result, fill in
+> the [validation report template](experiments/validation_report_template.md)
+> and open a **Validation report** issue:
+> <https://github.com/abduznik/instrumation/issues/new?template=validation_report.yml>
+
 ---
 
 ## Oscilloscopes
@@ -25,7 +34,7 @@ the same SCPI command set.
 
 | Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
 |:---|:---|:---|:---|:---|
-| `KeysightInfiniiVision` | DSOX2002A | DSOX/MSOX 2000–6000 Series | `DSO-X`, `MSO-X`, `DSOX`, `MSOX` | Not yet validated |
+| `KeysightInfiniiVision` | DSOX2002A | DSOX/MSOX 2000–6000 Series | `DSO-X`, `MSO-X`, `DSOX`, `MSOX` | ✅ 2026-05-03, FW unknown ([report](experiments/afg_dso_loopback.md)) |
 
 **Also likely compatible** (same InfiniiVision SCPI set):
 - DSOX1002A–DSOX1004A, DSOX1102G, DSOX1204G, DSOX2004A–DSOX2012A, DSOX3002T–DSOX3054T
@@ -44,7 +53,7 @@ treat the 4000 X-Series as assumed-compatible for the shared scope/measure API o
 
 | Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
 |:---|:---|:---|:---|:---|
-| `RigolDS1054Z` | DS1054Z | DS1000Z/MSO1000Z Series | `DS1054Z`, `DS1074Z`, `DS1104Z`, `MSO1054Z`, `DS1000Z`, `MSO1000Z` | Not yet validated |
+| `RigolDS1054Z` | DS1054Z | DS1000Z/MSO1000Z Series | `DS1054Z`, `DS1074Z`, `DS1104Z`, `MSO1054Z`, `DS1000Z`, `MSO1000Z` | ✅ 2026-07-18, FW 00.04.03.00.03 ([report](experiments/rigol_ds1054z.md)) |
 
 **Also likely compatible** (same MSO1000Z/DS1000Z SCPI set):
 - DS1054Z, DS1074Z, DS1102Z, DS1104Z, DS1202Z, DS1204Z
@@ -150,7 +159,7 @@ command shapes still used by the original SDS1000/SDS2000X(-E).
 | Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
 |:---|:---|:---|:---|:---|
 | `KeysightMXA` | MXA N9020A | MXA Series | `MXA` | Not yet validated |
-| `KeysightPXA` | PXA N9030A | PXA Series | `N9030`, `PXA` | Not yet validated |
+| `KeysightPXA` | PXA N9030A | PXA Series | `N9030`, `PXA` | ✅ 2026-05-03, FW A.14.04 ([report](experiments/pxa_validation.md)) |
 
 > [!NOTE]
 > `KeysightPXA` (v0.8.0+) ships 29 PXA-specific SCPI methods — measurement
@@ -214,7 +223,7 @@ Standard SCPI-99 spectrum-analyzer subsystem, the same command shape as
 
 | Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
 |:---|:---|:---|:---|:---|
-| `KeysightSG` | MXG N5183B | EXG/MXG/PSG Series | `N5181`, `N5182`, `N5183`, `PSG`, `MXG`, `EXG` | Not yet validated |
+| `KeysightSG` | MXG N5183B | EXG/MXG/PSG Series | `N5181`, `N5182`, `N5183`, `PSG`, `MXG`, `EXG` | ✅ 2026-05-03, FW unknown ([report](experiments/mxg_validation.md)) |
 
 **Also likely compatible:**
 - EXG N5171B, N5172B, N5173B
@@ -242,7 +251,7 @@ Standard SCPI-99 spectrum-analyzer subsystem, the same command shape as
 
 | Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
 |:---|:---|:---|:---|:---|
-| `TektronixAFG` | AFG3022C | AFG3000 Series | `TEKTRONIX` + `AFG` | Not yet validated |
+| `TektronixAFG` | AFG3022C | AFG3000 Series | `TEKTRONIX` + `AFG` | ✅ 2026-05-03, FW unknown ([report](experiments/afg_dso_loopback.md)) |
 
 **Also likely compatible:**
 - AFG3011C, AFG3021C, AFG3022C, AFG3102C, AFG3252C
@@ -341,7 +350,7 @@ to an external 10 MHz on its own). Modulation is `MTYP` (type:
 
 | Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
 |:---|:---|:---|:---|:---|
-| `KeysightPNA` | PNA N5232A | PNA / PNA-L / PNA-X | `E83`, `N52`, `PNA` | Not yet validated |
+| `KeysightPNA` | PNA N5232A | PNA / PNA-L / PNA-X | `E83`, `N52`, `PNA` | ✅ 2026-05-04, FW A.10 (PNA-L) ([report](experiments/vna_validation.md)) |
 
 **Also likely compatible:**
 - E8361C, E8362B, N5221A, N5222A, N5224A, N5225A, N5227A, N5230A–N5247A
@@ -387,7 +396,7 @@ SCPI-99 compliant for this measurement class.
 
 | Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
 |:---|:---|:---|:---|:---|
-| `Keysight34461A` | 34461A | Truevolt DMM | `34461`, `34460`, `34401`, `34410`, `34411`, `34420` | Not yet validated |
+| `Keysight34461A` | 34461A | Truevolt DMM | `34461`, `34460`, `34401`, `34410`, `34411`, `34420` | ✅ Validated in-lab (no public report) |
 
 `Keysight34461A` is shared across two IDN branches in `factory.py`
 (`~line 423` and `~line 429`, see issue #167): the Truevolt 34460/34461
@@ -502,7 +511,7 @@ SCPI function-name argument since ranging/NPLC live under
 
 | Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
 |:---|:---|:---|:---|:---|
-| `TDKLambdaZPlus` | Z+100-2 | Z+ Series (Serial/USB) | `TDK-LAMBDA`, `Z+` | Not yet validated |
+| `TDKLambdaZPlus` | Z+100-2 | Z+ Series (Serial/USB) | `TDK-LAMBDA`, `Z+` | ✅ 2026-05-03, FW unknown ([report](experiments/tdk_lambda_zplus.md)) |
 
 **Also likely compatible:**
 - Z+36-10, Z+50-2.5, Z+60-5, Z+100-2, Z+100-7, Z+150-4, Z+200-2.5, Z+360-1.7
@@ -1274,7 +1283,7 @@ by sensor family (diode, RTD, thermocouple) and firmware revision.
 
 | Driver | Purpose | Auto-Detect IDN Keywords | Validation |
 |:---|:---|:---|:---|
-| `GenericDriver` | Catch-all driver for unidentified instruments; accepts any model | none (explicit `"GENERIC"` request or unrecognized `*IDN?`) | Not yet validated |
+| `GenericDriver` | Catch-all driver for unidentified instruments; accepts any model | none (explicit `"GENERIC"` request or unrecognized `*IDN?`) | n/a — universal passthrough |
 
 `"GENERIC"` is a first-class, always-registered key in
 `DriverRegistry` — `get_drivers_by_type("GENERIC")` always returns
