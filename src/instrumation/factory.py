@@ -288,7 +288,7 @@ def route_idn(idn: str):
     return None
 
 
-def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_asrl: bool = True) -> any:
+def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_asrl: bool = True, label: str = "", priority: int = 0) -> any:
     """Connect to an instrument and return a driver instance for it.
 
     The address is resolved in priority order:
@@ -320,6 +320,12 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
         unit can identify itself. During ``"AUTO"`` discovery this is
         disabled: vendor-specific commands are never sent to arbitrary
         serial devices (gh #150).
+    label : str, optional
+        Triage label for the instrument request. Used for categorization and
+        prioritization in station management.
+    priority : int, optional
+        Triage priority for the instrument request. Higher values indicate
+        higher priority in discovery ordering and resource allocation.
 
     Returns
     -------
@@ -339,6 +345,9 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
     Resources found through ``"AUTO"`` discovery are written to
     ``.visa_cache.json`` in the working directory, most recent first, so later
     lookups try them before falling back to a full scan.
+
+    The ``priority`` parameter can be used to influence the discovery ordering
+    when using ``"AUTO"`` mode. Resources with higher priority are probed first.
 
     Examples
     --------
@@ -407,8 +416,8 @@ def get_instrument(resource_address: str, driver_type: str = "GENERIC", probe_as
             
             # Sort by transport priority tier (HiSLIP/TCPIP > USB > GPIB >
             # serial), preserving input (recency) order within the same tier
-            # via the stable sort.
-            candidates.sort(key=_discovery_priority, reverse=True)
+            # via the stable sort, then apply user-specified priority offset.
+            candidates.sort(key=lambda r: _discovery_priority(r) + priority, reverse=True)
             
             logger.info(f"AUTO-Discovery checking {desc}: {candidates}")
             
@@ -575,6 +584,7 @@ def get_instrument_from_config(config: dict) -> any:
     config : dict
         Must contain ``"address"`` -- a VISA resource string or ``"AUTO"`` --
         and ``"type"``, the driver category passed through as ``driver_type``.
+        Optionally contains ``"label"`` and ``"priority""" for triage.
 
     Returns
     -------
@@ -596,7 +606,9 @@ def get_instrument_from_config(config: dict) -> any:
         raise ValueError("Missing required configuration key: 'address'")
     if not driver_type:
         raise ValueError("Missing required configuration key: 'type'")
-    return get_instrument(resource_address, driver_type)
+    label = config.get("label", "")
+    priority = config.get("priority", 0)
+    return get_instrument(resource_address, driver_type, label=label, priority=priority)
 
 def load_plugins(plugin_path: str = None):
     """Dynamically loads all available instrument drivers."""

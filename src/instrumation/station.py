@@ -14,17 +14,21 @@ logger = logging.getLogger(__name__)
 class InstrumentConfig:
     driver: str
     address: str
+    label: str = ""
+    priority: int = 0
 
     @classmethod
     def from_dict(cls, name: str, data: dict):
         """Creates an InstrumentConfig from a dictionary with validation."""
         driver = data.get("driver")
         address = data.get("address")
+        label = data.get("label", "")
+        priority = data.get("priority", 0)
         
         if not driver or not address:
             raise ValueError(f"Instrument '{name}' must have 'driver' and 'address' specified.")
             
-        return cls(driver=driver, address=address)
+        return cls(driver=driver, address=address, label=label, priority=priority)
 
 class Station:
     """Station manager that loads instrument configurations from TOML.
