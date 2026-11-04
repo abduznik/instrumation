@@ -263,6 +263,7 @@ _IDN_ROUTES = [
     (("ITECH",), [(("IT85",), "itech_load.ItechIT8512Plus")]),
     (("CHROMA",), [(("632",), "chroma_load.Chroma63200A")]),
     (("AIM-TTI", "THURLBY THANDAR", "AIMTTI"), [(("CPX400",), "aimtti_psu.AimTTiCPX400DP")]),
+    (("KEPCO",), [((), "kepco_psu.KepcoKLP")]),
     (("SORENSEN",), [(("SG",), "sorensen_psu.SorensenSG")]),
     (("PRODIGIT",), [(("3311", "3310"), "prodigit_load.Prodigit3311F")]),
     (("BOONTON",), [

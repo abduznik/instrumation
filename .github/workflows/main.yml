@@ -8,7 +8,10 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04  # ubuntu-latest (26.04) has no 3.9 in the tool cache; 22.04 carries the whole matrix
+    # ubuntu-latest moved to 26.04, whose tool cache no longer carries Python
+    # 3.9 (still a supported version per requires-python >= 3.9). Keep 3.9 on
+    # the 22.04 image until 3.9 support is dropped.
+    runs-on: ${{ matrix.python-version == '3.9' && 'ubuntu-22.04' || 'ubuntu-latest' }}
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
