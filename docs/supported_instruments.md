@@ -1304,7 +1304,7 @@ default, never a silent DMM/SA misread — see issue #148.
 | Signal Generators | 7 | N5183B, AFG3022C, SMA100B, SMA100A, SDG2042X, DG4062, MFG-2120, DS345 |
 | Network Analyzers | 4 | N5232A, N9913A, MS2035B, SNA5012A |
 | Multimeters | 6 | 34461A, 2000, 8846A, SDM3055, DM3068, DMM6500 |
-| Power Supplies | 12 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P, GPP-4323, 6632B, CPX400DP, HMP4040, SG Series, 1685B |
+| Power Supplies | 13 | Z+100-2, 9130B, DP832, SPD3303X, E36313A, KA3005P, GPP-4323, 6632B, CPX400DP, HMP4040, SG Series, 1685B, UDP6900 |
 | AC Power Sources | 1 | AC6800B Series |
 | Electronic Loads | 6 | SDL1000X, 8600, DL3021, IT8512+, 63200A, 3311F |
 | Lock-In Amplifiers | 1 | SR830 |
@@ -1316,7 +1316,7 @@ default, never a silent DMM/SA misread — see issue #148.
 | Power Analyzers | 2 | WT310, PA1000 |
 | RF Peak Power Meters | 2 | 4531, 4532 |
 | Temperature Controllers | 1 | Model 336 |
-| **Total** | **64** | |
+| **Total** | **65** | |
 
 > [!TIP]
 > If your model shares a SCPI command set with one of the listed
