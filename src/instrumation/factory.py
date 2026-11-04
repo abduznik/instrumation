@@ -585,7 +585,7 @@ def get_instrument_from_config(config: dict) -> any:
     config : dict
         Must contain ``"address"`` -- a VISA resource string or ``"AUTO"`` --
         and ``"type"``, the driver category passed through as ``driver_type``.
-        Optionally contains ``"label"`` and ``"priority""" for triage.
+        Optionally contains ``"label"`` and ``"priority"`` for triage.
 
     Returns
     -------
