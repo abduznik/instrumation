@@ -84,7 +84,7 @@ class Station:
             settings (InstrumentConfig): Configuration object.
         """
         # Create the instrument instance using the factory
-        instance = get_instrument(settings.address, settings.driver)
+        instance = get_instrument(settings.address, settings.driver, label=settings.label, priority=settings.priority)
 
         # Attach to the instr namespace
         setattr(self.instr, name, instance)

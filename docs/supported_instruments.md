@@ -23,9 +23,9 @@ the same SCPI command set.
 
 ### Keysight InfiniiVision
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `KeysightInfiniiVision` | DSOX2002A | DSOX/MSOX 2000–6000 Series | `DSO-X`, `MSO-X`, `DSOX`, `MSOX` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `KeysightInfiniiVision` | DSOX2002A | DSOX/MSOX 2000–6000 Series | `DSO-X`, `MSO-X`, `DSOX`, `MSOX` | Not yet validated |
 
 **Also likely compatible** (same InfiniiVision SCPI set):
 - DSOX1002A–DSOX1004A, DSOX1102G, DSOX1204G, DSOX2004A–DSOX2012A, DSOX3002T–DSOX3054T
@@ -42,9 +42,9 @@ treat the 4000 X-Series as assumed-compatible for the shared scope/measure API o
 
 ### Rigol DS1000Z / MSO1000Z
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `RigolDS1054Z` | DS1054Z | DS1000Z/MSO1000Z Series | `DS1054Z`, `DS1074Z`, `DS1104Z`, `MSO1054Z`, `DS1000Z`, `MSO1000Z` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `RigolDS1054Z` | DS1054Z | DS1000Z/MSO1000Z Series | `DS1054Z`, `DS1074Z`, `DS1104Z`, `MSO1054Z`, `DS1000Z`, `MSO1000Z` | Not yet validated |
 
 **Also likely compatible** (same MSO1000Z/DS1000Z SCPI set):
 - DS1054Z, DS1074Z, DS1102Z, DS1104Z, DS1202Z, DS1204Z
@@ -59,9 +59,9 @@ treat the 4000 X-Series as assumed-compatible for the shared scope/measure API o
 
 ### Rigol MSO5000 Series
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `RigolMSO5000` | MSO5354 | MSO5000 Series | `RIGOL` + `MSO5` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `RigolMSO5000` | MSO5354 | MSO5000 Series | `RIGOL` + `MSO5` | Not yet validated |
 
 Basic control (`:RUN`/`:STOP`/`:SINGle`/`:AUTOscale`) matches the
 MSO1000Z/DS1000Z family, but the measurement subsystem differs:
@@ -83,9 +83,9 @@ argument on every query rather than DS1000Z's per-item
 
 ### Siglent SDS
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `SiglentSDS` | SDS1000 Series | SDS Series | `SIGLENT` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `SiglentSDS` | SDS1000 Series | SDS Series | `SIGLENT` | Not yet validated |
 
 **Also likely compatible:**
 - SDS1002X-E, SDS1004X-E, SDS1102X-E, SDS1104X-E, SDS1202X-E, SDS1204X-E
@@ -93,9 +93,9 @@ argument on every query rather than DS1000Z's per-item
 
 ### Siglent SDS2000X Plus
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `SiglentSDS2000XPlus` | SDS2102X Plus | SDS Series (newer command set) | `SIGLENT` + `PLUS` (with `SDS1`/`SDS2`/`SDS5`) |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `SiglentSDS2000XPlus` | SDS2102X Plus | SDS Series (newer command set) | `SIGLENT` + `PLUS` (with `SDS1`/`SDS2`/`SDS5`) | Not yet validated |
 
 Uses the newer standard `:SUBsystem:keyword` command set from the SDS
 Series Programming Guide (EN11D+) -- `:TRIGger:RUN`/`:TRIGger:STOP`/
@@ -113,15 +113,15 @@ command shapes still used by the original SDS1000/SDS2000X(-E).
 
 ### Tektronix TDS
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `TektronixTDS` | TDS Series | Tek TDS/TPS/MDO | `TEKTRONIX` (non-AFG) |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `TektronixTDS` | TDS Series | Tek TDS/TPS/MDO | `TEKTRONIX` (non-AFG) | Not yet validated |
 
 ### Rohde & Schwarz / Hameg HMO Compact
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `RohdeSchwarzHMOCompact` | HMO722 | HMO Compact Series | `HAMEG`/`ROHDE`/`ROHDE&SCHWARZ` + `HMO` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `RohdeSchwarzHMOCompact` | HMO722 | HMO Compact Series | `HAMEG`/`ROHDE`/`ROHDE&SCHWARZ` + `HMO` | Not yet validated |
 
 **Also likely compatible** (same HMO Compact SCPI set):
 - HMO724, HMO1022, HMO1024, HMO1522, HMO1524, HMO2022, HMO2024
@@ -147,10 +147,10 @@ command shapes still used by the original SDS1000/SDS2000X(-E).
 
 ### Keysight MXA / PXA
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `KeysightMXA` | MXA N9020A | MXA Series | `MXA` |
-| `KeysightPXA` | PXA N9030A | PXA Series | `N9030`, `PXA` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `KeysightMXA` | MXA N9020A | MXA Series | `MXA` | Not yet validated |
+| `KeysightPXA` | PXA N9030A | PXA Series | `N9030`, `PXA` | Not yet validated |
 
 > [!NOTE]
 > `KeysightPXA` (v0.8.0+) ships 29 PXA-specific SCPI methods — measurement
@@ -164,36 +164,36 @@ command shapes still used by the original SDS1000/SDS2000X(-E).
 
 ### Rigol DSA
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `RigolDSA` | DSA800 Series | DSA800 | `RIGOL` (non-scope) |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `RigolDSA` | DSA800 Series | DSA800 | `RIGOL` (non-scope) | Not yet validated |
 
 **Also likely compatible:**
 - DSA815, DSA815-TG, DSA832E, DSA875E
 
 ### Rohde & Schwarz
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `RohdeSchwarzSA` | FSV / FSW Series | R&S SA | `ROHDE&SCHWARZ`, `R&S` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `RohdeSchwarzSA` | FSV / FSW Series | R&S SA | `ROHDE&SCHWARZ`, `R&S` | Not yet validated |
 
 **Also likely compatible:**
 - FSV, FSVR, FSW, FSWP, FPS, FPL
 
 ### Anritsu
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `AnritsuSA` | MS2830A | MS2830/MS269x | `ANRITSU` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `AnritsuSA` | MS2830A | MS2830/MS269x | `ANRITSU` | Not yet validated |
 
 **Also likely compatible:**
 - MS2830A, MS2690A, MS2691A, MS2692A
 
 ### Siglent SSA3000X
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `SiglentSSA3000X` | SSA3021X | SSA3000X Series | `SIGLENT` + `SSA` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `SiglentSSA3000X` | SSA3021X | SSA3000X Series | `SIGLENT` + `SSA` | Not yet validated |
 
 Standard SCPI-99 spectrum-analyzer subsystem, the same command shape as
 `RigolDSA`/`AnritsuSA`.
@@ -212,9 +212,9 @@ Standard SCPI-99 spectrum-analyzer subsystem, the same command shape as
 
 ### Keysight EXG / MXG
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `KeysightSG` | MXG N5183B | EXG/MXG/PSG Series | `N5181`, `N5182`, `N5183`, `PSG`, `MXG`, `EXG` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `KeysightSG` | MXG N5183B | EXG/MXG/PSG Series | `N5181`, `N5182`, `N5183`, `PSG`, `MXG`, `EXG` | Not yet validated |
 
 **Also likely compatible:**
 - EXG N5171B, N5172B, N5173B
@@ -223,9 +223,9 @@ Standard SCPI-99 spectrum-analyzer subsystem, the same command shape as
 
 ### Rohde & Schwarz
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `RohdeSchwarzSG` | SMA100B / SMC100A | R&S SG | `ROHDE&SCHWARZ` (SG context) |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `RohdeSchwarzSG` | SMA100B / SMC100A | R&S SG | `ROHDE&SCHWARZ` (SG context) | Not yet validated |
 
 **Also likely compatible:**
 - SMA100A/B, SMB100A, SMC100A, SMF100A
@@ -240,18 +240,18 @@ Standard SCPI-99 spectrum-analyzer subsystem, the same command shape as
 
 ### Tektronix AFG
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `TektronixAFG` | AFG3022C | AFG3000 Series | `TEKTRONIX` + `AFG` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `TektronixAFG` | AFG3022C | AFG3000 Series | `TEKTRONIX` + `AFG` | Not yet validated |
 
 **Also likely compatible:**
 - AFG3011C, AFG3021C, AFG3022C, AFG3102C, AFG3252C
 
 ### Siglent SDG2000X
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `SiglentSDG2000X` | SDG2042X | SDG Series AWG | `SIGLENT` + `SDG` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `SiglentSDG2000X` | SDG2042X | SDG Series AWG | `SIGLENT` + `SDG` | Not yet validated |
 
 Uses Siglent's `C<n>:BSWV` (Basic Wave) command: a single keyword
 takes comma-separated `PARAM,value` pairs (`C1:BSWV FRQ,1000`,
@@ -271,9 +271,9 @@ unsupported-feature warning.
 
 ### Rigol DG4000 Series
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `RigolDG4000` | DG4062 | DG1000Z/DG4000/DG5000 Series | `RIGOL` + (`DG4`, `DG5`, `DG1000Z`) |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `RigolDG4000` | DG4062 | DG1000Z/DG4000/DG5000 Series | `RIGOL` + (`DG4`, `DG5`, `DG1000Z`) | Not yet validated |
 
 Uses the Agilent/Keysight-33500-derived
 `[:SOURce[<n>]]:APPLy:<shape>` single-command style shared across the
@@ -292,9 +292,9 @@ set, so `configure_list_sweep()` logs an unsupported-feature warning.
 
 ### GW Instek MFG-2000 Series
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `GWInstekMFG2000` | MFG-2120 | MFG-2000 Series | `GW`/`GW INSTEK` + `MFG` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `GWInstekMFG2000` | MFG-2120 | MFG-2000 Series | `GW`/`GW INSTEK` + `MFG` | Not yet validated |
 
 Combines Rigol-style `SOURce<n>:APPLy:<shape>` waveform selection with
 a separate per-parameter SCPI subtree for frequency/amplitude/offset/
@@ -310,9 +310,9 @@ independently after selecting the waveform shape. Roadmap #176.
 
 ### Stanford Research Systems DS345
 
-| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `SRSDS345` | DS345 | SRS terse mnemonics (non-SCPI-subtree) | `STANFORD` + `DS345` |
+| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `SRSDS345` | DS345 | SRS terse mnemonics (non-SCPI-subtree) | `STANFORD` + `DS345` | Not yet validated |
 
 Uses SRS's distinctively terse, colon-free command mnemonics (`FREQ`,
 `AMPL`, `OFFS`, `FUNC`, `PHSE`) rather than a SCPI `:SOURce:*` subtree;
@@ -339,33 +339,33 @@ to an external 10 MHz on its own). Modulation is `MTYP` (type:
 
 ### Keysight PNA
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `KeysightPNA` | PNA N5232A | PNA / PNA-L / PNA-X | `E83`, `N52`, `PNA` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `KeysightPNA` | PNA N5232A | PNA / PNA-L / PNA-X | `E83`, `N52`, `PNA` | Not yet validated |
 
 **Also likely compatible:**
 - E8361C, E8362B, N5221A, N5222A, N5224A, N5225A, N5227A, N5230A–N5247A
 
 ### Keysight FieldFox
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `KeysightFieldFox` | N9913A / N9914A | FieldFox SA+VNA | `N99`, `FIELD FOX` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `KeysightFieldFox` | N9913A / N9914A | FieldFox SA+VNA | `N99`, `FIELD FOX` | Not yet validated |
 
 ### Anritsu ShockLine / MS2035B
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `AnritsuShockLineVNA` | MS2035B | ShockLine Series | `MS2035` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `AnritsuShockLineVNA` | MS2035B | ShockLine Series | `MS2035` | Not yet validated |
 
 **Also likely compatible:**
 - MS2034B, MS2035B, MS2036A, MS2037A, MS2038C, MS2039C, MS2047A, MS2060A
 
 ### Siglent SNA5000A
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `SiglentSNA5000A` | SNA5012A | SNA5000A/X Series | `SIGLENT` + `SNA` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `SiglentSNA5000A` | SNA5012A | SNA5000A/X Series | `SIGLENT` + `SNA` | Not yet validated |
 
 Standard SCPI-99 network-analyzer subsystem, the same command shape as
 `KeysightPNA` -- Siglent's SNA5000A documentation is explicitly
@@ -385,9 +385,9 @@ SCPI-99 compliant for this measurement class.
 
 ### Keysight 34461A Truevolt
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `Keysight34461A` | 34461A | Truevolt DMM | `34461`, `34460`, `34401`, `34410`, `34411`, `34420` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `Keysight34461A` | 34461A | Truevolt DMM | `34461`, `34460`, `34401`, `34410`, `34411`, `34420` | Not yet validated |
 
 `Keysight34461A` is shared across two IDN branches in `factory.py`
 (`~line 423` and `~line 429`, see issue #167): the Truevolt 34460/34461
@@ -413,9 +413,9 @@ on their published SCPI command references, not verified in-lab:
 
 ### Fluke 8845A/8846A
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `Fluke8846A` | 8846A | Fluke 884x Series | `FLUKE` + (`8845`, `8846`) |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `Fluke8846A` | 8846A | Fluke 884x Series | `FLUKE` + (`8845`, `8846`) | Not yet validated |
 
 `Fluke8846A` is not validated against real hardware yet; it targets the
 `:MEAS:*?`/`:CONF:*` SCPI subset documented in the Fluke 8845A/8846A
@@ -433,15 +433,15 @@ Programmer's Manual, mirroring `Keysight34461A`'s command shapes:
 
 ### Keithley 2000
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `Keithley2000` | 2000 | Keithley 2000 Series | `KEITHLEY` + `2000` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `Keithley2000` | 2000 | Keithley 2000 Series | `KEITHLEY` + `2000` | Not yet validated |
 
 ### Siglent SDM3000 Series
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `SiglentSDM3055` | SDM3055 | SDM3000 Series | `SIGLENT` + `SDM` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `SiglentSDM3055` | SDM3055 | SDM3000 Series | `SIGLENT` + `SDM` | Not yet validated |
 
 Standard SCPI-99 `MEASure`/`CONFigure` multimeter subsystem, the same
 command shape as the Keysight 34401A family and Fluke 884x — DCV, ACV,
@@ -458,9 +458,9 @@ diode, and RTD/thermistor temperature. `set_nplc()` is SDM3000-specific.
 
 ### Rigol DM3000 Series
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `RigolDM3068` | DM3068 | DM3000 Series | `RIGOL` + `DM3` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `RigolDM3068` | DM3068 | DM3000 Series | `RIGOL` + `DM3` | Not yet validated |
 
 Unlike the SCPI-99 `CONFigure`/`MEASure?` split used elsewhere in this
 library, the DM3000 dialect selects the active function with
@@ -478,9 +478,9 @@ library, the DM3000 dialect selects the active function with
 
 ### Keithley DMM6500
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `KeithleyDMM6500` | DMM6500 | DMM6500 native SCPI | `KEITHLEY` + (`DMM6500`, `6500`) |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `KeithleyDMM6500` | DMM6500 | DMM6500 native SCPI | `KEITHLEY` + (`DMM6500`, `6500`) | Not yet validated |
 
 Targets the DMM6500's native SCPI command set (function selection via
 `:SENSe:FUNCtion "<FUNC>"` then `:READ?`), not the `SCPI2000`/`SCPI34401`
@@ -500,9 +500,9 @@ SCPI function-name argument since ranging/NPLC live under
 
 ### TDK-Lambda Z+
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `TDKLambdaZPlus` | Z+100-2 | Z+ Series (Serial/USB) | `TDK-LAMBDA`, `Z+` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `TDKLambdaZPlus` | Z+100-2 | Z+ Series (Serial/USB) | `TDK-LAMBDA`, `Z+` | Not yet validated |
 
 **Also likely compatible:**
 - Z+36-10, Z+50-2.5, Z+60-5, Z+100-2, Z+100-7, Z+150-4, Z+200-2.5, Z+360-1.7
@@ -513,9 +513,9 @@ SCPI function-name argument since ranging/NPLC live under
 
 ### BK Precision 9130B
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `BKPrecision9130B` | 9130B | 9130B Series (Triple Output) | `B&K`/`BK PRECISION` + `9130` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `BKPrecision9130B` | 9130B | 9130B Series (Triple Output) | `B&K`/`BK PRECISION` + `9130` | Not yet validated |
 
 Not yet validated against real hardware. Three independent output
 channels are addressed via `INST:NSEL {1\|2\|3}`; every `PowerSupply`
@@ -531,9 +531,9 @@ plain `VOLT`/`CURR`/`OUTP`/`MEAS:*?` command. `set_tracking_mode()` is
 
 ### Rigol DP800 Series
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `RigolDP832` | DP832 | DP800 Series (Triple Output) | `RIGOL` + `DP8` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `RigolDP832` | DP832 | DP800 Series (Triple Output) | `RIGOL` + `DP8` | Not yet validated |
 
 Unlike the BK Precision 9130B's `INST:NSEL`-then-plain-command style,
 DP800 series commands address a channel directly via a `[:SOURce<n>]`
@@ -552,9 +552,9 @@ to 1). `set_tracking_mode()` is DP800-specific and links CH2/CH3.
 
 ### Siglent SPD3303X
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `SiglentSPD3303X` | SPD3303X | SPD3303X Series | `SIGLENT` + `SPD` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `SiglentSPD3303X` | SPD3303X | SPD3303X Series | `SIGLENT` + `SPD` | Not yet validated |
 
 CH1/CH2 are independently controlled outputs addressed with a `CH1`/
 `CH2` command prefix; CH3 is a fixed 5V/2.5A logic supply with
@@ -573,9 +573,9 @@ independent/series/parallel CH1+CH2 coupling.
 
 ### Keysight E36300 Series
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `KeysightE36313A` | E36313A | E36300 Series (Triple Output) | `KEYSIGHT`/`AGILENT` + (`E3631`, `E36313`, `E3633`) |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `KeysightE36313A` | E36313A | E36300 Series (Triple Output) | `KEYSIGHT`/`AGILENT` + (`E3631`, `E36313`, `E3633`) | Not yet validated |
 
 Uses the SCPI-99 channel-list syntax `(@<chanlist>)` shared with other
 Keysight instruments -- every setpoint/measurement command takes an
@@ -593,9 +593,9 @@ channel-select round-trip and the Rigol/Siglent `CH<n>` prefix style.
 
 ### Korad KA3005P
 
-| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `KoradKA3005P` | KA3005P | Korad flat ASCII (non-SCPI) | `KORAD` |
+| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `KoradKA3005P` | KA3005P | Korad flat ASCII (non-SCPI) | `KORAD` | Not yet validated |
 
 **Not a SCPI instrument.** Speaks Korad's own flat ASCII command set
 over serial (9600 8N1, no line termination, no error queue, no
@@ -614,9 +614,9 @@ and Stamos under different model numbers with an identical protocol.
 
 ### GW Instek GPP Series
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `GWInstekGPP4323` | GPP-4323 | GPP Series (4 independent channels) | `GW`/`GW INSTEK` + `GPP` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `GWInstekGPP4323` | GPP-4323 | GPP Series (4 independent channels) | `GW`/`GW INSTEK` + `GPP` | Not yet validated |
 
 The GPP dialect puts the channel number directly as a numeric suffix
 on the keyword itself (`SOURce2:VOLTage`, `OUTPut2:STATe`,
@@ -637,9 +637,9 @@ CH1+CH2 (and CH3+CH4 where present).
 
 ### Agilent/HP 6632B/6634B Series
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `Agilent6632B` | 6632B | 663xB System DC Power Supply | `KEYSIGHT`/`AGILENT`/`HEWLETT-PACKARD`/`HP` + (`6631`, `6632`, `6633`, `6634`) |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `Agilent6632B` | 6632B | 663xB System DC Power Supply | `KEYSIGHT`/`AGILENT`/`HEWLETT-PACKARD`/`HP` + (`6631`, `6632`, `6633`, `6634`) | Not yet validated |
 
 Legacy single-channel SCPI-99 PSU family, routed through the same
 Keysight/Agilent IDN branch as `Keysight34461A`/`KeysightPNA` since it
@@ -656,9 +656,9 @@ predates the Keysight brand name but shares the same SCPI lineage.
 
 ### AIM-TTi CPX400DP
 
-| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `AimTTiCPX400DP` | CPX400DP | AIM-TTi PowerFlex command set | `AIM-TTI`/`THURLBY THANDAR`/`AIMTTI` + `CPX400` |
+| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `AimTTiCPX400DP` | CPX400DP | AIM-TTi PowerFlex command set | `AIM-TTI`/`THURLBY THANDAR`/`AIMTTI` + `CPX400` | Not yet validated |
 
 Puts the channel number directly on the command keyword with no colon
 or prefix separator (`V1 <v>`, `I2 <i>`, `OP1 {0|1}`) -- distinct from
@@ -673,11 +673,33 @@ series/parallel).
 > prefer `"GENERIC"` passthrough or file an issue with the failing
 > command.
 
-### Rohde & Schwarz HMP4040 Series
+### UNI-T UDP6900 Series
 
 | Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
 |:---|:---|:---|:---|
-| `RohdeSchwarzHMP4040` | HMP4040 | HMP Series (4 independent channels) | `HAMEG`/`ROHDE`/`ROHDE&SCHWARZ` + `HMP` |
+| `UniTUDP6900` | UDP6900 | UDP6900 Series (single output) | `UNI-T`/`UNI-TREND` + `UDP69` |
+
+Single-output programmable DC power supply (0-150 V / 0-10 A, 600 W). SCPI is
+case-insensitive; commands use the `[:SOURce:]` subtree and there is no channel
+addressing since there is one output. Every `PowerSupply` interface method
+accepts an optional `channel=` (ignored; defaults to the single output).
+OVP/OCP are set via `[:SOURce]:VOLTage:PROTection`/`[:SOURce]:CURRent:PROTection`
+with separate `[:SOURce]:<...>:PROTection:STATe {ON|OFF}` enable commands, and
+tripped protection is cleared with `[:SOURce]:<...>:PROTection:CLEar`.
+
+**Also likely compatible** (same UDP6900 command set):
+- UDP6900B (LAN/USB/RS232/RS485 variant)
+
+> [!WARNING]
+> Not yet verified against real hardware. If you hit an SCPI error,
+> prefer `"GENERIC"` passthrough or file an issue with the failing
+> command.
+
+### Rohde & Schwarz HMP4040 Series
+
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `RohdeSchwarzHMP4040` | HMP4040 | HMP Series (4 independent channels) | `HAMEG`/`ROHDE`/`ROHDE&SCHWARZ` + `HMP` | Not yet validated |
 
 Channels are selected via `INST:NSEL {1..4}` and then addressed with
 plain `VOLT`/`CURR`/`OUTP` commands -- the same select-then-command
@@ -698,9 +720,9 @@ has no separate OVP/OCP trip-clear command.
 
 ### Ametek Sorensen SG Series
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `SorensenSG` | SG Series | SG/SGA/SGX Series (core PSU subsystem) | `SORENSEN` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `SorensenSG` | SG Series | SG/SGA/SGX Series (core PSU subsystem) | `SORENSEN` | Not yet validated |
 
 Standard SCPI-99 `:SOURce`/`:OUTPut`/`:MEASure` subsystem, directly
 comparable to `KeysightE36313A`/`RigolDP832`. The Sorensen-specific
@@ -720,9 +742,9 @@ for a future pass.
 
 ### BK Precision 1685B/1687B/1688B Series
 
-| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `BKPrecision1685B` | 1685B | BK Precision flat ASCII (non-SCPI) | `B&K`/`BK PRECISION` + (`1685`, `1687`, `1688`) |
+| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `BKPrecision1685B` | 1685B | BK Precision flat ASCII (non-SCPI) | `B&K`/`BK PRECISION` + (`1685`, `1687`, `1688`) | Not yet validated |
 
 **Not a SCPI instrument.** Speaks the same flat ASCII command family
 as `KoradKA3005P` (`VSET1:<v>`, `ISET1:<i>`, `OUT1`/`OUT0`) over a USB
@@ -746,9 +768,9 @@ off, 0V, 0A limit.
 
 ### Keysight AC6800B Series
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `KeysightAC6800B` | AC6800B Series | AC6800B Series Programming Guide | `KEYSIGHT` + `AC68` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `KeysightAC6800B` | AC6800B Series | AC6800B Series Programming Guide | `KEYSIGHT` + `AC68` | Not yet validated |
 
 New `ACPowerSource` base class (`src/instrumation/drivers/base.py`) --
 every `PowerSupply` driver in this library is DC-only (a single
@@ -778,18 +800,18 @@ deferred its `:PROGram` subsystem.
 
 ### Siglent SDL1000X
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `SiglentSDL1000X` | SDL1000X | SDL1000X Series | `SIGLENT` + `LOAD` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `SiglentSDL1000X` | SDL1000X | SDL1000X Series | `SIGLENT` + `LOAD` | Not yet validated |
 
 **Also likely compatible:**
 - SDL1020X, SDL1030X, SDL1060X
 
 ### BK Precision 8600 Series
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `BKPrecision8600` | 8600 | 8600 Series | `B&K`/`BK PRECISION` + (`8600`, `8601`, `8602`, `8610`, `8612`, `8614`, `8620`) |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `BKPrecision8600` | 8600 | 8600 Series | `B&K`/`BK PRECISION` + (`8600`, `8601`, `8602`, `8610`, `8612`, `8614`, `8620`) | Not yet validated |
 
 Not yet validated against real hardware. Supports CC/CV/CR/CP modes,
 OVP/OCP/OPP protection, and BK-specific battery discharge test mode
@@ -804,9 +826,9 @@ programming from the 8600 Series manual are not yet implemented.
 
 ### Rigol DL3000 Series
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `RigolDL3021` | DL3021 | DL3000 Series | `RIGOL` + `DL3` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `RigolDL3021` | DL3021 | DL3000 Series | `RIGOL` + `DL3` | Not yet validated |
 
 Supports CC/CV/CR/CP modes and battery discharge test mode
 (`set_battery_test_mode`, `get_battery_test_capacity`,
@@ -826,9 +848,9 @@ subsystem in its base command set — front-panel OCP/OPP are test
 
 ### ITECH IT8500+ Series
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `ItechIT8512Plus` | IT8512+ | IT8500+ Series | `ITECH` + `IT85` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `ItechIT8512Plus` | IT8512+ | IT8500+ Series | `ITECH` + `IT85` | Not yet validated |
 
 Supports CC/CV/CR/CP modes plus `CURRent:PROTection`/`POWer:PROTection`
 (OCP/OPP trip levels) and a simulated short-circuit input
@@ -846,9 +868,9 @@ trip-point command in its base command set, so `set_ovp`/
 
 ### Chroma 63200A Series
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `Chroma63200A` | 63200A series | 63200A Series (High Power) | `CHROMA` + `632` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `Chroma63200A` | 63200A series | 63200A Series (High Power) | `CHROMA` + `632` | Not yet validated |
 
 The most distinctive load dialect in this library: a single `MODE`
 mnemonic encodes BOTH the operating mode and measurement range
@@ -870,9 +892,9 @@ unsupported-feature warning.
 
 ### Prodigit 3311F
 
-| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `Prodigit3311F` | 3311F | 3310F Series plug-in module | `PRODIGIT` + (`3311`, `3310`) |
+| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `Prodigit3311F` | 3311F | 3310F Series plug-in module | `PRODIGIT` + (`3311`, `3310`) | Not yet validated |
 
 The 3311F is a plug-in module hosted in a 3302F mainframe chassis, not
 a standalone load -- every command is prefixed with a `CHAN<n>` slot
@@ -898,9 +920,9 @@ abstract base in `drivers/base.py`; `"LOCKIN"` is a new canonical
 
 ### Stanford Research Systems SR830
 
-| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `SRSSR830` | SR830 | SRS terse mnemonics (non-SCPI-subtree) | `STANFORD` + `SR830` |
+| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `SRSSR830` | SR830 | SRS terse mnemonics (non-SCPI-subtree) | `STANFORD` + `SR830` | Not yet validated |
 
 Like the SRS DS345, uses terse colon-free command mnemonics (`FREQ`,
 `PHAS`, `SLVL`, `SENS`, `OFLT`, `HARM`) rather than a
@@ -928,9 +950,9 @@ key registered in `factory.KNOWN_DRIVER_TYPES`, with a
 
 ### Keysight E4980A/AL
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `KeysightE4980A` | E4980A | E4980A/AL Precision LCR Meter | `KEYSIGHT`/`AGILENT` + `E4980` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `KeysightE4980A` | E4980A | E4980A/AL Precision LCR Meter | `KEYSIGHT`/`AGILENT` + `E4980` | Not yet validated |
 
 `set_measurement_function()` selects the impedance parameter type
 (`CPD`, `CPQ`, `CSD`, `LSD`, `RX`, `ZTD`, etc.); `measure()` returns a
@@ -945,9 +967,9 @@ source.
 
 ### Hioki IM3536
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `HiokiIM3536` | IM3536 | IM3523/IM3533/IM3536/IM3570/IM3590 family | `HIOKI` + `IM35` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `HiokiIM3536` | IM3536 | IM3523/IM3533/IM3536/IM3570/IM3590 family | `HIOKI` + `IM35` | Not yet validated |
 
 SCPI-style command set shared across the IM35xx/IM3570/IM3590
 family. `:FREQuency`/`:FREQuency?` confirmed against Hioki's own
@@ -963,9 +985,9 @@ Keysight E4980A LCR meter class.
 
 ### Keysight E4990A Impedance Analyzer
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `KeysightE4990A` | E4990A | E4990A SCPI Command Reference | `KEYSIGHT`/`AGILENT` + `E4990` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `KeysightE4990A` | E4990A | E4990A SCPI Command Reference | `KEYSIGHT`/`AGILENT` + `E4990` | Not yet validated |
 
 Unlike the fixed-frequency `KeysightE4980A`/`HiokiIM3536` LCR meters,
 the E4990A sweeps frequency (1 MHz-120 MHz) and returns trace data --
@@ -996,9 +1018,9 @@ are left as a follow-up.
 
 ### Keysight 53230A
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `Keysight53230A` | 53230A | 53230A/53220A Universal Counter | `KEYSIGHT`/`AGILENT`/`HP` + (`53230`, `53220`, `53181`) |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `Keysight53230A` | 53230A | 53230A/53220A Universal Counter | `KEYSIGHT`/`AGILENT`/`HP` + (`53230`, `53220`, `53181`) | Not yet validated |
 
 **Also likely compatible:**
 - 53220A (350 MHz), 53230A (350 MHz, 12 digits/s), 53181A (225 MHz, RF counter predecessor)
@@ -1011,9 +1033,9 @@ are left as a follow-up.
 
 ### Fluke PM6690
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `FlukePM6690` | PM6690 | PM6690 native SCPI | `FLUKE` + `PM6690` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `FlukePM6690` | PM6690 | PM6690 native SCPI | `FLUKE` + `PM6690` | Not yet validated |
 
 The PM6690 has two GPIB personalities: a native SCPI mode (targeted
 here) with a command set optimized for its own capabilities, and a
@@ -1032,9 +1054,9 @@ mode uses the same standard SCPI-99 counter subsystem shape as
 
 ### Keysight DAQ970A/DAQ973A
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `KeysightDAQ970A` | DAQ970A | DAQ970A/DAQ973A Programming Guide | `KEYSIGHT`/`AGILENT` + (`DAQ970`, `DAQ973`) |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `KeysightDAQ970A` | DAQ970A | DAQ970A/DAQ973A Programming Guide | `KEYSIGHT`/`AGILENT` + (`DAQ970`, `DAQ973`) | Not yet validated |
 
 New `DataAcquisitionUnit` base class (`src/instrumation/drivers/base.py`),
 registered under a new `"DAQ"` driver type -- the direct,
@@ -1067,9 +1089,9 @@ New instrument category (issue #204). `"SENSOR"` is a new canonical
 
 ### Keysight U2000 Series
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `KeysightU2000` | U2004A | U2000 Series USB Power Sensor | `KEYSIGHT`/`AGILENT`/`HP` + (`U2000`, `U200`) |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `KeysightU2000` | U2004A | U2000 Series USB Power Sensor | `KEYSIGHT`/`AGILENT`/`HP` + (`U2000`, `U200`) | Not yet validated |
 
 Headless USBTMC-only sensor (no front panel); standard SCPI power-
 sensor command set (`FETCh?`/`MEASure?`, `SENSe:FREQuency`,
@@ -1084,9 +1106,9 @@ the sensor's internal cal-factor table lookup, not an output.
 
 ### Rohde & Schwarz NRP-Z Series
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `RohdeSchwarzNRPZ` | NRP-Z21 | NRP-Z Series USB Power Sensor | `HAMEG`/`ROHDE`/`ROHDE&SCHWARZ` + `NRP` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `RohdeSchwarzNRPZ` | NRP-Z21 | NRP-Z Series USB Power Sensor | `HAMEG`/`ROHDE`/`ROHDE&SCHWARZ` + `NRP` | Not yet validated |
 
 Headless USB sensor (no front panel), similar in shape to the
 Keysight U2000 series but with R&S-specific correction subsystems:
@@ -1107,9 +1129,9 @@ New instrument category (issue #204). `"SWITCH"` is a new canonical
 
 ### Mini-Circuits RC/RFS Series
 
-| Driver | Purpose | Auto-Detect IDN Keywords |
-|:---|:---|:---|
-| `MiniCircuitsRCSwitch` | RF switch matrix control (RC-4SPDT, RC-1SP4T, RC-2SP4T, etc.) | `MINI-CIRCUITS`/`MINICIRCUITS` |
+| Driver | Purpose | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|
+| `MiniCircuitsRCSwitch` | RF switch matrix control (RC-4SPDT, RC-1SP4T, RC-2SP4T, etc.) | `MINI-CIRCUITS`/`MINICIRCUITS` | Not yet validated |
 
 **Not a SCPI instrument.** Uses Mini-Circuits' own flat ASCII command
 set over USB/Ethernet: `SET{switch}={0|1}` for individual SPDT
@@ -1131,10 +1153,10 @@ Rev. B7 (7-Jun-24). Roadmap #174.
 
 ### Boonton 4530 Series
 
-| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `Boonton4531` | 4531 (single-channel) | SCPI 1993 | `BOONTON` + (`4531`, `4530`) |
-| `Boonton4532` | 4532 (dual-channel) | SCPI 1993 | `BOONTON` + `4532` |
+| Driver | Validated Model | SCPI Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `Boonton4531` | 4531 (single-channel) | SCPI 1993 | `BOONTON` + (`4531`, `4530`) | Not yet validated |
+| `Boonton4532` | 4532 (dual-channel) | SCPI 1993 | `BOONTON` + `4532` | Not yet validated |
 
 New `PowerMeter` base class (`src/instrumation/drivers/base.py`) --
 distinct from the `POWERMETER`-keyed `TektronixPA1000`/`YokogawaWT310`
@@ -1169,9 +1191,9 @@ canonical `driver_type` key registered in
 
 ### Yokogawa WT310 Series
 
-| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `YokogawaWT310` | WT310 | WT310/WT310HC/WT332/WT333 | `YOKOGAWA` + `WT3` |
+| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `YokogawaWT310` | WT310 | WT310/WT310HC/WT332/WT333 | `YOKOGAWA` + `WT3` | Not yet validated |
 
 Uses Yokogawa's `:NUMeric[:NORMal]:ITEM<x>` output-item configuration
 model: each numeric output slot (1-255) is assigned a function
@@ -1191,9 +1213,9 @@ and read it back in one call.
 
 ### Tektronix PA1000
 
-| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `TektronixPA1000` | PA1000 | Community-verified quirky SCPI | `TEKTRONIX` + `PA1000` |
+| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `TektronixPA1000` | PA1000 | Community-verified quirky SCPI | `TEKTRONIX` + `PA1000` | Not yet validated |
 
 Tektronix's published PA1000 manual omits the SCPI programming
 chapter; this driver is built from community-verified, hands-on
@@ -1221,9 +1243,9 @@ PyVISA usage notes and documents several real quirks:
 
 ### Lake Shore Model 336
 
-| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords |
-|:---|:---|:---|:---|
-| `LakeShore336` | 336 | Model 336/335 ASCII mnemonic set | `LSCI`/`LAKE SHORE`/`LAKESHORE` + (`336`, `335`) |
+| Driver | Validated Model | Command Family | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|:---|
+| `LakeShore336` | 336 | Model 336/335 ASCII mnemonic set | `LSCI`/`LAKE SHORE`/`LAKESHORE` + (`336`, `335`) | Not yet validated |
 
 New `TemperatureController` base class (`src/instrumation/drivers/base.py`)
 -- a cryogenic temperature controller reads multiple sensor inputs
@@ -1250,9 +1272,9 @@ by sensor family (diode, RTD, thermocouple) and firmware revision.
 
 ## GENERIC (Universal Fallback)
 
-| Driver | Purpose | Auto-Detect IDN Keywords |
-|:---|:---|:---|
-| `GenericDriver` | Catch-all driver for unidentified instruments; accepts any model | none (explicit `"GENERIC"` request or unrecognized `*IDN?`) |
+| Driver | Purpose | Auto-Detect IDN Keywords | Validation |
+|:---|:---|:---|:---|
+| `GenericDriver` | Catch-all driver for unidentified instruments; accepts any model | none (explicit `"GENERIC"` request or unrecognized `*IDN?`) | Not yet validated |
 
 `"GENERIC"` is a first-class, always-registered key in
 `DriverRegistry` — `get_drivers_by_type("GENERIC")` always returns

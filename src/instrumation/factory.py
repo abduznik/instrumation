@@ -264,6 +264,7 @@ _IDN_ROUTES = [
     (("CHROMA",), [(("632",), "chroma_load.Chroma63200A")]),
     (("AIM-TTI", "THURLBY THANDAR", "AIMTTI"), [(("CPX400",), "aimtti_psu.AimTTiCPX400DP")]),
     (("SORENSEN",), [(("SG",), "sorensen_psu.SorensenSG")]),
+    (("UNI-T", "UNI-TREND"), [(("UDP69",), "uni_t_udp6900.UniTUDP6900")]),
     (("PRODIGIT",), [(("3311", "3310"), "prodigit_load.Prodigit3311F")]),
     (("BOONTON",), [
         (("4532",), "boonton_pm.Boonton4532"),
