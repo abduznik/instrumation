@@ -154,3 +154,28 @@ def test_shutdown_safety(mock_ctrl):
     mock_ctrl.shutdown_safety()
     mock_ctrl.inst.write.assert_any_call("RANGE 1,0")
     mock_ctrl.inst.write.assert_any_call("RANGE 2,0")
+
+
+def test_shutdown_safety_turns_off_all_four_outputs(mock_ctrl):
+    # Model 336 manual 4.5.1.5.9: ALL OFF "is equivalent to setting the Heater
+    # Range parameter of all outputs to Off" -- outputs 3 and 4 included.
+    mock_ctrl.shutdown_safety()
+    for output in (1, 2, 3, 4):
+        mock_ctrl.inst.write.assert_any_call(f"RANGE {output},0")
+
+
+def test_set_heater_range_analog_output_accepts_on(mock_ctrl):
+    # Outputs 3/4 are the unpowered analog outputs: 0 = Off, 1 = On only.
+    mock_ctrl.set_heater_range(4, "ON")
+    mock_ctrl.inst.write.assert_any_call("RANGE 4,1")
+
+
+def test_set_heater_range_analog_output_rejects_heater_codes(mock_ctrl):
+    for bad in ("LOW", "MEDIUM", "HIGH"):
+        with pytest.raises(ValueError):
+            mock_ctrl.set_heater_range(3, bad)
+
+
+def test_get_heater_range_analog_output_decodes_on(mock_ctrl):
+    mock_ctrl.inst.query.return_value = "1"
+    assert mock_ctrl.get_heater_range(3) == "ON"
