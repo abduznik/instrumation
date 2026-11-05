@@ -30,6 +30,7 @@ class LakeShore336(RealDriver, TemperatureController):
         - PID <loop>,<P>,<I>,<D>     — set PID gains for a loop
         - PID? <loop>                — query PID gains
         - RANGE <loop>,<range>       — heater range (0=Off,1=Low,2=Med,3=High)
+                           (outputs 3/4 are analog outputs: 0=Off,1=On)
         - RANGE? <loop>              — query heater range
         - HTR? <loop>                — heater output (% of current range)
         - RAMP <loop>,<onoff>,<rate> — setpoint ramp rate (K/min) enable
@@ -43,6 +44,17 @@ class LakeShore336(RealDriver, TemperatureController):
 
     _RANGE_MAP = {"OFF": 0, "LOW": 1, "MEDIUM": 2, "MED": 2, "HIGH": 3}
     _RANGE_MAP_REV = {0: "OFF", 1: "LOW", 2: "MEDIUM", 3: "HIGH"}
+    # Outputs 3 and 4 are the unpowered analog outputs: same RANGE command,
+    # but the manual defines only 0 = Off and 1 = On for them.
+    _ANALOG_OUTPUTS = (3, 4)
+    _ANALOG_RANGE_MAP = {"OFF": 0, "ON": 1}
+    _ANALOG_RANGE_MAP_REV = {0: "OFF", 1: "ON"}
+
+    def _range_maps(self, loop: int):
+        if loop in self._ANALOG_OUTPUTS:
+            return self._ANALOG_RANGE_MAP, self._ANALOG_RANGE_MAP_REV
+        return self._RANGE_MAP, self._RANGE_MAP_REV
+
     # Model 336 User's Manual, OUTMODE <output>,<mode>,<input>,<powerup enable>
     _CONTROL_MODES = {"OFF": 0, "PID": 1, "CLOSEDLOOP": 1, "ZONE": 2,
                       "OPENLOOP": 3, "MANUAL": 3}
@@ -76,14 +88,16 @@ class LakeShore336(RealDriver, TemperatureController):
         return tuple(parts[:3]) if len(parts) >= 3 else (0.0, 0.0, 0.0)
 
     def set_heater_range(self, loop: int, range_setting: str) -> None:
+        codes, _ = self._range_maps(loop)
         key = range_setting.upper()
-        if key not in self._RANGE_MAP:
+        if key not in codes:
             raise ValueError(f"Invalid heater range: {range_setting}")
-        self.safe_send(f"RANGE {loop},{self._RANGE_MAP[key]}")
+        self.safe_send(f"RANGE {loop},{codes[key]}")
 
     def get_heater_range(self, loop: int) -> str:
+        _, reverse = self._range_maps(loop)
         code = int(self.query_ascii(f"RANGE? {loop}"))
-        return self._RANGE_MAP_REV.get(code, "OFF")
+        return reverse.get(code, "OFF")
 
     def get_heater_output(self, loop: int) -> MeasurementResult:
         val = self.query_ascii(f"HTR? {loop}")
@@ -138,8 +152,9 @@ class LakeShore336(RealDriver, TemperatureController):
         return self.query_ascii(f"ALARMST? {input_channel.upper()}").strip()
 
     def shutdown_safety(self) -> None:
-        # Force both loops' heater outputs off -- the closest equivalent to
-        # a PSU's "outputs off" for a temperature controller.
-        self.set_heater_range(1, "OFF")
-        self.set_heater_range(2, "OFF")
+        # Model 336 User's Manual 4.5.1.5.9: the front-panel ALL OFF key "is
+        # equivalent to setting the Heater Range parameter of all outputs to
+        # Off" -- all four outputs, not just the two heater loops.
+        for output in (1, 2, 3, 4):
+            self.safe_send(f"RANGE {output},0")
         self.sync_config()
