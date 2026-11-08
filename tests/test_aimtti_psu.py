@@ -67,8 +67,14 @@ def test_set_ocp(mock_psu):
 
 def test_clear_protection(mock_psu):
     mock_psu.clear_protection(channel=1)
-    mock_psu.inst.write.assert_any_call("OVP1 0")
-    mock_psu.inst.write.assert_any_call("OCP1 0")
+    mock_psu.inst.write.assert_any_call("TRIPRST")
+
+
+def test_clear_protection_never_zeroes_trip_points(mock_psu):
+    # OVP<n> 0 would set a 0 V trip point, not clear the trip.
+    mock_psu.clear_protection(channel=1)
+    written = [c.args[0] for c in mock_psu.inst.write.call_args_list]
+    assert not [c for c in written if c.startswith(("OVP", "OCP"))]
 
 
 def test_measure_voltage_actual(mock_psu):
@@ -86,14 +92,50 @@ def test_measure_current(mock_psu):
     mock_psu.inst.query.assert_any_call("I2O?")
 
 
-def test_set_track_mode(mock_psu):
-    mock_psu.set_track_mode(1)
-    mock_psu.inst.write.assert_any_call("CONFIG 1")
+def test_set_track_mode_independent(mock_psu):
+    # CONFIG 2 = outputs independent; outputs must be off first (execution error 104).
+    mock_psu.set_track_mode(2)
+    mock_psu.inst.write.assert_any_call("OP1 0")
+    mock_psu.inst.write.assert_any_call("OP2 0")
+    mock_psu.inst.write.assert_any_call("CONFIG 2")
 
 
-def test_set_track_mode_invalid_raises(mock_psu):
-    with pytest.raises(ValueError):
-        mock_psu.set_track_mode(9)
+def test_set_track_mode_tracking(mock_psu):
+    mock_psu.set_track_mode(0)
+    mock_psu.inst.write.assert_any_call("CONFIG 0")
+
+
+def test_set_track_mode_rejects_undefined_modes(mock_psu):
+    # 1 (series) and 3 are not CONFIG values on this instrument.
+    for mode in (1, 3, 9):
+        with pytest.raises(ValueError):
+            mock_psu.set_track_mode(mode)
+
+
+def test_check_errors_uses_eer_not_syst_err(mock_psu):
+    mock_psu.check_errors_enabled = True
+    mock_psu.identity = {"model": "CPX400DP"}
+    mock_psu.inst.query.return_value = "0"
+    mock_psu.check_errors()
+    mock_psu.inst.query.assert_called_with("EER?")
+    assert not mock_psu.error_stack
+
+
+def test_check_errors_raises_on_execution_error(mock_psu):
+    from instrumation.exceptions import ConfigurationError
+
+    mock_psu.check_errors_enabled = True
+    mock_psu.identity = {"model": "CPX400DP"}
+    mock_psu.inst.query.return_value = "104"
+    with pytest.raises(ConfigurationError):
+        mock_psu.check_errors()
+    assert mock_psu.error_stack == ["104"]
+
+
+def test_discover_options_sends_no_opt_query(mock_psu):
+    mock_psu._discover_options()
+    assert mock_psu.options == []
+    mock_psu.inst.query.assert_not_called()
 
 
 def test_shutdown_safety(mock_psu):
