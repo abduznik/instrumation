@@ -903,7 +903,11 @@ class PowerMeter(InstrumentDriver):
 
     @_unsupported
     def set_video_bandwidth(self, hz: float) -> None:
-        """Sets the video bandwidth used for pulse/peak demodulation."""
+        """Sets the video bandwidth used for pulse/peak demodulation.
+
+        Instruments that only define discrete bands (e.g. the Boonton
+        4530's HIGH/LOW setting) take a band name instead of a number.
+        """
 
     @_unsupported
     def set_trigger_source(self, source: str) -> None:

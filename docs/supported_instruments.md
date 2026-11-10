@@ -1174,17 +1174,21 @@ New `PowerMeter` base class (`src/instrumation/drivers/base.py`) --
 distinct from the `POWERMETER`-keyed `TektronixPA1000`/`YokogawaWT310`
 AC power *analyzers* (registered separately, no shared ABC), this
 covers wideband RF *peak/pulse* power measurement: CW average power
-(`MEAS:POWER?`), peak/pulse power (`MEAS:PEAK?`), video bandwidth for
-pulse demodulation (`SENS:BAND:VIDEO`), trigger source/level
-(`TRIG:SOURCE`/`TRIG:LEVEL`), pulse-width measurement
-(`MEAS:PULSE:WIDTH?`), relative gain/loss offset (`CAL1:OFFSET`), and
-sensor zero calibration (`CAL:ZERO`). Registered under a dedicated
+(`MEASure[n]:POWer?`), pulse-on peak power and pulse width from the
+automatic pulse arrays (`FETCh[n]:ARRay:AMEAsure:POWer?` /
+`:TIMe?`), video bandwidth (`SENSe[n]:BANDwidth {HIGH|LOW}`), trigger
+source/level (`TRIGger:SOURce`/`:LEVel`), relative gain/loss offset
+(`SENSe[n]:CORRection:OFFset`), and sensor zero calibration
+(`CALibration:INTernal:ZERO`). The 4530's frequency command is
+`SENSe:CORRection:FREQuency`, whose argument the manual defines in GHz
+(the driver still takes Hz and converts). Registered under a dedicated
 `"PEAKPM"` driver type to avoid ambiguity with the existing
 `"POWERMETER"` category.
 
-`Boonton4532` (dual-channel) overrides `measure_power`/
-`measure_peak_power` with an optional `channel` argument (1 or 2);
-`Boonton4531` (single-channel) omits the parameter entirely. GPIB and
+Measurement methods take an optional `channel` argument (1 or 2),
+spelled as a SCPI suffix (`MEAS2:POW?`, `FETC2:ARR:AMEA:POW?`) -- a
+channel-2 call only means something on the dual-channel
+`Boonton4532`; the single-channel `Boonton4531` has just channel 1. GPIB and
 RS-232 only -- no USB/LAN on this generation, which fits the existing
 PyVISA `RealDriver` path directly.
 
