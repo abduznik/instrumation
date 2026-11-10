@@ -11,65 +11,116 @@ class _Boonton4530Base(RealDriver, PowerMeter):
     4532; both share the same SCPI 1993 command tree over GPIB or
     RS-232 (no USB/LAN on this generation).
 
-    Command Reference (4530 Series Instruction Manual):
-        - FREQ <hz> / FREQ?              — CW frequency for cal-factor lookup
-        - UNIT:POWER {DBM|W} / UNIT:POWER?  — readout unit
-        - CAL1:OFFSET <db> / CAL1:OFFSET?   — relative gain/loss offset
-        - MEAS:POWER? / FETCH:POWER?     — CW average power reading
-        - MEAS:PEAK? / FETCH:PEAK?       — peak (pulse) power reading
-        - SENS:BAND:VIDEO <hz>           — video bandwidth for pulse demod
-        - TRIG:SOURCE {INT|EXT|FREERUN}  — trigger source select
-        - TRIG:LEVEL <dbm>               — trigger level for peak capture
-        - MEAS:PULSE:WIDTH?              — measured pulse width
-        - CAL:ZERO                       — sensor zero calibration
+    Command Reference (4530 Series Instruction Manual, Table 4-1):
+        - SENSe[n]:CORRection:FREQuency <GHz>   — CW frequency for the
+          sensor's cal-factor lookup (manual argument is in GHz)
+        - CALCulate[n]:UNITs {DBM|WATTS}        — readout units
+        - SENSe[n]:CORRection:OFFset <db>       — relative gain/loss offset
+        - MEASure[n]:POWer?                     — CW average power
+        - FETCh[n]:ARRay:AMEAsure:POWer?        — pulse-mode automatic
+          measurements; first field is the pulse-on peak power
+        - FETCh[n]:ARRay:AMEAsure:TIMe?         — pulse timing; third
+          field is the pulse width
+        - SENSe[n]:BANDwidth {HIGH|LOW}         — sensor video bandwidth
+        - TRIGger:SOURce {SENSOR1|SENSOR2|EXTERNAL|IMMEDIATE|BUS}
+        - TRIGger:LEVel <dbm>
+        - CALibration:INTernal:ZERO             — sensor zero against the
+          50 MHz internal calibrator (use EXTernal for the 1 GHz one)
         - *IDN? / *RST / *CLS / *OPC?
+
+    The 4530 defines no ``FREQ``, ``UNIT:POWER``, ``SENS:BAND:VIDEO``,
+    ``TRIG:SOURCE INT``, ``MEAS:PEAK?`` or ``MEAS:PULSE:WIDTH?`` command;
+    those belong to other power-meter families (e.g. Keysight N191x).
     """
 
+    @staticmethod
+    def _chan_cmd(command: str, channel: int) -> str:
+        """Return ``command`` with the 1|2 channel suffix after its root.
+
+        ``MEASure:POWer?`` -> ``MEASure2:POWer?``. Channel 1 uses the
+        suffix-less default form the manual shows as ``[1|2]``.
+        """
+        if channel == 1:
+            return command
+        root, sep, rest = command.partition(":")
+        return f"{root}{channel}{sep}{rest}"
+
     def set_frequency(self, hz: float) -> None:
-        self.safe_send(f"FREQ {hz}")
+        self.safe_send(f"SENS:CORR:FREQ {hz / 1e9:.9g} GHz")
 
     def get_frequency(self) -> float:
-        return float(self.query_ascii("FREQ?"))
+        return float(self.query_ascii("SENS:CORR:FREQ?")) * 1e9
 
     def set_power_unit(self, unit: str) -> None:
         unit_upper = unit.upper()
-        if unit_upper not in ("DBM", "W"):
+        if unit_upper not in ("DBM", "W", "WATTS"):
             raise ValueError("unit must be 'DBM' or 'W'")
-        self.safe_send(f"UNIT:POWER {unit_upper}")
+        self.safe_send(f"CALC:UNIT {'DBM' if unit_upper == 'DBM' else 'WATTS'}")
 
     def set_offset(self, db: float) -> None:
-        self.safe_send(f"CAL1:OFFSET {db}")
+        self.safe_send(f"SENS:CORR:OFF {db}")
 
     def get_offset(self) -> float:
-        return float(self.query_ascii("CAL1:OFFSET?"))
+        return float(self.query_ascii("SENS:CORR:OFF?"))
 
-    def measure_power(self) -> MeasurementResult:
-        return self._meas("MEAS:POWER?", "dBm")
+    def measure_power(self, channel: int = 1) -> MeasurementResult:
+        cmd = self._chan_cmd("MEAS:POW?", channel)
+        return MeasurementResult(float(self.query_ascii(cmd)), "dBm", channel=channel)
 
-    def measure_peak_power(self) -> MeasurementResult:
-        return self._meas("MEAS:PEAK?", "dBm")
+    def measure_peak_power(self, channel: int = 1) -> MeasurementResult:
+        """Pulse-on peak power (pulse mode only).
 
-    def set_video_bandwidth(self, hz: float) -> None:
-        self.safe_send(f"SENS:BAND:VIDEO {hz}")
+        The 4530 has no scalar peak query: automatic pulse measurements
+        come back as an array from FETCh:ARRay:AMEAsure:POWer?, whose
+        first field is ``PulseOnPeak``.
+        """
+        cmd = self._chan_cmd("FETC:ARR:AMEA:POW?", channel)
+        peak = float(self.query_ascii(cmd).split(",")[0])
+        return MeasurementResult(peak, "dBm", channel=channel)
 
-    def get_video_bandwidth(self) -> float:
-        return float(self.query_ascii("SENS:BAND:VIDEO?"))
+    def set_video_bandwidth(self, band: str) -> None:
+        """Selects the sensor video bandwidth: 'HIGH' (normal) or 'LOW'.
+
+        The 4530 takes a HIGH/LOW setting, not a numeric bandwidth in Hz.
+        """
+        band_upper = str(band).upper()
+        if band_upper not in ("HIGH", "LOW"):
+            raise ValueError(
+                "4530 video bandwidth is 'HIGH' or 'LOW', not a frequency in Hz"
+            )
+        self.safe_send(f"SENS:BAND {band_upper}")
+
+    def get_video_bandwidth(self) -> str:
+        return self.query_ascii("SENS:BAND?").strip().upper()
 
     def set_trigger_source(self, source: str) -> None:
         key = source.upper()
-        mapping = {"INTERNAL": "INT", "EXTERNAL": "EXT", "FREE_RUN": "FREERUN", "FREERUN": "FREERUN"}
-        if key not in mapping and key not in ("INT", "EXT"):
+        mapping = {
+            "INTERNAL": "SENSOR1", "INT": "SENSOR1", "SENSOR1": "SENSOR1",
+            "SENSOR2": "SENSOR2", "EXTERNAL": "EXTERNAL", "EXT": "EXTERNAL",
+            "IMMEDIATE": "IMMEDIATE", "FREE_RUN": "IMMEDIATE",
+            "FREERUN": "IMMEDIATE", "BUS": "BUS",
+        }
+        if key not in mapping:
             raise ValueError(f"Invalid trigger source: {source}")
-        self.safe_send(f"TRIG:SOURCE {mapping.get(key, key)}")
+        self.safe_send(f"TRIG:SOUR {mapping[key]}")
 
     def set_trigger_level(self, dbm: float) -> None:
-        self.safe_send(f"TRIG:LEVEL {dbm}")
+        self.safe_send(f"TRIG:LEV {dbm}")
 
-    def measure_pulse_width(self) -> MeasurementResult:
-        return self._meas("MEAS:PULSE:WIDTH?", "s")
+    def measure_pulse_width(self, channel: int = 1) -> MeasurementResult:
+        """Pulse width in seconds (pulse mode only).
+
+        FETCh:ARRay:AMEAsure:TIMe? returns PulseFreq, PulsePeriod,
+        PulseWidth, Offtime, DutyCycle, Risetime, Falltime.
+        """
+        cmd = self._chan_cmd("FETC:ARR:AMEA:TIM?", channel)
+        fields = self.query_ascii(cmd).split(",")
+        return MeasurementResult(float(fields[2]), "s", channel=channel)
 
     def zero(self) -> None:
-        self.write("CAL:ZERO")
+        """Zeroes the CW sensor against the internal 50 MHz calibrator."""
+        self.safe_send("CAL:INT:ZERO")
         self.wait_ready()
 
     def shutdown_safety(self) -> None:
@@ -86,14 +137,7 @@ class Boonton4531(_Boonton4530Base):
 class Boonton4532(_Boonton4530Base):
     """Driver for the Boonton 4532 dual-channel RF Peak Power Meter.
 
-    Adds a second measurement channel; channel 2 methods mirror the
-    channel-1 (default) methods with a ``channel=2`` argument.
+    Channel 2 methods mirror the channel-1 (default) ones with a
+    ``channel=2`` argument, which the 4530 spells as a SCPI suffix
+    (``MEAS2:POW?``), not as a command parameter.
     """
-
-    def measure_power(self, channel: int = 1) -> MeasurementResult:
-        val = self.query_ascii(f"MEAS:POWER? {channel}" if channel != 1 else "MEAS:POWER?")
-        return MeasurementResult(float(val), "dBm", channel=channel)
-
-    def measure_peak_power(self, channel: int = 1) -> MeasurementResult:
-        val = self.query_ascii(f"MEAS:PEAK? {channel}" if channel != 1 else "MEAS:PEAK?")
-        return MeasurementResult(float(val), "dBm", channel=channel)
