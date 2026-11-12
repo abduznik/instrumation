@@ -128,21 +128,31 @@ class BKPrecision8600(RealDriver, ElectronicLoad):
     """Driver for BK Precision 8600 Series Programmable DC Electronic Loads.
 
     Supports Constant Current (CC), Constant Voltage (CV), Constant Power
-    (CP) and Constant Resistance (CR) modes, plus OVP/OCP/OPP protection
-    and battery test mode.
+    (CP) and Constant Resistance (CR) modes, plus software OCP/OPP protection
+    levels.
 
-    SCPI Reference (8600 Series Programming Manual):
-        - :SOUR:FUNC {CURR|VOLT|POW|RES}   — operating mode
-        - :SOUR:CURR:LEV:IMM {amps}        — CC setpoint
-        - :SOUR:VOLT:LEV:IMM {volts}       — CV setpoint
-        - :SOUR:RES:LEV:IMM {ohms}         — CR setpoint
-        - :SOUR:POW:LEV:IMM {watts}        — CP setpoint
-        - :SOUR:INP:STAT {ON|OFF}          — input on/off
-        - :MEAS:VOLT?/:MEAS:CURR?/:MEAS:POW? — actual measurements
-        - :SOUR:VOLT:PROT/:SOUR:CURR:PROT/:SOUR:POW:PROT — OVP/OCP/OPP
-        - :SOUR:PROT:CLE                   — clear tripped protection
-        - :SOUR:BATT:MODE {ON|OFF}         — battery test mode
-        - :SOUR:BATT:LEV:VOLT {volts}      — battery test cutoff voltage
+    SCPI Reference (8600 Series Programming Manual, SCPI 1995.0):
+        - [SOURce:]FUNCtion {VOLTage|CURRent|RESistance|POWer}  — operating mode
+        - [SOURce:]CURRent[:LEVel][:IMMediate] {amps}          — CC setpoint
+        - [SOURce:]VOLTage[:LEVel][:IMMediate] {volts}         — CV setpoint
+        - [SOURce:]RESistance[:LEVel][:IMMediate] {ohms}       — CR setpoint
+        - [SOURce:]POWer[:LEVel][:IMMediate] {watts}           — CP setpoint
+        - [SOURce:]INPut[:STATe] {ON|OFF}                      — input on/off
+        - MEASure:VOLTage[:DC]? / MEASure:CURRent[:DC]?        — one-shot readings
+        - FETCh:POWer[:DC]?                                    — computed power
+        - [SOURce:]CURRent:PROTection:LEVel / :STATe {ON|OFF}  — OCP level + arm
+        - [SOURce:]POWer:PROTection[:LEVel]                    — OPP level
+        - [SOURce:]PROTection:CLEar                            — clear tripped protection
+
+    Not remote-controllable on this instrument:
+        - OVP is a fixed hardware threshold at ~110% of the maximum rated
+          voltage (User Manual p.42) — the manual defines no
+          ``VOLTage:PROTection`` node, so ``set_ovp`` only logs.
+        - The battery test function is front-panel only: "batt" has 0 hits in
+          the 100-page programming manual and User Manual p.60 configures and
+          runs the test from the front panel.
+        - No ``*OPT?`` (0 hits for OPT in the programming manual), so option
+          discovery is a no-op instead of queueing -113.
     """
 
     def set_mode(self, mode: str) -> None:
@@ -193,13 +203,36 @@ class BKPrecision8600(RealDriver, ElectronicLoad):
         return self._meas(":MEAS:CURR?", "A")
 
     def measure_power(self) -> MeasurementResult:
-        return self._meas(":MEAS:POW?", "W")
+        """Computed power — the 8600 only defines ``FETCh:POWer[:DC]?``.
+
+        MEASure has VOLTage and CURRent leaves only (programming manual p.65);
+        power is derived from the last acquired sample, so FETCh is the
+        documented query.
+        """
+        return self._meas(":FETCH:POW?", "W")
 
     def set_ovp(self, voltage: float) -> None:
-        self.safe_send(f":SOUR:VOLT:PROT {voltage}")
+        """No-op: the 8600's OVP threshold is fixed in hardware.
+
+        The SOURce subsystem defines CURRent:PROTection and POWer:PROTection
+        only — ``VOLTage:PROTection`` has 0 hits in the 100-page manual — and
+        User Manual p.42 states the OVP limit is ~110% of the maximum rated
+        voltage. Clear a trip with ``clear_protection()``.
+        """
+        self._unsupported_feature(
+            "set_ovp (8600 OVP is a fixed hardware threshold at ~110% of "
+            "rated voltage; the manual defines no VOLTage:PROTection node)"
+        )
 
     def set_ocp(self, current: float) -> None:
-        self.safe_send(f":SOUR:CURR:PROT {current}")
+        """Sets the soft OCP level and arms it.
+
+        ``CURRent:PROTection:LEVel`` only stores the trip point; the feature
+        itself is off after ``*RST`` (``CURRent:PROTection:STATe`` *RST value
+        is OFF, p.48), so sending the level alone never trips.
+        """
+        self.safe_send(f":SOUR:CURR:PROT:LEV {current}")
+        self.safe_send(":SOUR:CURR:PROT:STAT ON")
 
     def set_opp(self, power: float) -> None:
         self.safe_send(f":SOUR:POW:PROT {power}")
@@ -207,17 +240,38 @@ class BKPrecision8600(RealDriver, ElectronicLoad):
     def clear_protection(self) -> None:
         self.safe_send(":SOUR:PROT:CLE")
 
+    def _discover_options(self) -> None:
+        """No *OPT? query on the 8600 — 0 hits for OPT in the manual.
+
+        Sending it would queue -113 "Undefined header", which the next
+        error-checked command would then surface as a hardware error.
+        """
+        self.options = []
+
     def set_battery_test_mode(self, enable: bool) -> None:
-        """Enables or disables battery discharge test mode."""
-        self.safe_send(f":SOUR:BATT:MODE {'ON' if enable else 'OFF'}")
+        """No-op: the battery test is front-panel only on the 8600.
+
+        The programming manual has no BATTery subsystem at all ("batt": 0
+        hits in 100 pages); User Manual p.60 sets up and runs the test from
+        the front panel.
+        """
+        self._unsupported_feature(
+            "set_battery_test_mode (battery test is front-panel only; the "
+            "programming manual defines no BATTery subsystem)"
+        )
 
     def set_battery_cutoff_voltage(self, volts: float) -> None:
-        """Sets the cutoff voltage for battery discharge test mode."""
-        self.safe_send(f":SOUR:BATT:LEV:VOLT {volts}")
+        """No-op: the battery test is front-panel only (see above)."""
+        self._unsupported_feature(
+            "set_battery_cutoff_voltage (battery test is front-panel only)"
+        )
 
     def get_battery_test_capacity(self) -> MeasurementResult:
-        """Returns the measured discharge capacity (Ah) from the last/current battery test."""
-        return self._meas(":SOUR:BATT:DCH:CAP?", "Ah")
+        """No-op: the battery test is front-panel only (see above)."""
+        self._unsupported_feature(
+            "get_battery_test_capacity (battery test is front-panel only)"
+        )
+        return MeasurementResult(0.0, "Ah")
 
     def shutdown_safety(self) -> None:
         self.set_input(False)
